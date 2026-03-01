@@ -28,11 +28,11 @@ export default function VerticalKanji({ characters, side }: KanjiProps) {
     return () => clearInterval(interval);
   }, [characters.length]);
 
-  const positionClass = side === 'left' ? 'left-8 2xl:left-24' : 'right-8 2xl:right-24';
+  const positionClass = side === 'left' ? 'left-8 2xl:left-4' : 'right-8 2xl:right-4';
 
   return (
     // 3. Dodajemy yujiMai.className do głównego kontenera
-    <div className={`fixed top-1/2 -translate-y-1/2 hidden xl:flex flex-col gap-10 text-8xl text-white z-40 ${positionClass} ${yujiMai.className}`}>
+    <div className={`fixed opacity-20 top-1/2 -translate-y-1/2 hidden xl:flex flex-col gap-10 text-8xl text-white z-10 ${positionClass} ${yujiMai.className}`}>
       {characters.map((char, index) => (
         <span 
           key={index}
