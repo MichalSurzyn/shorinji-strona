@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "Shorinji Kempo Kraków",
   description: "Japońska sztuka walki w Krakowie",
 };
-  const leftKanji = ['剣', '禅', '一', '如'];
+  const leftKanji = ['拳', '禅', '一', '如'];
   const rightKanji = ['力', '愛', '不', '二'];
 export default function RootLayout({
   

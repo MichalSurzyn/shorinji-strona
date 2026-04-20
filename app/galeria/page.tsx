@@ -1,5 +1,5 @@
 import { getGalleryFolders } from "../../actions/galleryActions";
-import GalleryClient from "../../components/GalleryClient";
+import GalleryClient from "./_components/GalleryClient";
 
 // Ta podstrona może pobierać dane od razu na serwerze!
 export default async function GaleriaPage() {
