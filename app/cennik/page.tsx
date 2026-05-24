@@ -146,8 +146,8 @@ export default function CennikPage() {
             Lista opłat obowiązująca od{" "}
             <span className="text-yellow-500">1 kwietnia 2026</span> do{" "}
             <span className="text-yellow-500">31 marca 2030</span> — kategoria{" "}
-            <span className="text-yellow-500">„B"</span>. Wszystkie kwoty
-            podane są w polskich złotych (PLN).
+            <span className="text-yellow-500">&bdquo;B&rdquo;</span>. Wszystkie
+            kwoty podane są w polskich złotych (PLN).
           </p>
         </header>
 
@@ -158,25 +158,53 @@ export default function CennikPage() {
         <PriceTable section={egzaminyDan} />
         <PriceTable section={pozostale} />
 
-        {/* Notka informacyjna */}
-        <aside className="mt-14 rounded-xl border border-yellow-500/40 bg-yellow-500/5 px-6 py-5 text-sm text-neutral-300 leading-relaxed">
-          <p className="mb-2">
-            <span className="text-yellow-500 font-semibold">Informacja: </span>
-            opłaty miesięczne za treningi prosimy regulować z góry, do 10. dnia
-            każdego miesiąca. Opłaty egzaminacyjne wnoszone są bezpośrednio
-            przed egzaminem.
-          </p>
-          <p>
-            W razie pytań dotyczących płatności zapraszamy do kontaktu —{" "}
-            <a
-              href="mailto:pl.shorinjikempo@gmail.com"
-              className="text-yellow-500 hover:text-yellow-400 transition-colors underline underline-offset-4"
-            >
-              pl.shorinjikempo@gmail.com
-            </a>
-            .
-          </p>
-        </aside>
+        {/* Konto bankowe + nota informacyjna */}
+        <div className="mt-14 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Konto bankowe */}
+          <aside className="rounded-xl border border-yellow-500/60 bg-yellow-500/5 px-6 py-5 backdrop-blur-sm">
+            <h3 className="text-yellow-500 text-xs uppercase tracking-[0.14em] font-semibold mb-3">
+              Konto bankowe
+            </h3>
+            <p className="text-white font-medium">
+              Stowarzyszenie &bdquo;Polska Organizacja Shorinji Kempo&rdquo;
+            </p>
+            <p className="text-neutral-300 text-sm mt-1">
+              ul. Wysłouchów 33/5, 30-611 Kraków, Polska
+            </p>
+            <div className="mt-4 pt-4 border-t border-yellow-500/20">
+              <p className="text-neutral-400 text-xs uppercase tracking-wider mb-1">
+                mBank
+              </p>
+              <p className="text-white font-mono text-sm md:text-base tracking-wider select-all">
+                53 1140 2004 0000 3502 7497 1466
+              </p>
+            </div>
+            <p className="text-neutral-500 text-xs mt-3 italic">
+              W tytule przelewu prosimy podać imię, nazwisko oraz cel wpłaty
+              (np. składka — kwiecień 2026, egzamin 5 Kyu).
+            </p>
+          </aside>
+
+          {/* Notka informacyjna */}
+          <aside className="rounded-xl border border-yellow-500/40 bg-yellow-500/5 px-6 py-5 text-sm text-neutral-300 leading-relaxed backdrop-blur-sm">
+            <p className="mb-2">
+              <span className="text-yellow-500 font-semibold">Informacja: </span>
+              opłaty miesięczne za treningi prosimy regulować z góry, do
+              10. dnia każdego miesiąca. Opłaty egzaminacyjne wnoszone są
+              bezpośrednio przed egzaminem.
+            </p>
+            <p>
+              W razie pytań dotyczących płatności zapraszamy do kontaktu —{" "}
+              <a
+                href="mailto:pl.shorinjikempo@gmail.com"
+                className="text-yellow-500 hover:text-yellow-400 transition-colors underline underline-offset-4"
+              >
+                pl.shorinjikempo@gmail.com
+              </a>
+              .
+            </p>
+          </aside>
+        </div>
       </div>
     </div>
   );

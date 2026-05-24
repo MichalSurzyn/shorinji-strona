@@ -46,6 +46,19 @@ i hover wszędzie operują na akcencie.
 - `Yuji Mai` (Google) — pionowe kanji dekoracyjne po bokach
   (komponent `VerticalKanji`).
 
+## Tailwind v4
+
+Projekt używa **Tailwind v4** (`tailwindcss` ^4, `@tailwindcss/postcss`).
+W v4 zamiast `@tailwind base; @tailwind components; @tailwind utilities;`
+używamy:
+
+```css
+@import "tailwindcss";
+```
+
+w `app/globals.css`. Konfiguracja themu jest inline w CSS
+(`@theme inline { ... }`).
+
 ## Struktura folderów (skrót)
 
 ```
@@ -53,12 +66,13 @@ app/
   layout.tsx        # globalny layout (Navbar, Footer, VerticalKanji)
   page.tsx          # strona główna (Hero + NewsSidebar)
   galeria/page.tsx  # galeria zdjęć (Cloudinary)
-  cennik/page.tsx   # cennik — kilka tabel opłat
+  cennik/page.tsx   # cennik — kilka tabel opłat + konto bankowe
 components/
   Navbar.tsx
-  Footer.tsx
+  Footer.tsx        # 4 kolumny: O nas+social (FB/IG/YT), Do pobrania, Dokumenty, Kontakt
   HeroSection.tsx
   NewsSidebar.tsx
   GalleryClient.tsx
   VerticalKanji.tsx
+public/downloads/   # statyczne PDFy (deklaracje, statuty WSKO/POSK)
 ```

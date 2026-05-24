@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-// Importujemy Twój nowy komponent
 import Footer from "../components/Footer"; 
 import Navbar from "@/components/Navbar";
 import VerticalKanji from "@/components/VerticalKanji";
