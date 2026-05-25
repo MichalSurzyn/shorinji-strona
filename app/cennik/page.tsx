@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Cennik — Shorinji Kempo Kraków",
+  title: "Cennik – Shorinji Kempo Kraków",
   description:
-    "Lista opłat obowiązująca od 1 kwietnia 2026 do 31 marca 2030 — składki, egzaminy na stopnie Kyu i Dan, opłaty organizacyjne.",
+    "Lista opłat obowiązująca od 1 kwietnia 2026 do 31 marca 2030 – składki, egzaminy na stopnie Kyu i Dan, opłaty organizacyjne.",
 };
 
 type Row = { label: string; price: string; note?: string };
@@ -18,8 +18,8 @@ const skladki: Section = {
   title: "Składki regularne",
   subtitle: "Miesięczne opłaty za udział w treningach.",
   rows: [
-    { label: "Miesięczna opłata za trening — dzieci", price: "150 zł" },
-    { label: "Miesięczna opłata za trening — dorośli", price: "160 zł" },
+    { label: "Miesięczna opłata za trening – dzieci", price: "150 zł" },
+    { label: "Miesięczna opłata za trening – dorośli", price: "160 zł" },
   ],
 };
 
@@ -37,7 +37,7 @@ const organizacyjne: Section = {
 
 const egzaminyKyu: Section = {
   title: "Egzaminy na stopnie Kyu",
-  subtitle: "Stopnie uczniowskie — od najniższego (8 Kyu) do 1 Kyu.",
+  subtitle: "Stopnie uczniowskie – od najniższego (8 Kyu) do 1 Kyu.",
   rows: [
     { label: "8 Kyu", price: "50 zł", note: "tylko dzieci do 10. roku życia" },
     { label: "7 Kyu", price: "60 zł", note: "tylko dzieci do 10. roku życia" },
@@ -52,7 +52,7 @@ const egzaminyKyu: Section = {
 
 const egzaminyDan: Section = {
   title: "Egzaminy na stopnie Dan",
-  subtitle: "Stopnie mistrzowskie — od 1 Dan wzwyż.",
+  subtitle: "Stopnie mistrzowskie – od 1 Dan wzwyż.",
   rows: [
     { label: "1 Dan", price: "200 zł" },
     { label: "2 Dan", price: "300 zł" },
@@ -69,7 +69,7 @@ const pozostale: Section = {
   title: "Pozostałe opłaty",
   subtitle: "Powtórne podejścia do egzaminów oraz duplikaty certyfikatów.",
   rows: [
-    { label: "Ponowne podejście do egzaminu (1 Dan — 3 Dan)", price: "50 zł" },
+    { label: "Ponowne podejście do egzaminu (1 Dan – 3 Dan)", price: "50 zł" },
     { label: "Ponowne podejście do egzaminu (4 Dan albo wyżej)", price: "100 zł" },
     { label: "Ponowne wydanie certyfikatu dla stopni Kyu", price: "25 zł" },
     { label: "Ponowne wydanie certyfikatu dla stopni Dan", price: "50 zł" },
@@ -145,7 +145,7 @@ export default function CennikPage() {
           <p className="text-neutral-300 text-lg">
             Lista opłat obowiązująca od{" "}
             <span className="text-yellow-500">1 kwietnia 2026</span> do{" "}
-            <span className="text-yellow-500">31 marca 2030</span> — kategoria{" "}
+            <span className="text-yellow-500">31 marca 2030</span> – kategoria{" "}
             <span className="text-yellow-500">&bdquo;B&rdquo;</span>. Wszystkie
             kwoty podane są w polskich złotych (PLN).
           </p>
@@ -181,7 +181,7 @@ export default function CennikPage() {
             </div>
             <p className="text-neutral-500 text-xs mt-3 italic">
               W tytule przelewu prosimy podać imię, nazwisko oraz cel wpłaty
-              (np. składka — kwiecień 2026, egzamin 5 Kyu).
+              (np. składka – kwiecień 2026, egzamin 5 Kyu).
             </p>
           </aside>
 
@@ -194,7 +194,7 @@ export default function CennikPage() {
               bezpośrednio przed egzaminem.
             </p>
             <p>
-              W razie pytań dotyczących płatności zapraszamy do kontaktu —{" "}
+              W razie pytań dotyczących płatności zapraszamy do kontaktu –{" "}
               <a
                 href="mailto:pl.shorinjikempo@gmail.com"
                 className="text-yellow-500 hover:text-yellow-400 transition-colors underline underline-offset-4"

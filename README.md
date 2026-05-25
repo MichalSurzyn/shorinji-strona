@@ -1,4 +1,4 @@
-# Shorinji Kempo Kraków — strona
+# Shorinji Kempo Kraków – strona
 
 Projekt Next.js (App Router) zastępujący starą stronę z Wix
 (https://www.shorinjikempo.pl/).
@@ -23,7 +23,7 @@ i hover wszędzie operują na akcencie.
 | Tło navbara / dropdownów   | `bg-black`                | `#000000` |
 | Tło stopki                 | `bg-neutral-900`          | `#171717` |
 | Akcent (złoty)             | `text-yellow-500` / `border-yellow-500` | `#eab308` |
-| Akcent — hover             | `text-yellow-400`         | `#facc15` |
+| Akcent – hover             | `text-yellow-400`         | `#facc15` |
 | Tekst główny               | `text-white`              | `#ffffff` |
 | Tekst body                 | `text-neutral-300`        | `#d4d4d4` |
 | Tekst pomocniczy           | `text-neutral-400`        | `#a3a3a3` |
@@ -42,8 +42,8 @@ i hover wszędzie operują na akcencie.
 
 ### Fonty
 
-- `Inter` (Google) — font główny, body i nagłówki.
-- `Yuji Mai` (Google) — pionowe kanji dekoracyjne po bokach
+- `Inter` (Google) – font główny, body i nagłówki.
+- `Yuji Mai` (Google) – pionowe kanji dekoracyjne po bokach
   (komponent `VerticalKanji`).
 
 ## Tailwind v4
@@ -66,7 +66,7 @@ app/
   layout.tsx        # globalny layout (Navbar, Footer, VerticalKanji)
   page.tsx          # strona główna (Hero + NewsSidebar)
   galeria/page.tsx  # galeria zdjęć (Cloudinary)
-  cennik/page.tsx   # cennik — kilka tabel opłat + konto bankowe
+  cennik/page.tsx   # cennik – kilka tabel opłat + konto bankowe
 components/
   Navbar.tsx
   Footer.tsx        # 4 kolumny: O nas+social (FB/IG/YT), Do pobrania, Dokumenty, Kontakt

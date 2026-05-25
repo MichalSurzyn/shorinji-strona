@@ -1,22 +1,21 @@
 import Link from 'next/link';
 
 const downloads = [
-  { href: '/downloads/deklaracja-dorosli.pdf', label: 'Deklaracja członkowska — dorośli' },
-  { href: '/downloads/deklaracja-do-18.pdf', label: 'Deklaracja członkowska — do 18 lat' },
-  { href: '/cennik', label: 'Lista opłat' },
+  { href: '/downloads/deklaracja-dorosli.pdf', label: 'Deklaracja członkowska – dorośli' },
+  { href: '/downloads/deklaracja-do-18.pdf', label: 'Deklaracja członkowska – do 18 lat' },
 ];
 
 const dokumenty = [
   { href: '/downloads/statut-posk.pdf', label: 'Statut POSK' },
-  { href: '/downloads/wsko-statutes.pdf', label: 'WSKO — Statutes (kiyaku)' },
-  { href: '/downloads/wsko-bylaws.pdf', label: 'WSKO — Bylaws' },
-  { href: '/downloads/wsko-regulations.pdf', label: 'WSKO — Regulations' },
+  { href: '/downloads/wsko-statutes.pdf', label: 'WSKO – Statutes (kiyaku)' },
+  { href: '/downloads/wsko-bylaws.pdf', label: 'WSKO – Bylaws' },
+  { href: '/downloads/wsko-regulations.pdf', label: 'WSKO – Regulations' },
 ];
 
 export default function Footer() {
   return (
     <footer className="bg-neutral-900 text-neutral-300 py-12 border-t border-neutral-800 z-11">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-[80%] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
 
           {/* Kolumna 1: O nas + social */}

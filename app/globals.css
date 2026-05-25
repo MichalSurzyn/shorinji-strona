@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Tailwind v4 breaking change:
+   Domyślnie `hover:` używa `@media (hover: hover)`, więc na touch / w niektórych
+   środowiskach DevTools/iOS hover variant w ogóle się nie aplikuje.
+   Override przywraca stare zachowanie (czysty :hover bez media query). */
+@custom-variant hover (&:hover);
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
