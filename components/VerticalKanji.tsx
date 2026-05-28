@@ -5,8 +5,6 @@ import { Yuji_Mai } from 'next/font/google';
 
 const yujiMai = Yuji_Mai({
   weight: '400',
-  // Dla fontów japońskich (zawierających tysiące znaków) najlepiej
-  // wyłączyć preload, aby uniknąć błędów przy budowaniu aplikacji.
   preload: false,
 });
 
@@ -19,7 +17,6 @@ export default function VerticalKanji({ characters, side }: KanjiProps) {
   const [visibleCount, setVisibleCount] = useState(0);
   const [footerVisible, setFooterVisible] = useState(false);
 
-  // Stopniowe pojawianie się kolejnych znaków (efekt początkowy).
   useEffect(() => {
     const interval = setInterval(() => {
       setVisibleCount((prev) => (prev < characters.length ? prev + 1 : prev));
@@ -27,8 +24,6 @@ export default function VerticalKanji({ characters, side }: KanjiProps) {
     return () => clearInterval(interval);
   }, [characters.length]);
 
-  // Chowamy kanji gdy stopka wjeżdża w viewport – fixed kanji w przeciwnym razie
-  // nakładałyby się wizualnie na stopkę (są niżej w z-stacku i prześwitują).
   useEffect(() => {
     const footer = document.querySelector('footer');
     if (!footer) return;
