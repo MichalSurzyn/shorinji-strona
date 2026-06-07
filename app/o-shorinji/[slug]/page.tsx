@@ -5,6 +5,10 @@ import { o_shorinji } from "../../../data/articles/o-shorinji";
 
 type Params = { params: Promise<{ slug: string }> };
 
+// Odśwież stronę co godzinę – nowe zdjęcia z Cloudinary pojawią się
+// bez przebudowy całej aplikacji.
+export const revalidate = 3600;
+
 export async function generateStaticParams() {
   return o_shorinji.articles.map((a) => ({ slug: a.slug }));
 }

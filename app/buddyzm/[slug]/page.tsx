@@ -5,6 +5,10 @@ import { buddyzm } from "../../../data/articles/buddyzm";
 
 type Params = { params: Promise<{ slug: string }> };
 
+// Odśwież stronę co godzinę – nowe zdjęcia z Cloudinary pojawią się
+// bez przebudowy całej aplikacji.
+export const revalidate = 3600;
+
 export async function generateStaticParams() {
   return buddyzm.articles.map((a) => ({ slug: a.slug }));
 }

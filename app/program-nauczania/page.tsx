@@ -18,7 +18,8 @@ type Section = {
 const sections: Section[] = [
   {
     title: "Podstawy / kihon",
-    subtitle: "Pierwsze techniki, przewroty, blokady.",
+    subtitle:
+      "Pozycje, uderzenia, kopnięcia, bloki i pady (ukemi). To fundament, do którego wracamy na każdym treningu.",
     videos: [
       { label: "Jak zawiązać pas?", url: "https://www.youtube.com/watch?v=9luFLV52N_8" },
       { label: "Byakuren Hachijin", url: "https://www.youtube.com/watch?v=N_58F3VSTCs" },
@@ -36,7 +37,8 @@ const sections: Section[] = [
   },
   {
     title: "Tan'en Kihon Hokei – formy jednoosobowe",
-    subtitle: "Tan'en = pojedynczo, kihon hokei = formy podstawowe.",
+    subtitle:
+      "Formy podstawowe wykonywane pojedynczo (tan'en znaczy „samemu\"). Uczą całych sekwencji technik, zanim przećwiczysz je z partnerem.",
     videos: [
       { label: "Tenchiken Dai Ikkei", url: "https://www.youtube.com/watch?v=OxkSM4L_DLc" },
       { label: "Tenchiken Dai Nikei", url: "https://www.youtube.com/watch?v=Pq-JIjllo8k" },
@@ -51,7 +53,8 @@ const sections: Section[] = [
   },
   {
     title: "Sotai – formy w parach",
-    subtitle: "Sotai = w parach. To samo kihon hokei, ale z partnerem.",
+    subtitle:
+      "Te same formy podstawowe, ale wykonywane w parach (sotai). Dochodzi realny dystans, timing i kontakt z partnerem.",
     videos: [
       { label: "Tenchiken Dai Ikkei", url: "https://www.youtube.com/watch?v=IyKJ-IEY2fU" },
       { label: "Tenchiken Dai Nikei", url: "https://www.youtube.com/watch?v=GesgymAIyvA" },
@@ -74,9 +77,11 @@ export default function ProgramNauczaniaPage() {
             Program nauczania
           </h1>
           <p className="text-neutral-300 text-lg max-w-3xl">
-            Wybór filmów do nauki podstaw Shorinji Kempo. Strona jest wstępna –
-            uporządkujemy ją po dodaniu szczegółowego programu kyu/dan oraz
-            opisu poszczególnych technik.
+            Nagrania, z których korzystamy podczas treningów – od pierwszych
+            technik i przewrotów, przez formy wykonywane pojedynczo, po pracę
+            w parach. Filmy pomagają utrwalić materiał między zajęciami, nie
+            zastępują jednak treningu z instruktorem. Każdy link otwiera
+            nagranie na YouTube.
           </p>
         </header>
 
@@ -125,15 +130,6 @@ export default function ProgramNauczaniaPage() {
             </ul>
           </section>
         ))}
-
-        <aside className="mt-12 rounded-xl border border-yellow-500/30 bg-yellow-500/5 px-6 py-5 text-sm text-neutral-300 leading-relaxed">
-          <p>
-            <span className="text-yellow-500 font-semibold">Status: </span>
-            wstępna wersja strony. Plan: dodać opis programu kyu/dan (8 Kyu → 1 Dan
-            i wyżej), wymagania egzaminacyjne dla każdego stopnia oraz schematy
-            poszczególnych form (gō-no kata, jū-no kata, embu).
-          </p>
-        </aside>
 
       </div>
     </div>

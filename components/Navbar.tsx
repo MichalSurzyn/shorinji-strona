@@ -37,13 +37,14 @@ export default function Navbar() {
         { href: '/o-shorinji/wprowadzenie', label: 'WPROWADZENIE' },
         { href: '/o-shorinji/cele-i-wartosci', label: 'CELE I WARTOŚCI' },
         { href: '/o-shorinji/symbolika-i-medytacja', label: 'SYMBOLIKA I MEDYTACJA' },
+        { href: '/o-shorinji/historia', label: 'HISTORIA' },
       ],
     },
     {
       label: 'ORGANIZACJA',
       href: '/organizacja',
       dropdown: [
-        { href: '/organizacja/zalozyciel-i-wsko', label: 'ZAŁOŻYCIEL I WSKO' },
+        { href: '/organizacja/zalozyciel', label: 'ZAŁOŻYCIEL' },
         { href: '/organizacja/egzaminatorzy', label: 'EGZAMINATORZY' },
       ],
     },

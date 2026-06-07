@@ -5,6 +5,10 @@ import { organizacja } from "../../../data/articles/organizacja";
 
 type Params = { params: Promise<{ slug: string }> };
 
+// Odśwież stronę co godzinę – nowe zdjęcia z Cloudinary pojawią się
+// bez przebudowy całej aplikacji.
+export const revalidate = 3600;
+
 export async function generateStaticParams() {
   return organizacja.articles.map((a) => ({ slug: a.slug }));
 }

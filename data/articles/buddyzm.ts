@@ -17,7 +17,7 @@ export const buddyzm: ArticleGroup = {
       "Brak Boga stwórcy w buddyzmie sprawia, iż często nie uważa się go za religię w utartym w naszym kręgu kulturowym znaczeniu tego słowa. Podstawy buddyzmu są łatwe do zrozumienia i zastosowania: nic na świecie nie jest stałe lub niezmienne; ponosimy konsekwencje wszystkiego, co robimy (karma); w każdej sytuacji możliwa jest zmiana.",
       "Buddyzm zwraca się więc ku wszystkim ludziom, niezależnie od rasy, narodowości czy płci. Naucza też praktycznych metod, takich jak medytacja, dzięki którym możemy zastosować te nauki w życiu, wziąć za nie odpowiedzialność, zmienić się na lepsze, rozwinąć w sobie świadomość, współczucie oraz mądrość.",
       "Na świecie jest około 350 milionów buddystów, a nieustannie rośnie ich liczba w krajach, które nie są tradycyjnie krajami buddyjskimi (np. w Europie i Ameryce). Istnieją różne formy buddyzmu, lecz wszystkie tradycje łączy nieuciekanie się do przemocy, wolność od dogmatów, tolerancja oraz – w większości przypadków – medytacja.",
-      "##### DWIE GAŁĘZI BUDDYZMU",
+      { type: "subheading", text: "DWIE GAŁĘZIE BUDDYZMU" },
       "MAHAJANA",
       "Mahayana (\"Wielki Wóz\") to termin dla szerokiej grupy tradycji buddyjskich, tekstów, filozofii i praktyk.",
       "Buddyzm Mahayany rozwinął się w Indiach (od ok. I wieku p.n.e.). Mahayana odnosi się również do ścieżki Bodhisattwy dążącej do stania się w pełni przebudzonym Buddą dla pożytku wszystkich czujących istot i dlatego jest również nazywany „Ścieżką Bodhisattwy\". Buddyzm Mahayany ogólnie postrzega cel stania się Buddą poprzez ścieżkę Bodhisattwy jako dostępny dla wszystkich i postrzega stan Arhata jako niekompletny.",
@@ -55,15 +55,9 @@ export const buddyzm: ArticleGroup = {
     paragraphs: [
       "Cztery Szlachetne Prawdy ujmują nauki Buddy w bardzo prosty sposób. A oto w jaki:",
       { type: "ordered", items: [
-        "**Cała egzystencja jest dukkha.** To słowo bywa tłumaczone jako „cierpienie\", „udręka\", „ból\" lub „niezaspokojenie\". Wgląd Buddy pokazał mu, iż żyjąc zawsze będziemy się borykali z przeciwnościami losu i że nic, czego doświadczamy, nie jest w stanie dać nam ostatecznego i trwałego szczęścia czy usatysfakcjonować nas w pełni."
-      ] },
-      { type: "ordered", items: [
-        "**Przyczyną dukkhi jest żądza.** Naturalną ludzką tendencją jest szukać winnego własnych kłopotów na zewnątrz. Budda twierdzi jednak, że ich korzenie tkwią w rzeczywistości w naszym umyśle. W szczególności nasza tendencja do chwytania (lub odpychania) wszystkiego sprawia, że znajdujemy się w konflikcie nie do pogodzenia z życiem."
-      ] },
-      { type: "ordered", items: [
-        "**Dukkha wygasa, gdy wygasa żądza.** Ponieważ w ostatecznym rozrachunku sami powodujemy swoje trudności, tylko my możemy je też rozwiązać. Nie da się zmienić tego, co nam się przydarza, ale możemy zmienić nasze reakcje na to."
-      ] },
-      { type: "ordered", items: [
+        "**Cała egzystencja jest dukkha.** To słowo bywa tłumaczone jako „cierpienie\", „udręka\", „ból\" lub „niezaspokojenie\". Wgląd Buddy pokazał mu, iż żyjąc zawsze będziemy się borykali z przeciwnościami losu i że nic, czego doświadczamy, nie jest w stanie dać nam ostatecznego i trwałego szczęścia czy usatysfakcjonować nas w pełni.",
+        "**Przyczyną dukkhi jest żądza.** Naturalną ludzką tendencją jest szukać winnego własnych kłopotów na zewnątrz. Budda twierdzi jednak, że ich korzenie tkwią w rzeczywistości w naszym umyśle. W szczególności nasza tendencja do chwytania (lub odpychania) wszystkiego sprawia, że znajdujemy się w konflikcie nie do pogodzenia z życiem.",
+        "**Dukkha wygasa, gdy wygasa żądza.** Ponieważ w ostatecznym rozrachunku sami powodujemy swoje trudności, tylko my możemy je też rozwiązać. Nie da się zmienić tego, co nam się przydarza, ale możemy zmienić nasze reakcje na to.",
         "**Istnieje ścieżka wyprowadzająca z dukkhi.** Choć Budda przyznaje, iż każdy z osobna jest za siebie odpowiedzialny, to naucza on także metod, dzięki którym możemy się zmienić. Jedna z tych metod to Szlachetna Ośmioraka Ścieżka, w skład której wchodzą: właściwe widzenie rzeczy, właściwe emocje, właściwe działania, właściwa mowa, właściwe źródła zarabiania, właściwy wysiłek, właściwa uważność oraz właściwa medytacja."
       ] }
     ],
@@ -71,11 +65,19 @@ export const buddyzm: ArticleGroup = {
   {
     heading: "Szlachetna Ośmioraka Ścieżka Buddy",
     paragraphs: [
-      "Cztery Szlachetne Prawdy ujmują nauki Buddy w bardzo prosty sposób. A oto w jaki:",
+      "Szlachetna Ośmioraka Ścieżka to praktyczne rozwinięcie czwartej z Czterech Szlachetnych Prawd. Pokazuje, jak na co dzień wychodzić z dukkhi. Nie jest zbiorem nakazów, lecz opisem ośmiu obszarów życia, nad którymi pracuje się równolegle, a każdy z nich wspiera pozostałe.",
       { type: "ordered", items: [
-        "Cała egzystencja jest dukkha. To słowo bywa tłumaczone jako „cierpienie\", „udręka\", „ból\" lub „niezaspokojenie\". Wgląd Buddy pokazał mu, iż żyjąc zawsze będziemy się borykali z przeciwnościami losu i że nic, czego doświadczamy, nie jest w stanie dać nam ostatecznego i trwałego szczęścia czy usatysfakcjonować nas w pełni."
+        "**Właściwe widzenie** oznacza poznanie nauk Buddy i patrzenie na rzeczywistość taką, jaka jest, bez iluzji trwałości.",
+        "**Właściwe emocje** to intencje, z których wyrastają nasze czyny, czyli życzliwość i wyrzeczenie się niechęci.",
+        "**Właściwa mowa** obejmuje prawdomówność oraz słowa życzliwe, pomocne i budujące zgodę.",
+        "**Właściwe działanie** to postępowanie w zgodzie ze wskazaniami etycznymi, przede wszystkim niewyrządzanie szkody.",
+        "**Właściwe źródła zarabiania** oznaczają utrzymywanie się z pracy, która nie krzywdzi innych istot.",
+        "**Właściwy wysiłek** polega na pielęgnowaniu pozytywnych stanów umysłu i stopniowym porzucaniu szkodliwych.",
+        "**Właściwa uważność** to świadomość ciała, uczuć i myśli w każdej chwili dnia, nie tylko podczas medytacji.",
+        "**Właściwa medytacja** (samadhi) rozwija koncentrację, która prowadzi do wglądu i przemiany całej osoby."
       ] },
-      "##### WIDEO-KURSY",
+      "Kolejnym ujęciem tej samej drogi jest Potrójna Droga, opisana poniżej, w której osiem członów ścieżki grupuje się w etykę, medytację i mądrość.",
+      { type: "subheading", text: "WIDEO-KURSY" },
       "KURS ONLINE W BUDDYJSKIM OŚRODKU TRIRATNA",
       { type: "list", items: [
         "[DOSKONAŁA WIZJA](https://www.youtube.com/embed/GwBwlMs2Cpc)",
@@ -98,23 +100,15 @@ export const buddyzm: ArticleGroup = {
       "Rdzeń buddyjskiej nauki etycznej zawiera się w pięciu tzw. wskazówkach. Nie należy mylić ich z przepisami, ani chrześcijańskimi przykazaniami; wskazania to po prostu „reguły treningu\", za którymi podąża się z własnej, nieprzymuszonej woli, posługując się przy tym rozumem i wrażliwością. Życie jest skomplikowane, dlatego też tradycja Buddyjska nie narzuca jednego wzorca działania, który można by zastosować we wszystkich sytuacjach życiowych. W Buddyzmie nie mówi się nawet, że jakieś zachowanie jest dobre lub złe, lecz używa się w zamian określeń: „zręczne\" (kusala) oraz „niezręczne\" (akusala).",
       "Pięć wskazówek po kolei:",
       { type: "ordered", items: [
-        "Nie zabijać i nie wyrządzać szkody istotom żyjącym. Jest to fundamentalna zasada buddyjskiej etyki, wszystkie inne są jej rozwinięciem. W tym wskazaniu mieści się zasada nieużywania przemocy – jeśli to tylko możliwe – stąd też wielu Buddystów jest wegetarianami. Jego pozytywny odpowiednik to miłość."
-      ] },
-      { type: "ordered", items: [
-        "Nie brać tego, co nie zostało nam dane. Oczywiście kradnąc wyrządzamy innym szkodę, ale także wykorzystując, wyzyskując lub manipulując ich, bierzemy to, co nie zostało nam dane. Pozytywny odpowiednik tego wskazania to kultywowanie szczodrości."
-      ] },
-      { type: "ordered", items: [
-        "Unikać niewłaściwych zachowań seksualnych. To wskazanie w różnych epokach i miejscach różnie interpretowano, ale sprowadza się ono do nie wyrządzania szkody sobie i innym w sferze seksualnej. Jego pozytywnym odpowiednikiem jest zadowolenie ze swojego położenia np. kiedy mamy stałego partnera lub żyjemy w celibacie."
-      ] },
-      { type: "ordered", items: [
-        "Unikać kłamstwa i fałszu. W związkach z innymi ludźmi mowa odgrywa niezwykle ważną rolę, my nie zawsze jednak kontrolujemy swój język. Zdarza się więc często, że naciągamy fakty i niekoniecznie nawet zdajemy sobie z tego sprawę. Dlatego prawdomówność, która jest pozytywnym odpowiednikiem tego wskazania, jest niezbywalną częścią życia etycznego. Ale prawdomówność to nie wszystko i tak w innym zbiorze wskazań (tzw. dziesięciu wskazań, czy też dziesięciu kusala dharm) wymienia się aż cztery wskazania dotyczące mowy – pozostałe trzy zalecają używanie mowy życzliwej, pomocnej oraz harmonijnej."
-      ] },
-      { type: "ordered", items: [
+        "Nie zabijać i nie wyrządzać szkody istotom żyjącym. Jest to fundamentalna zasada buddyjskiej etyki, wszystkie inne są jej rozwinięciem. W tym wskazaniu mieści się zasada nieużywania przemocy – jeśli to tylko możliwe – stąd też wielu Buddystów jest wegetarianami. Jego pozytywny odpowiednik to miłość.",
+        "Nie brać tego, co nie zostało nam dane. Oczywiście kradnąc wyrządzamy innym szkodę, ale także wykorzystując, wyzyskując lub manipulując ich, bierzemy to, co nie zostało nam dane. Pozytywny odpowiednik tego wskazania to kultywowanie szczodrości.",
+        "Unikać niewłaściwych zachowań seksualnych. To wskazanie w różnych epokach i miejscach różnie interpretowano, ale sprowadza się ono do nie wyrządzania szkody sobie i innym w sferze seksualnej. Jego pozytywnym odpowiednikiem jest zadowolenie ze swojego położenia np. kiedy mamy stałego partnera lub żyjemy w celibacie.",
+        "Unikać kłamstwa i fałszu. W związkach z innymi ludźmi mowa odgrywa niezwykle ważną rolę, my nie zawsze jednak kontrolujemy swój język. Zdarza się więc często, że naciągamy fakty i niekoniecznie nawet zdajemy sobie z tego sprawę. Dlatego prawdomówność, która jest pozytywnym odpowiednikiem tego wskazania, jest niezbywalną częścią życia etycznego. Ale prawdomówność to nie wszystko i tak w innym zbiorze wskazań (tzw. dziesięciu wskazań, czy też dziesięciu kusala dharm) wymienia się aż cztery wskazania dotyczące mowy – pozostałe trzy zalecają używanie mowy życzliwej, pomocnej oraz harmonijnej.",
         "Nie używać napojów i środków mącących umysł. Pozytywny odpowiednik tutaj to rozwijanie uważności, czyli świadomości. Uważność ma na ścieżce buddyjskiej ogromne znaczenie, doświadczenie natomiast wskazuje, iż alkohol i narkotyki (ale i na przykład oglądanie godzinami telewizji) nie przyczyniają się do jej rozwoju."
       ] },
       "Wielu Buddystów na całym świecie codziennie recytuje pięć wskazań i stara się do nich stosować.",
       "MEDYTACJA",
-      "Medytacja jest drugim stopniem Potrójnej Drogi i [tutaj](https://www.shorinjikempo.pl/czym-jest-medytacja) została opisana dokładnie.",
+      "Medytacja jest drugim stopniem Potrójnej Drogi. Dokładnie opisujemy ją na podstronie [Medytacja i ścieżka praktyki](/buddyzm/medytacja).",
       "MĄDROŚĆ",
       "Celem wszystkich praktyk buddyjskich – włącznie z medytacją – jest pradżnia, czyli mądrość. Budda wskazywał, że główną przyczyną trudności życiowych jest nasza egzystencjalna ignorancja, czyli nieznajomość prawdziwej natury rzeczywistości – mądrość jest natomiast jej przeciwieństwem.",
       "Na początku należy się zapoznać z buddyjską wizją życia. Następnie powinniśmy się nad nią zastanowić i porównać z tym, co mówi nam nasze doświadczenie życiowe oraz starać się wyciągnąć z tego wnioski. Jednak pradżnia to coś więcej. Nie wystarczy znać filozofię Buddy, czy nawet dobrze ją rozumieć intelektualnie. Ostatecznie musimy doznać intuicyjnego wglądu w tę prawdę i pozwolić, by dokonała się w nas na tej bazie całkowita przemiana.",
@@ -174,18 +168,10 @@ export const buddyzm: ArticleGroup = {
       "Usiądź wygodnie w pozycji medytacyjnej (lub jeśli nie wiesz jak, to na krześle czy w fotelu) i zamknij oczy.",
       "Bądź świadom/a swego ciała, szczególnie kontaktu z podłożem oraz oddechu przepływającego przez Ciebie. Możesz w ten sposób spędzić kilka minut, żeby uspokoić myśli.",
       { type: "ordered", items: [
-        "W pierwszym etapie rozwijamy mettę dla siebie. Skieruj uwagę ku okolicy serca, klatki piersiowej i zwróć uwagę, jak się czujesz. Możesz też siebie spytać, jaką w tej chwili masz energię albo jaki jest twój wewnętrzny krajobraz. Może jest ci dobrze, czujesz się spokojnie i radośnie, a może wręcz przeciwnie. Może nawet niewiele albo nic specjalnie w tej chwili nie odczuwasz. To nie ma tutaj znaczenia. Ważne, żeby nie udawać przed sobą ani nie cenzurową swoich odczuć – po prostu staraj się być jak najbliżej siebie, być szczery/a ze sobą i trzymać niejako rękę na pulsie swojego nastroju, jaki by nie był. Zwracaj uwagę na wszelkie pojawiające się odczucia spokoju, wewnętrznej równowagi, zadowolenia czy jakikolwiek inne kiełkujące przejawy rodzącego się metta. Pozostając przy nich uwagą, możesz je wzmocnić oraz nabrać zaufania we własne siły. A od poczucia własnej siły już tylko krok do pozytywnego uczucia, do miłości do siebie. Możesz się posłużyć jakimś obrazem lub symbolem, który do ciebie przemawia, wyobrażając sobie na przykład, że przenika cię złote światło, lub powtarzając w myślach zdanie takie, jak „chcę być szczęśliwa\" albo „chcę być wolny\". Nie bój się eksperymentować – w ten sposób możesz odnaleźć metodę, która najlepiej stymuluje w tobie uczucie metty dla siebie. Może to być też wspomnienie wyjątkowo przyjemnego momentu, powtarzanie w myślach swego imienia („nasłuchując\" za każdym razem, czy wskutek wibracji twojego imienia nie pojawia się odczucie metta) albo wczucie się w przyjemne wrażenia płynące z ciała czy z oddechu etc…"
-      ] },
-      { type: "ordered", items: [
-        "W drugim etapie przywołujemy na myśl dobrego przyjaciela lub przyjaciółkę – jedną osobę. Staraj się sobie wyobrazić jak najżywiej, jakbyś ją czy jego miał/a przed sobą i przypomnij sobie jej pozytywne cechy. Poczuj swą więź z tą osobą, uczucie, które dla niej żywisz, a następnie pozwól by narastały ci w sercu. Ponownie możesz powtarzać w myślach do siebie: „życzę mu/jej dobrze, życzę mu/jej jak najlepiej\" lub posłużyć się symbolem, jak światło płynące z twojego serca ku sercu tej osoby lub jakimś innym. Podobnie możesz postępować w kolejnych dwóch etapach."
-      ] },
-      { type: "ordered", items: [
-        "W trzecim etapie przywołaj na myśl osobę, dla której nie żywisz żadnych silnych uczuć: ani jej specjalnie nie lubisz, ale nie masz też nic przeciwko. Słowem osobę „neutralną\" lub stosunkowo obojętną ci. Może to być ktoś, kogo nie znasz, ale widujesz dość często – kolega z pracy, listonosz, kasjerka z Tesco, pani ze sklepu na rogu. Postaraj się wytworzyć w sobie uczucia metty dla tej osoby – pomóc w tym może ci refleksja nad faktem, że też jest człowiekiem, też się budzi zaspana, zmywa przed lustrem resztki snu z twarzy itp. Albo postaw się w sytuacji tej osoby, staraj się sobie wyobrazić jak to jest nią być. Jak w całej tej medytacji nie bój się puścić wodzy fantazji, żeby się zbliżyć w wyobraźni do tej osoby. Ale jeśli odczuwasz jedynie nudę i obojętność, nie udawaj przed sobą wielkiego współczucia! Pozostań cierpliwie z tą osobą do końca tego etapu, to też jest dużo warte."
-      ] },
-      { type: "ordered", items: [
-        "Teraz pomyśl o kimś, kogo nie lubisz lub z kim masz problemy. Staraj się nie popaść w spiralę awersji, lecz zauważ także pozytywne strony charakteru tej osoby, które na pewno ma, spójrz na nią świeżym okiem. Negatywne emocje to tylko przyzwyczajenia naszego umysłu, które stopniowo jesteśmy w stanie zmienić. Powtórzmy – nie chodzi o to, żeby pobłażać tej osobie, jeśli zrobiła coś niewłaściwego albo udawać, że zapałaliśmy do niej nagłą miłością. Czuj swoje prawdziwe negatywne emocje, ale staraj się, by siła twojej pozytywności je przerosła."
-      ] },
-      { type: "ordered", items: [
+        "W pierwszym etapie rozwijamy mettę dla siebie. Skieruj uwagę ku okolicy serca, klatki piersiowej i zwróć uwagę, jak się czujesz. Możesz też siebie spytać, jaką w tej chwili masz energię albo jaki jest twój wewnętrzny krajobraz. Może jest ci dobrze, czujesz się spokojnie i radośnie, a może wręcz przeciwnie. Może nawet niewiele albo nic specjalnie w tej chwili nie odczuwasz. To nie ma tutaj znaczenia. Ważne, żeby nie udawać przed sobą ani nie cenzurową swoich odczuć – po prostu staraj się być jak najbliżej siebie, być szczery/a ze sobą i trzymać niejako rękę na pulsie swojego nastroju, jaki by nie był. Zwracaj uwagę na wszelkie pojawiające się odczucia spokoju, wewnętrznej równowagi, zadowolenia czy jakikolwiek inne kiełkujące przejawy rodzącego się metta. Pozostając przy nich uwagą, możesz je wzmocnić oraz nabrać zaufania we własne siły. A od poczucia własnej siły już tylko krok do pozytywnego uczucia, do miłości do siebie. Możesz się posłużyć jakimś obrazem lub symbolem, który do ciebie przemawia, wyobrażając sobie na przykład, że przenika cię złote światło, lub powtarzając w myślach zdanie takie, jak „chcę być szczęśliwa\" albo „chcę być wolny\". Nie bój się eksperymentować – w ten sposób możesz odnaleźć metodę, która najlepiej stymuluje w tobie uczucie metty dla siebie. Może to być też wspomnienie wyjątkowo przyjemnego momentu, powtarzanie w myślach swego imienia („nasłuchując\" za każdym razem, czy wskutek wibracji twojego imienia nie pojawia się odczucie metta) albo wczucie się w przyjemne wrażenia płynące z ciała czy z oddechu etc…",
+        "W drugim etapie przywołujemy na myśl dobrego przyjaciela lub przyjaciółkę – jedną osobę. Staraj się sobie wyobrazić jak najżywiej, jakbyś ją czy jego miał/a przed sobą i przypomnij sobie jej pozytywne cechy. Poczuj swą więź z tą osobą, uczucie, które dla niej żywisz, a następnie pozwól by narastały ci w sercu. Ponownie możesz powtarzać w myślach do siebie: „życzę mu/jej dobrze, życzę mu/jej jak najlepiej\" lub posłużyć się symbolem, jak światło płynące z twojego serca ku sercu tej osoby lub jakimś innym. Podobnie możesz postępować w kolejnych dwóch etapach.",
+        "W trzecim etapie przywołaj na myśl osobę, dla której nie żywisz żadnych silnych uczuć: ani jej specjalnie nie lubisz, ale nie masz też nic przeciwko. Słowem osobę „neutralną\" lub stosunkowo obojętną ci. Może to być ktoś, kogo nie znasz, ale widujesz dość często – kolega z pracy, listonosz, kasjerka z Tesco, pani ze sklepu na rogu. Postaraj się wytworzyć w sobie uczucia metty dla tej osoby – pomóc w tym może ci refleksja nad faktem, że też jest człowiekiem, też się budzi zaspana, zmywa przed lustrem resztki snu z twarzy itp. Albo postaw się w sytuacji tej osoby, staraj się sobie wyobrazić jak to jest nią być. Jak w całej tej medytacji nie bój się puścić wodzy fantazji, żeby się zbliżyć w wyobraźni do tej osoby. Ale jeśli odczuwasz jedynie nudę i obojętność, nie udawaj przed sobą wielkiego współczucia! Pozostań cierpliwie z tą osobą do końca tego etapu, to też jest dużo warte.",
+        "Teraz pomyśl o kimś, kogo nie lubisz lub z kim masz problemy. Staraj się nie popaść w spiralę awersji, lecz zauważ także pozytywne strony charakteru tej osoby, które na pewno ma, spójrz na nią świeżym okiem. Negatywne emocje to tylko przyzwyczajenia naszego umysłu, które stopniowo jesteśmy w stanie zmienić. Powtórzmy – nie chodzi o to, żeby pobłażać tej osobie, jeśli zrobiła coś niewłaściwego albo udawać, że zapałaliśmy do niej nagłą miłością. Czuj swoje prawdziwe negatywne emocje, ale staraj się, by siła twojej pozytywności je przerosła.",
         "W ostatnim etapie na początek wyobraź sobie wszystkie cztery osoby razem (siebie, przyjaciela, osobę obojętną oraz nielubianą) i spróbuj je obdarować swą mettą po równi. Następnie rozszerzaj jej zasięg i pozwól jej promieniować na ludzi wokół ciebie, rodzinę, sąsiadów, ludzi w twojej dzielnicy, twoim mieście, kraju itd. aż obejmie ona cały świat i wszystkie istoty, nie tylko ludzi. Poczuj jak fale pozytywnych uczuć wypływają z twojego serca ku wszystkim istotom wszędzie."
       ] },
       "Następnie powróć uwagą do ciała, do oddechu, do miejsca, w którym siedzisz i nie śpiesząc się zakończ medytację.",

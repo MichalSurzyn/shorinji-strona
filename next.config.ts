@@ -19,6 +19,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        // Stary adres podstrony o założycielu (przed rozdzieleniem treści).
+        source: '/organizacja/zalozyciel-i-wsko',
+        destination: '/organizacja/zalozyciel',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

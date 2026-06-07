@@ -6,7 +6,16 @@ export type ArticleParagraph =
   | string
   | { type: "list"; items: string[] }
   | { type: "ordered"; items: string[] }
-  | { type: "quote"; text: string };
+  | { type: "quote"; text: string }
+  /** Śródtytuł wewnątrz sekcji (mniejszy niż H2). */
+  | { type: "subheading"; text: string }
+  /**
+   * Zdjęcie z Cloudinary wstawione w treść artykułu.
+   * `publicId` to identyfikator zasobu (bez ścieżki folderu – cloud działa
+   * w trybie dynamic folders). `variant: "portrait"` zwęża zdjęcie (4:5),
+   * domyślnie obraz jest szeroki (14:9).
+   */
+  | { type: "image"; publicId: string; caption?: string; variant?: "wide" | "portrait" };
 
 export type ArticleSection = {
   /** Slug do anchora (auto-generowany jeśli nie podany). */
