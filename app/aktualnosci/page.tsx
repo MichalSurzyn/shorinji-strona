@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { news } from "../../data/news";
 
 export const metadata: Metadata = {
-  title: "Aktualności – Shorinji Kempo Kraków",
+  title: "Aktualności",
   description:
     "Ogłoszenia i wydarzenia krakowskich filii Shorinji Kempo: seminaria, zmiany w harmonogramie, obozy i egzaminy.",
 };

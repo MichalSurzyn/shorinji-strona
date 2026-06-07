@@ -80,12 +80,12 @@ export const buddyzm: ArticleGroup = {
       { type: "subheading", text: "WIDEO-KURSY" },
       "KURS ONLINE W BUDDYJSKIM OŚRODKU TRIRATNA",
       { type: "list", items: [
-        "[DOSKONAŁA WIZJA](https://www.youtube.com/embed/GwBwlMs2Cpc)",
-        "[DOSKONAŁE EMOCJE](https://www.youtube.com/embed/DCBilCtDGqI?si=KAJOlFgJG_VKMSUl)",
-        "[DOSKONAŁA MOWA](https://www.youtube.com/embed/JJqNvnHr-Ms)",
+        "[DOSKONAŁA WIZJA](https://www.youtube.com/watch?v=GwBwlMs2Cpc)",
+        "[DOSKONAŁE EMOCJE](https://www.youtube.com/watch?v=DCBilCtDGqI)",
+        "[DOSKONAŁA MOWA](https://www.youtube.com/watch?v=JJqNvnHr-Ms)",
         "DOSKONAŁE DZIAŁANIE",
-        "[DOSKONAŁY SPOSÓB ZARABIANIA](https://www.youtube.com/embed/owsQJxavsQk)",
-        "[DOSKONAŁY WYSIŁEK](https://www.youtube.com/embed/feOpHgNNTEc)",
+        "[DOSKONAŁY SPOSÓB ZARABIANIA](https://www.youtube.com/watch?v=owsQJxavsQk)",
+        "[DOSKONAŁY WYSIŁEK](https://www.youtube.com/watch?v=feOpHgNNTEc)",
         "DOSKONAŁA ŚWIADOMOŚĆ",
         "DOSKONAŁE SAMADHI"
       ] }

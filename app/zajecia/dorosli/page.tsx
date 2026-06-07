@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import ScheduleWeek from "../../../components/ScheduleWeek";
+import LocationMap from "../../../components/LocationMap";
 
 export const metadata: Metadata = {
-  title: "Grupa dorosła – Filia Kraków | Shorinji Kempo",
+  title: "Grupa dorosła (Filia Kraków)",
   description:
     "Zajęcia dla młodzieży i dorosłych w krakowskiej filii Shorinji Kempo prowadzone przez Shibucho Dominika Chowańskiego.",
 };
@@ -143,6 +144,8 @@ export default function ZajeciaDorosliPage() {
 
         {/* Tygodniowy plan zajęć */}
         <ScheduleWeek group="dorosli" />
+
+        <LocationMap heading="Lokalizacja i dojazd" showContact={false} className="mb-12" />
 
         {/* CTA na dole */}
         <aside className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">

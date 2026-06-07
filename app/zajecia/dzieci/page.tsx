@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import ScheduleWeek from "../../../components/ScheduleWeek";
+import LocationMap from "../../../components/LocationMap";
 
 export const metadata: Metadata = {
-  title: "Grupa dziecięca – Filia Wawel | Shorinji Kempo",
+  title: "Grupa dziecięca (Filia Wawel)",
   description:
     "Zajęcia dla dzieci i młodzieży (5–13 lat) w krakowskiej filii Wawel Shorinji Kempo prowadzone przez Shibucho Krzysztofa Kmiecika.",
 };
@@ -156,6 +157,8 @@ export default function ZajeciaDzieciPage() {
 
         {/* Tygodniowy plan zajęć */}
         <ScheduleWeek group="dzieci" />
+
+        <LocationMap heading="Lokalizacja i dojazd" showContact={false} className="mb-12" />
 
         {/* CTA na dole */}
         <aside className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Cennik – Shorinji Kempo Kraków",
+  title: "Cennik",
   description:
     "Lista opłat obowiązująca od 1 kwietnia 2026 do 31 marca 2030 – składki, egzaminy na stopnie Kyu i Dan, opłaty organizacyjne.",
 };

@@ -3,7 +3,7 @@ import ArticleListing from "../../components/ArticleListing";
 import { o_shorinji } from "../../data/articles/o-shorinji";
 
 export const metadata: Metadata = {
-  title: `${o_shorinji.topicTitle} – Shorinji Kempo Kraków`,
+  title: o_shorinji.topicTitle,
   description: o_shorinji.topicIntro,
 };
 

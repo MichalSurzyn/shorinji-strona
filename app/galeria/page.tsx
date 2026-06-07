@@ -1,5 +1,13 @@
+import type { Metadata } from "next";
 import { getGalleryFolders } from "../../actions/galleryActions";
 import GalleryClient from "./_components/GalleryClient";
+
+export const metadata: Metadata = {
+  title: "Galeria",
+  description:
+    "Zdjęcia z treningów, pokazów i seminariów krakowskiego dōjō Shorinji Kempo.",
+  alternates: { canonical: "/galeria" },
+};
 
 // Ta podstrona może pobierać dane od razu na serwerze!
 export default async function GaleriaPage() {

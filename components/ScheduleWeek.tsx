@@ -7,12 +7,12 @@ import {
 
 /**
  * Tygodniowy plan zajęć w stylu strony.
- * – Statyczna siatka 7 kolumn (poniedziałek – niedziela).
- * – Każdy blok zajęć jest klikalny i otwiera Google Calendar
- *   z prefillem (RRULE: cotygodniowe powtarzanie).
- * – Pod siatką: jeden przycisk pobierający cały plan jako plik .ics
- *   – wystarczy zaimportować w Google Calendar (Ustawienia → Importuj),
- *     żeby mieć wszystkie zajęcia naraz.
+ * – Statyczna siatka 7 kolumn (poniedziałek do niedzieli).
+ * – Bloki w poszczególnych dniach są wyłącznie informacyjne: pokazują
+ *   godziny zajęć i nie są klikalne.
+ * – Pod siatką jeden przycisk pobierający cały plan jako plik .ics.
+ *   Wystarczy zaimportować go w Google Calendar (Ustawienia → Importuj),
+ *   żeby mieć wszystkie zajęcia naraz.
  */
 
 type Props = {
@@ -27,53 +27,6 @@ const GROUP_LABEL: Record<ScheduleGroup, string> = {
   dzieci: "grupa dziecięca",
   dorosli: "grupa dorosła",
 };
-
-/** Znajduje kolejne wystąpienie podanego dnia tygodnia (1 = pon … 7 = nd). */
-function nextOccurrence(day: number, start: string, end: string) {
-  const now = new Date();
-  const todayIso = ((now.getDay() + 6) % 7) + 1; // JS: 0=nd → ISO: 7
-  let diff = (day - todayIso + 7) % 7;
-  if (diff === 0) {
-    const [eh, em] = end.split(":").map(Number);
-    const endTodayMin = eh * 60 + em;
-    const nowMin = now.getHours() * 60 + now.getMinutes();
-    if (nowMin > endTodayMin) diff = 7;
-  }
-  const target = new Date(now);
-  target.setDate(now.getDate() + diff);
-  const [sh, sm] = start.split(":").map(Number);
-  const [eh, em] = end.split(":").map(Number);
-  const startDate = new Date(target);
-  startDate.setHours(sh, sm, 0, 0);
-  const endDate = new Date(target);
-  endDate.setHours(eh, em, 0, 0);
-  return { startDate, endDate };
-}
-
-/** Format wymagany przez GCal: YYYYMMDDTHHMMSS w czasie lokalnym. */
-function gcalDate(d: Date) {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return (
-    `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T` +
-    `${pad(d.getHours())}${pad(d.getMinutes())}00`
-  );
-}
-
-function gcalLink(slot: ScheduleSlot, groupLabel: string) {
-  const { startDate, endDate } = nextOccurrence(slot.day, slot.start, slot.end);
-  const text = `Shorinji Kempo – ${groupLabel}`;
-  const dates = `${gcalDate(startDate)}/${gcalDate(endDate)}`;
-  const details = `Trening Shorinji Kempo (${groupLabel}).`;
-  const recur = "RRULE:FREQ=WEEKLY";
-  const params = new URLSearchParams({
-    text,
-    dates,
-    details,
-    location: slot.location,
-    recur,
-  });
-  return `https://calendar.google.com/calendar/r/eventedit?${params.toString()}`;
-}
 
 export default function ScheduleWeek({ group, slots, title }: Props) {
   const groupLabel = GROUP_LABEL[group];
@@ -119,12 +72,9 @@ export default function ScheduleWeek({ group, slots, title }: Props) {
               {hasClasses ? (
                 <div className="space-y-3 flex-1">
                   {daySlots.map((slot, idx) => (
-                    <a
+                    <div
                       key={`${slot.start}-${idx}`}
-                      href={gcalLink(slot, groupLabel)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block rounded-md border border-yellow-500/40 hover:border-yellow-500 bg-yellow-500/0 hover:bg-yellow-500/10 transition-colors px-3 py-2 group"
+                      className="rounded-md border border-yellow-500/40 bg-yellow-500/5 px-3 py-2"
                     >
                       <div className="text-white font-mono text-sm font-medium">
                         {slot.start} – {slot.end}
@@ -134,7 +84,7 @@ export default function ScheduleWeek({ group, slots, title }: Props) {
                           {slot.note}
                         </div>
                       )}
-                    </a>
+                    </div>
                   ))}
                 </div>
               ) : (

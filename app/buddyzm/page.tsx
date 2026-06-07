@@ -3,7 +3,7 @@ import ArticleListing from "../../components/ArticleListing";
 import { buddyzm } from "../../data/articles/buddyzm";
 
 export const metadata: Metadata = {
-  title: `${buddyzm.topicTitle} – Shorinji Kempo Kraków`,
+  title: buddyzm.topicTitle,
   description: buddyzm.topicIntro,
 };
 

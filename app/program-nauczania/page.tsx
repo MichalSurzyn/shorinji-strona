@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Program nauczania – Shorinji Kempo Kraków",
+  title: "Program nauczania",
   description:
     "Materiały wideo Shorinji Kempo: kihon, kata, embu, randori. Tan'en Kihon Hokei – jednoosobowe i parami.",
 };

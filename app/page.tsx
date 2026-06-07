@@ -1,6 +1,11 @@
+import type { Metadata } from 'next';
 import VerticalKanji from '../components/VerticalKanji';
 import HeroSection from '../components/HeroSection';
 import NewsSidebar from '../components/NewsSidebar';
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+};
 
 export default function Home() {
 

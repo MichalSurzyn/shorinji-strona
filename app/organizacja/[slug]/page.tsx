@@ -18,8 +18,9 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const article = organizacja.articles.find((a) => a.slug === slug);
   if (!article) return { title: "Nie znaleziono" };
   return {
-    title: `${article.title} – ${organizacja.topicTitle}`,
+    title: article.title,
     description: article.intro,
+    alternates: { canonical: `/organizacja/${slug}` },
   };
 }
 
