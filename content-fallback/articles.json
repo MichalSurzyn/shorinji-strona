@@ -1,0 +1,53 @@
+[
+  {
+    "slug": "pokaz-gala-35-lat-hapkido-w-polsce",
+    "title": "Wystąpiliśmy na Gali Jubileuszowej 35-lecia Hapkido w Polsce",
+    "excerpt": "Nasze dōjō miało zaszczyt zaprezentować pokaz Shorinji Kempo podczas uroczystej gali z okazji 35-lecia Hapkido w Polsce. Zobacz fotorelację z tego wyjątkowego wieczoru.",
+    "cover_image": "D3S_9133_4_g4us0w",
+    "published": true,
+    "published_at": "2026-06-05T18:00:00+02:00",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "Za nami wyjątkowy wieczór! Nasze dōjō otrzymało zaproszenie do udziału w ==Gali Jubileuszowej 35-lecia Hapkido w Polsce== – święcie podsumowującym ponad trzy dekady pasji, ciężkiej pracy i budowania społeczności sztuk walki w naszym kraju."
+      },
+      {
+        "type": "paragraph",
+        "text": "Gala odbyła się w auli Akademii Wychowania Fizycznego w Krakowie i zgromadziła zawodników, instruktorów, rodziny oraz sympatyków sztuk walki. W programie znalazły się spektakularne pokazy, wspomnienia i podziękowania dla osób, które tworzyły historię Hapkido w Polsce."
+      },
+      {
+        "type": "image",
+        "publicId": "D3S_9127_5_a9tkxs",
+        "caption": "Pokaz Shorinji Kempo na scenie gali"
+      },
+      {
+        "type": "heading",
+        "text": "Shorinji Kempo na scenie"
+      },
+      {
+        "type": "paragraph",
+        "text": "Podczas gali zaprezentowaliśmy pokaz Shorinji Kempo – widzowie zobaczyli dynamiczne ==embu== w parach, techniki twarde **gōhō** oraz miękkie **jūhō**: dźwignie, rzuty i obezwładnienia. Dla wielu gości było to pierwsze spotkanie z naszą sztuką walki i nie ukrywamy, że oklaski po występie smakowały wyjątkowo."
+      },
+      {
+        "type": "gallery",
+        "publicIds": [
+          "D3S_9125_2_aselqj",
+          "D3S_9125_2_aselqj",
+          "D3S_9050_5_uxf36i",
+          "D3S_9114_3_jw01f2",
+          "D3S_9037_2_hfdf2h",
+          "D3S_9148_5_srzgc2"
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "Serdecznie gratulujemy społeczności ==Hapkido Polska== pięknego jubileuszu i dziękujemy za zaproszenie oraz wspaniałą atmosferę. 35 lat nieprzerwanej pracy to dowód, że sztuki walki budują coś znacznie trwalszego niż technika – budują ludzi i wspólnotę."
+      },
+      {
+        "type": "callout",
+        "text": "Pełna fotorelacja z pokazu znajduje się w naszej Galerii, w albumie „Pokazy”. Zdjęcia: B. Kołaczek."
+      }
+    ],
+    "id": "fallback-pokaz-gala-35-lat-hapkido-w-polsce"
+  }
+]

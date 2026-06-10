@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ArticlePage from "../../../components/ArticlePage";
 import { buddyzm } from "../../../data/articles/buddyzm";
+import { resolveArticle } from "../../../lib/articleContent";
 
 type Params = { params: Promise<{ slug: string }> };
 
-// Odśwież stronę co godzinę – nowe zdjęcia z Cloudinary pojawią się
-// bez przebudowy całej aplikacji.
+// ISR: refresh hourly so new Cloudinary images appear without a full rebuild.
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
@@ -28,7 +28,7 @@ export default async function Page({ params }: Params) {
   const { slug } = await params;
   const idx = buddyzm.articles.findIndex((a) => a.slug === slug);
   if (idx === -1) notFound();
-  const article = buddyzm.articles[idx];
+  const article = await resolveArticle("buddyzm", slug, buddyzm.articles[idx]);
   const prev = idx > 0 ? buddyzm.articles[idx - 1] : undefined;
   const next = idx < buddyzm.articles.length - 1 ? buddyzm.articles[idx + 1] : undefined;
   return (

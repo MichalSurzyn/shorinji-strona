@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import EditableSection from "../../components/EditableSection";
+
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Program nauczania",
@@ -85,6 +88,10 @@ export default function ProgramNauczaniaPage() {
           </p>
         </header>
 
+        <EditableSection
+          slug="program-nauczania"
+          fallback={
+            <>
         {sections.map((section, idx) => (
           <section key={idx} className="mb-12">
             <div className="mb-4 flex items-end justify-between gap-4 flex-wrap">
@@ -130,6 +137,9 @@ export default function ProgramNauczaniaPage() {
             </ul>
           </section>
         ))}
+            </>
+          }
+        />
 
       </div>
     </div>

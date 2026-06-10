@@ -3,6 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import ScheduleWeek from "../../../components/ScheduleWeek";
 import LocationMap from "../../../components/LocationMap";
+import { getSchedule } from "@/lib/schedule";
+import EditableSection from "@/components/EditableSection";
 
 export const metadata: Metadata = {
   title: "Grupa dorosła (Filia Kraków)",
@@ -10,7 +12,10 @@ export const metadata: Metadata = {
     "Zajęcia dla młodzieży i dorosłych w krakowskiej filii Shorinji Kempo prowadzone przez Shibucho Dominika Chowańskiego.",
 };
 
-export default function ZajeciaDorosliPage() {
+export const revalidate = 300;
+
+export default async function ZajeciaDorosliPage() {
+  const slots = await getSchedule();
   return (
     <div className="relative pt-50 pb-20 min-h-screen">
       <div className="w-[80%] mx-auto z-10 relative">
@@ -97,8 +102,12 @@ export default function ZajeciaDorosliPage() {
           </div>
         </section>
 
-        {/* Opis zajęć */}
+        {/* Opis zajęć (edytowalny z panelu admina) */}
         <section className="mb-14">
+          <EditableSection
+            slug="zajecia-dorosli"
+            fallback={
+              <>
           <h2 className="text-2xl md:text-3xl font-semibold text-white mb-5">
             Zajęcia dla dorosłych
           </h2>
@@ -140,10 +149,13 @@ export default function ZajeciaDorosliPage() {
               w Shorinji Kempo.
             </p>
           </div>
+              </>
+            }
+          />
         </section>
 
         {/* Tygodniowy plan zajęć */}
-        <ScheduleWeek group="dorosli" />
+        <ScheduleWeek group="dorosli" slots={slots} />
 
         <LocationMap heading="Lokalizacja i dojazd" showContact={false} className="mb-12" />
 

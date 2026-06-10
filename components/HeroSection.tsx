@@ -1,4 +1,5 @@
 import Link from "next/link";
+import EditableSection from "./EditableSection";
 
 export default function HeroSection() {
   const linkClass =
@@ -10,6 +11,9 @@ export default function HeroSection() {
         Witamy w krakowskim dōjō Shorinji Kempo
       </h1>
 
+      <EditableSection
+        slug="home"
+        fallback={
       <div className="space-y-6 text-neutral-300 text-lg leading-relaxed">
         <p>
           <Link href="/o-shorinji/wprowadzenie" className={linkClass}>Shorinji Kempo</Link>{" "}
@@ -43,6 +47,8 @@ export default function HeroSection() {
           <Link href="/galeria" className={linkClass}>galerii</Link>.
         </p>
       </div>
+        }
+      />
 
       <div className="mt-12 aspect-[4/3] bg-neutral-800 rounded-2xl overflow-hidden border border-neutral-700 shadow-2xl relative">
         <iframe

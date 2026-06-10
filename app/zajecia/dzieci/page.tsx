@@ -3,6 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import ScheduleWeek from "../../../components/ScheduleWeek";
 import LocationMap from "../../../components/LocationMap";
+import { getSchedule } from "@/lib/schedule";
+import EditableSection from "@/components/EditableSection";
 
 export const metadata: Metadata = {
   title: "Grupa dziecięca (Filia Wawel)",
@@ -11,7 +13,10 @@ export const metadata: Metadata = {
 };
 
 
-export default function ZajeciaDzieciPage() {
+export const revalidate = 300;
+
+export default async function ZajeciaDzieciPage() {
+  const slots = await getSchedule();
   return (
     <div className="relative pt-50 pb-20 min-h-screen">
       <div className="w-[80%] mx-auto z-10 relative">
@@ -112,8 +117,12 @@ export default function ZajeciaDzieciPage() {
           </div>
         </section>
 
-        {/* Opis zajęć */}
+        {/* Opis zajęć (edytowalny z panelu admina) */}
         <section className="mb-14">
+          <EditableSection
+            slug="zajecia-dzieci"
+            fallback={
+              <>
           <h2 className="text-2xl md:text-3xl font-semibold text-white mb-5">
             Zajęcia dla dzieci
           </h2>
@@ -153,10 +162,13 @@ export default function ZajeciaDzieciPage() {
               mistrzostw Europy w Shorinji Kempo.
             </p>
           </div>
+              </>
+            }
+          />
         </section>
 
         {/* Tygodniowy plan zajęć */}
-        <ScheduleWeek group="dzieci" />
+        <ScheduleWeek group="dzieci" slots={slots} />
 
         <LocationMap heading="Lokalizacja i dojazd" showContact={false} className="mb-12" />
 

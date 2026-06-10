@@ -3,8 +3,9 @@ import { SITE_URL } from "../lib/site";
 import { o_shorinji } from "../data/articles/o-shorinji";
 import { organizacja } from "../data/articles/organizacja";
 import { buddyzm } from "../data/articles/buddyzm";
+import { getNews } from "../lib/news";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const staticPaths = [
@@ -27,10 +28,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...buddyzm.articles.map((a) => `/buddyzm/${a.slug}`),
   ];
 
-  return [...staticPaths, ...articlePaths].map((path) => ({
-    url: `${SITE_URL}${path}`,
-    lastModified: now,
-    changeFrequency: "monthly",
-    priority: path === "" ? 1 : 0.7,
-  }));
+  const entries: MetadataRoute.Sitemap = [...staticPaths, ...articlePaths].map(
+    (path) => ({
+      url: `${SITE_URL}${path}`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: path === "" ? 1 : 0.7,
+    }),
+  );
+
+  // Aktualnosci z bazy (z fallbackiem) - nowe artykuly trafiaja do sitemapy.
+  const news = await getNews();
+  for (const a of news) {
+    entries.push({
+      url: `${SITE_URL}/aktualnosci/${a.slug}`,
+      lastModified: new Date(a.published_at),
+      changeFrequency: "yearly",
+      priority: 0.6,
+    });
+  }
+
+  return entries;
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { SCHEDULE, type ScheduleGroup, type ScheduleSlot } from "../../../../../data/schedule";
+import { type ScheduleGroup, type ScheduleSlot } from "../../../../../data/schedule";
+import { getSchedule } from "@/lib/schedule";
 
 const GROUP_LABEL: Record<ScheduleGroup, string> = {
   dzieci: "grupa dziecięca",
@@ -114,7 +115,7 @@ export async function GET(
 
   const groupTyped = group as ScheduleGroup;
   const groupLabel = GROUP_LABEL[groupTyped];
-  const slots = SCHEDULE.filter((s) => s.group === groupTyped);
+  const slots = (await getSchedule()).filter((s) => s.group === groupTyped);
 
   const events = slots.map((slot, idx) => buildEvent(slot, groupLabel, idx));
 

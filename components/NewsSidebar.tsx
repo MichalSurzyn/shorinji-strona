@@ -1,7 +1,17 @@
 import Link from "next/link";
-import { news } from "../data/news";
+import { getNews } from "@/lib/news";
 
-export default function NewsSidebar() {
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("pl-PL", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export default async function NewsSidebar() {
+  const articles = await getNews(3);
+
   return (
     <div className="sticky top-40 bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
       <h2 className="text-xl font-bold text-white mb-6 uppercase tracking-wider border-b border-neutral-800 pb-4">
@@ -9,14 +19,17 @@ export default function NewsSidebar() {
       </h2>
 
       <div className="space-y-6">
-        {news.slice(0, 3).map((item) => (
+        {articles.length === 0 && (
+          <p className="text-neutral-500 text-sm">Brak aktualności.</p>
+        )}
+        {articles.map((item) => (
           <Link
-            key={item.date + item.title}
-            href="/aktualnosci"
+            key={item.slug}
+            href={`/aktualnosci/${item.slug}`}
             className="group block"
           >
             <span className="text-xs text-yellow-500 font-bold mb-1 block">
-              {item.dateLabel}
+              {formatDate(item.published_at)}
             </span>
             <h3 className="text-neutral-200 group-hover:text-yellow-500 transition-colors leading-tight">
               {item.title}

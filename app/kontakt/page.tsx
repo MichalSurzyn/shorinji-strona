@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import EditableSection from "../../components/EditableSection";
 import LocationMap from "../../components/LocationMap";
 import { CONTACT, SOCIAL_LINKS } from "../../lib/site";
+
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Kontakt",
@@ -30,6 +33,10 @@ export default function KontaktPage() {
 
         <LocationMap heading="Jak do nas trafić" className="mb-14" />
 
+        <EditableSection
+          slug="kontakt"
+          fallback={
+            <>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
 
           {/* Godziny treningów */}
@@ -115,6 +122,9 @@ export default function KontaktPage() {
           </section>
 
         </div>
+            </>
+          }
+        />
       </div>
     </div>
   );

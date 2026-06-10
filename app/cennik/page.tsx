@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import EditableSection from "../../components/EditableSection";
+
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Cennik",
@@ -151,7 +154,11 @@ export default function CennikPage() {
           </p>
         </header>
 
-        {/* Tabele */}
+        {/* Tabele (edytowalne z panelu admina) */}
+        <EditableSection
+          slug="cennik"
+          fallback={
+            <>
         <PriceTable section={skladki} />
         <PriceTable section={organizacyjne} />
         <PriceTable section={egzaminyKyu} />
@@ -205,6 +212,9 @@ export default function CennikPage() {
             </p>
           </aside>
         </div>
+            </>
+          }
+        />
       </div>
     </div>
   );

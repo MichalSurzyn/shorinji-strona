@@ -76,3 +76,42 @@ components/
   VerticalKanji.tsx
 public/downloads/   # statyczne PDFy (deklaracje, statuty WSKO/POSK)
 ```
+
+## Panel administracyjny (od 06.2026)
+
+Panel pod `/admin` (jasny motyw, celowo inny niż strona publiczna).
+
+- **Logowanie:** Supabase Auth (email + hasło). Konta zarządzasz w panelu
+  (zakładka Administratorzy) - możesz mieć wielu adminów.
+- **Podstrony:** edycja treści artykułów tematycznych (O Shorinji /
+  Organizacja / Buddyzm) - nadpisania trafiają do tabeli
+  `article_overrides` w Supabase; bez nadpisania strona pokazuje treść
+  bazową z `data/articles/*`. Zdjęcia wstawiasz przyciskiem (wybór
+  wizualny z Cloudinary albo upload z dysku).
+- **Aktualności:** pełny CRUD artykułów-newsów (tabela `articles`),
+  edytor blokowy (akapit / nagłówek / lista / wyróżnienie / zdjęcie /
+  galeria), okładka, szkice, data publikacji. Strona główna i
+  `/aktualnosci` czytają z bazy z fallbackiem do
+  `content-fallback/articles.json` (gdy Supabase śpi / brak sieci).
+- **Zdjęcia:** przeglądanie folderów Cloudinary (Galeria/* = zakładki
+  publicznej galerii; Strona/* = zdjęcia podstron), upload bezpośrednio
+  do Cloudinary (podpisany - bez limitu rozmiaru), usuwanie.
+  Cloud działa w trybie dynamic folders - upload ustawia `asset_folder`,
+  public_id zostaje krótkie.
+- **Harmonogram:** edycja godzin zajęć (tabela `site_settings`, klucz
+  `schedule`); nadpisuje `data/schedule.ts` na stronach Zajęcia i w
+  pliku kalendarza `.ics`. Przycisk "Przywróć wersję bazową" usuwa
+  nadpisanie.
+
+### Zmienne środowiskowe (`.env.local`)
+
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...   # tylko serwer! nigdy NEXT_PUBLIC_
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
+```
+
+Dawne `ADMIN_PASSWORD` nie jest już używane (logowanie przez Supabase).
