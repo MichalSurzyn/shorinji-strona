@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ArticlePage from "../../../components/ArticlePage";
 import { o_shorinji } from "../../../data/articles/o-shorinji";
-import { resolveArticle } from "../../../lib/articleContent";
+import { resolveArticleBlocks } from "../../../lib/articleContent";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -28,7 +28,7 @@ export default async function Page({ params }: Params) {
   const { slug } = await params;
   const idx = o_shorinji.articles.findIndex((a) => a.slug === slug);
   if (idx === -1) notFound();
-  const article = await resolveArticle("o-shorinji", slug, o_shorinji.articles[idx]);
+  const article = await resolveArticleBlocks("o-shorinji", slug, o_shorinji.articles[idx]);
   const prev = idx > 0 ? o_shorinji.articles[idx - 1] : undefined;
   const next = idx < o_shorinji.articles.length - 1 ? o_shorinji.articles[idx + 1] : undefined;
   return (
@@ -36,7 +36,10 @@ export default async function Page({ params }: Params) {
       topic="o-shorinji"
       topicTitle={o_shorinji.topicTitle}
       topicHref="/o-shorinji"
-      article={article}
+      slug={slug}
+      title={article.title}
+      intro={article.intro}
+      blocks={article.blocks}
       prev={prev ? { slug: prev.slug, title: prev.title } : undefined}
       next={next ? { slug: next.slug, title: next.title } : undefined}
     />

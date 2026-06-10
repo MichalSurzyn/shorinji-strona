@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ArticlePage from "../../../components/ArticlePage";
 import { organizacja } from "../../../data/articles/organizacja";
-import { resolveArticle } from "../../../lib/articleContent";
+import { resolveArticleBlocks } from "../../../lib/articleContent";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -28,7 +28,7 @@ export default async function Page({ params }: Params) {
   const { slug } = await params;
   const idx = organizacja.articles.findIndex((a) => a.slug === slug);
   if (idx === -1) notFound();
-  const article = await resolveArticle("organizacja", slug, organizacja.articles[idx]);
+  const article = await resolveArticleBlocks("organizacja", slug, organizacja.articles[idx]);
   const prev = idx > 0 ? organizacja.articles[idx - 1] : undefined;
   const next = idx < organizacja.articles.length - 1 ? organizacja.articles[idx + 1] : undefined;
   return (
@@ -36,7 +36,10 @@ export default async function Page({ params }: Params) {
       topic="organizacja"
       topicTitle={organizacja.topicTitle}
       topicHref="/organizacja"
-      article={article}
+      slug={slug}
+      title={article.title}
+      intro={article.intro}
+      blocks={article.blocks}
       prev={prev ? { slug: prev.slug, title: prev.title } : undefined}
       next={next ? { slug: next.slug, title: next.title } : undefined}
     />

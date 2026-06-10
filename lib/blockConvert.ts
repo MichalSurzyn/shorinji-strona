@@ -12,13 +12,32 @@ import type { NewsBlock } from "./newsTypes";
  * dalej trafia do article_overrides jako markdown (bez zmian w bazie).
  */
 
+/**
+ * Krótkie linie pisane wersalikami to w danych źródłowych śródtytuły
+ * (konwencja ze starej strony) - tak samo traktuje je publiczny renderer.
+ */
+function isCapsHeading(s: string): boolean {
+  const t = s.trim();
+  if (t.length < 3 || t.length > 90) return false;
+  if (t.includes("**") || t.includes("](")) return false;
+  if (!/[A-ZĄĆĘŁŃÓŚŹŻ]/.test(t)) return false;
+  return t === t.toUpperCase();
+}
+
 export function sectionsToBlocks(sections: ArticleSection[]): NewsBlock[] {
   const blocks: NewsBlock[] = [];
   for (const section of sections) {
     if (section.heading) blocks.push({ type: "heading", text: section.heading });
     for (const p of section.paragraphs) {
       if (typeof p === "string") {
-        blocks.push({ type: "paragraph", text: p });
+        const hashHeading = p.match(/^#{2,6}\s+(.*)$/);
+        if (hashHeading) {
+          blocks.push({ type: "subheading", text: hashHeading[1].trim() });
+        } else if (isCapsHeading(p)) {
+          blocks.push({ type: "subheading", text: p.trim() });
+        } else {
+          blocks.push({ type: "paragraph", text: p });
+        }
         continue;
       }
       switch (p.type) {

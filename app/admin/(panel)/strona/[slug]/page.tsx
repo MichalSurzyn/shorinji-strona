@@ -22,7 +22,6 @@ export default async function AdminStaticPageEdit({
       scope={page.scope}
       initialBlocks={override ?? page.prefill}
       baseBlocks={page.prefill}
-      overridden={override !== null}
     />
   );
 }

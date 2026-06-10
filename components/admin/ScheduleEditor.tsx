@@ -11,11 +11,9 @@ const DAYS: { value: ScheduleSlot["day"]; label: string }[] = (
 export default function ScheduleEditor({
   initialSlots,
   baseSlots,
-  overridden,
 }: {
   initialSlots: ScheduleSlot[];
   baseSlots: ScheduleSlot[];
-  overridden: boolean;
 }) {
   const [slots, setSlots] = useState<ScheduleSlot[]>(initialSlots);
   const [busy, setBusy] = useState(false);
@@ -85,11 +83,6 @@ export default function ScheduleEditor({
 
   return (
     <div className="space-y-4">
-      {overridden && (
-        <p className="rounded-lg bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2.5 text-sm">
-          Harmonogram ma zmiany zapisane w panelu (nadpisuje wersję z kodu).
-        </p>
-      )}
       {msg && (
         <div
           className={`rounded-lg px-4 py-3 text-sm ${

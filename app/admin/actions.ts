@@ -2,8 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createSupabaseServer, getSessionUser } from "@/lib/supabase/server";
+import { createSupabaseServer, requireUser } from "@/lib/supabase/server";
 import { upsertArticleOverride } from "@/lib/articleContent";
+import type { NewsBlock } from "@/lib/newsTypes";
 
 export async function logoutAction() {
   const supabase = await createSupabaseServer();
@@ -11,27 +12,29 @@ export async function logoutAction() {
   redirect("/admin/login");
 }
 
-export async function saveArticleAction(formData: FormData) {
-  if (!(await getSessionUser())) {
-    redirect("/admin/login");
-  }
+/** Zapis podstrony tematycznej (o-shorinji / organizacja / buddyzm) - bloki. */
+export async function saveTopicArticle(
+  topic: string,
+  slug: string,
+  input: { title: string; intro: string; blocks: NewsBlock[] }
+) {
+  await requireUser();
 
-  const topic = String(formData.get("topic") ?? "");
-  const slug = String(formData.get("slug") ?? "");
-  const title = String(formData.get("title") ?? "");
-  const intro = String(formData.get("intro") ?? "");
-  const body_md = String(formData.get("body_md") ?? "");
+  if (!input.title.trim())
+    return { ok: false as const, error: "Podstrona musi mieć tytuł." };
+  if (!Array.isArray(input.blocks) || input.blocks.length === 0)
+    return { ok: false as const, error: "Treść nie może być pusta." };
 
-  const res = await upsertArticleOverride({ topic, slug, title, intro, body_md });
+  const res = await upsertArticleOverride({
+    topic,
+    slug,
+    title: input.title.trim(),
+    intro: input.intro.trim(),
+    blocks: input.blocks,
+  });
+  if (!res.ok) return { ok: false as const, error: res.error ?? "Błąd zapisu." };
 
-  if (!res.ok) {
-    redirect(
-      `/admin/edit/${topic}/${slug}?error=${encodeURIComponent(res.error ?? "Nie udało się zapisać.")}`,
-    );
-  }
-
-  // Odśwież publiczną podstronę i listę tematu, żeby zmiana była widoczna od razu.
   revalidatePath(`/${topic}/${slug}`);
   revalidatePath(`/${topic}`);
-  redirect(`/admin/edit/${topic}/${slug}?saved=1`);
+  return { ok: true as const };
 }

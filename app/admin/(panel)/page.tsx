@@ -1,20 +1,28 @@
 import Link from "next/link";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { listOverrideKeys } from "@/lib/articleContent";
+import { o_shorinji } from "@/data/articles/o-shorinji";
+import { organizacja } from "@/data/articles/organizacja";
+import { buddyzm } from "@/data/articles/buddyzm";
+import { EDITABLE_PAGES } from "@/lib/editablePages";
 
 export default async function AdminDashboard() {
   const supabase = await createSupabaseServer();
 
-  const [{ count: articlesCount }, { data: recent }, overridden] =
-    await Promise.all([
-      supabase.from("articles").select("*", { count: "exact", head: true }),
-      supabase
-        .from("articles")
-        .select("id,title,published,published_at")
-        .order("published_at", { ascending: false })
-        .limit(5),
-      listOverrideKeys(),
-    ]);
+  const [{ count: articlesCount }, { data: recent }] = await Promise.all([
+    supabase.from("articles").select("*", { count: "exact", head: true }),
+    supabase
+      .from("articles")
+      .select("id,title,published,published_at")
+      .order("published_at", { ascending: false })
+      .limit(5),
+  ]);
+
+  const pagesCount =
+    EDITABLE_PAGES.length +
+    [o_shorinji, organizacja, buddyzm].reduce(
+      (sum, g) => sum + g.articles.length,
+      0
+    );
 
   return (
     <div className="space-y-8">
@@ -37,8 +45,8 @@ export default async function AdminDashboard() {
           href="/admin/strony"
           className="bg-white rounded-2xl border border-slate-200 p-6 hover:border-indigo-400 hover:shadow-md transition-all"
         >
-          <div className="text-3xl font-bold text-indigo-600">{overridden.size}</div>
-          <div className="text-slate-600 mt-1">Podstrony ze zmianami</div>
+          <div className="text-3xl font-bold text-indigo-600">{pagesCount}</div>
+          <div className="text-slate-600 mt-1">Edytowalne podstrony</div>
         </Link>
       </div>
 

@@ -13,7 +13,6 @@ export default function PageBlocksEditor({
   scope,
   initialBlocks,
   baseBlocks,
-  overridden,
 }: {
   slug: string;
   label: string;
@@ -21,7 +20,6 @@ export default function PageBlocksEditor({
   scope: string;
   initialBlocks: NewsBlock[];
   baseBlocks: NewsBlock[];
-  overridden: boolean;
 }) {
   const [blocks, setBlocks] = useState<NewsBlock[]>(initialBlocks);
   const [busy, setBusy] = useState(false);
@@ -93,11 +91,6 @@ export default function PageBlocksEditor({
         </div>
       </div>
 
-      {overridden && !msg && (
-        <p className="rounded-lg bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2.5 text-sm">
-          Ta strona ma zmiany zapisane w panelu (nadpisują wersję z kodu).
-        </p>
-      )}
       {msg && (
         <div
           className={`rounded-lg px-4 py-3 text-sm ${

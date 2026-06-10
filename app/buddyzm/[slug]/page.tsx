@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ArticlePage from "../../../components/ArticlePage";
 import { buddyzm } from "../../../data/articles/buddyzm";
-import { resolveArticle } from "../../../lib/articleContent";
+import { resolveArticleBlocks } from "../../../lib/articleContent";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -28,7 +28,7 @@ export default async function Page({ params }: Params) {
   const { slug } = await params;
   const idx = buddyzm.articles.findIndex((a) => a.slug === slug);
   if (idx === -1) notFound();
-  const article = await resolveArticle("buddyzm", slug, buddyzm.articles[idx]);
+  const article = await resolveArticleBlocks("buddyzm", slug, buddyzm.articles[idx]);
   const prev = idx > 0 ? buddyzm.articles[idx - 1] : undefined;
   const next = idx < buddyzm.articles.length - 1 ? buddyzm.articles[idx + 1] : undefined;
   return (
@@ -36,7 +36,10 @@ export default async function Page({ params }: Params) {
       topic="buddyzm"
       topicTitle={buddyzm.topicTitle}
       topicHref="/buddyzm"
-      article={article}
+      slug={slug}
+      title={article.title}
+      intro={article.intro}
+      blocks={article.blocks}
       prev={prev ? { slug: prev.slug, title: prev.title } : undefined}
       next={next ? { slug: next.slug, title: next.title } : undefined}
     />

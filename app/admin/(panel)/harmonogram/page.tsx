@@ -1,12 +1,9 @@
 import ScheduleEditor from "@/components/admin/ScheduleEditor";
 import { SCHEDULE } from "@/data/schedule";
-import { getSchedule, hasScheduleOverride } from "@/lib/schedule";
+import { getSchedule } from "@/lib/schedule";
 
 export default async function AdminSchedulePage() {
-  const [slots, overridden] = await Promise.all([
-    getSchedule(),
-    hasScheduleOverride(),
-  ]);
+  const slots = await getSchedule();
 
   return (
     <div className="space-y-6">
@@ -17,11 +14,7 @@ export default async function AdminSchedulePage() {
           Zajęcia oraz w pliku kalendarza (.ics).
         </p>
       </div>
-      <ScheduleEditor
-        initialSlots={slots}
-        baseSlots={SCHEDULE}
-        overridden={overridden}
-      />
+      <ScheduleEditor initialSlots={slots} baseSlots={SCHEDULE} />
     </div>
   );
 }
