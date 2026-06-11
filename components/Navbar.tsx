@@ -4,61 +4,17 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { DEFAULT_NAV, type NavLink } from '@/lib/navTypes';
 
-type NavLink = {
-  label: string;
-  href?: string;
-  dropdown?: { href: string; label: string }[];
-};
-
-export default function Navbar() {
+export default function Navbar({ links }: { links?: NavLink[] }) {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const pathname = usePathname();
 
-  const navLinks: NavLink[] = [
-    {
-      label: 'ZAJĘCIA',
-      dropdown: [
-        { href: '/zajecia/dorosli', label: 'GRUPA DOROSŁA' },
-        { href: '/zajecia/dzieci', label: 'GRUPA DZIECIĘCA' },
-      ],
-    },
-    { href: '/aktualnosci', label: 'AKTUALNOŚCI' },
-    { href: '/cennik', label: 'CENNIK' },
-    { href: '/program-nauczania', label: 'PROGRAM NAUCZANIA' },
-    { href: '/galeria', label: 'GALERIA' },
-    {
-      label: 'O SHORINJI KEMPO',
-      href: '/o-shorinji',
-      dropdown: [
-        { href: '/o-shorinji/wprowadzenie', label: 'WPROWADZENIE' },
-        { href: '/o-shorinji/cele-i-wartosci', label: 'CELE I WARTOŚCI' },
-        { href: '/o-shorinji/symbolika-i-medytacja', label: 'SYMBOLIKA I MEDYTACJA' },
-        { href: '/o-shorinji/historia', label: 'HISTORIA' },
-      ],
-    },
-    {
-      label: 'ORGANIZACJA',
-      href: '/organizacja',
-      dropdown: [
-        { href: '/organizacja/zalozyciel', label: 'ZAŁOŻYCIEL' },
-        { href: '/organizacja/egzaminatorzy', label: 'EGZAMINATORZY' },
-      ],
-    },
-    {
-      label: 'BUDDYZM',
-      href: '/buddyzm',
-      dropdown: [
-        { href: '/buddyzm/podstawy', label: 'PODSTAWY' },
-        { href: '/buddyzm/nauki', label: 'NAUKI' },
-        { href: '/buddyzm/medytacja', label: 'MEDYTACJA' },
-        { href: '/buddyzm/etyka-i-swieta', label: 'ETYKA I ŚWIĘTA' },
-      ],
-    },
-  ];
+  // Menu z bazy (przekazane przez layout); fallback - struktura z kodu.
+  const navLinks: NavLink[] = links && links.length ? links : DEFAULT_NAV;
 
   useEffect(() => {
     const handleScroll = () => {

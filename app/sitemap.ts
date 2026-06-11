@@ -4,6 +4,7 @@ import { o_shorinji } from "../data/articles/o-shorinji";
 import { organizacja } from "../data/articles/organizacja";
 import { buddyzm } from "../data/articles/buddyzm";
 import { getNews } from "../lib/news";
+import { listCustomPages } from "../lib/customPages";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -44,6 +45,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${SITE_URL}/aktualnosci/${a.slug}`,
       lastModified: new Date(a.published_at),
       changeFrequency: "yearly",
+      priority: 0.6,
+    });
+  }
+
+  // Wlasne podstrony tworzone w panelu.
+  const customPages = await listCustomPages();
+  for (const p of customPages) {
+    if (!p.published) continue;
+    entries.push({
+      url: `${SITE_URL}/${p.slug}`,
+      lastModified: p.updated_at ? new Date(p.updated_at) : now,
+      changeFrequency: "monthly",
       priority: 0.6,
     });
   }

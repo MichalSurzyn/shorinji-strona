@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import VerticalKanji from "@/components/VerticalKanji";
 import StructuredData from "../components/StructuredData";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "../lib/site";
+import { getNavTree } from "../lib/navigation";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -58,17 +59,19 @@ export const metadata: Metadata = {
 };
   const leftKanji = ['拳', '禅', '一', '如'];
   const rightKanji = ['力', '愛', '不', '二'];
-export default function RootLayout({
-  
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Menu z bazy danych (edytowalne w panelu), z fallbackiem do kodu.
+  const navLinks = await getNavTree();
+
   return (
     <html lang="pl">
       <body className={`${inter.className} bg-neutral-900 text-white min-h-screen flex flex-col`}>
         <StructuredData />
-        <Navbar />
+        <Navbar links={navLinks} />
         {/* Zawartość główna strony (flex-grow wypycha stopkę na dół) */}
         <main className="flex-grow">
         <VerticalKanji characters={leftKanji} side="left" />

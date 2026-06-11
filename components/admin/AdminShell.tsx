@@ -9,6 +9,8 @@ const NAV = [
   { href: "/admin", label: "Pulpit", icon: "▦" },
   { href: "/admin/strony", label: "Podstrony", icon: "❏" },
   { href: "/admin/artykuly", label: "Aktualności", icon: "✎" },
+  { href: "/admin/nawigacja", label: "Nawigacja (menu)", icon: "☰" },
+  { href: "/admin/stopka", label: "Stopka", icon: "▁" },
   { href: "/admin/zdjecia", label: "Zdjęcia", icon: "▣" },
   { href: "/admin/harmonogram", label: "Harmonogram", icon: "◷" },
   { href: "/admin/admini", label: "Administratorzy", icon: "♟" },
@@ -38,7 +40,10 @@ export default function AdminShell({
     href === "/admin"
       ? pathname === "/admin"
       : pathname === href || pathname.startsWith(href + "/") ||
-        (href === "/admin/strony" && pathname.startsWith("/admin/edit"));
+        (href === "/admin/strony" &&
+          (pathname.startsWith("/admin/edit") ||
+            pathname.startsWith("/admin/strona/") ||
+            pathname.startsWith("/admin/wlasne")));
 
   const sidebar = (
     <div className="flex flex-col h-full">
