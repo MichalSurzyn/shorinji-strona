@@ -27,7 +27,7 @@ export const DEFAULT_FOOTER: FooterData = {
     youtube: "https://www.youtube.com/@Dominik_Chowanski",
   },
   downloads: [
-    { label: "Deklaracja członkowska – dorośli", href: "/downloads/deklaracja-dorosli.pdf" },
+    { label: "Deklaracja członkowska – od 18 lat", href: "/downloads/deklaracja-dorosli.pdf" },
     { label: "Deklaracja członkowska – do 18 lat", href: "/downloads/deklaracja-do-18.pdf" },
   ],
   documents: [

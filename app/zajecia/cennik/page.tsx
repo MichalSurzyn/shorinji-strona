@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import EditableSection from "../../components/EditableSection";
+import EditableSection from "../../../components/EditableSection";
 
 export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Cennik",
   description:
-    "Lista opłat obowiązująca od 1 kwietnia 2026 do 31 marca 2030 – składki, egzaminy na stopnie Kyu i Dan, opłaty organizacyjne.",
+    "Lista opłat obowiązująca do 31 marca 2030 – składki, egzaminy na stopnie Kyu i Dan, opłaty organizacyjne.",
 };
 
 type Row = { label: string; price: string; note?: string };

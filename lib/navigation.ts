@@ -1,13 +1,39 @@
 import { getSupabaseAdmin } from "./supabaseAdmin";
 import { DEFAULT_NAV, type NavItemRow, type NavLink } from "./navTypes";
 
+function normalizeNavTree(tree: NavLink[]): NavLink[] {
+  const cennikIndex = tree.findIndex((item) => item.href === "/cennik");
+  const zajeciaIndex = tree.findIndex((item) => item.label === "ZAJĘCIA");
+
+  if (cennikIndex === -1 || zajeciaIndex === -1) {
+    return tree;
+  }
+
+  const nextTree = tree.map((item) => ({
+    ...item,
+    dropdown: item.dropdown ? [...item.dropdown] : item.dropdown,
+  }));
+  const cennik = nextTree[cennikIndex];
+  const zajecia = nextTree[zajeciaIndex];
+
+  if (!zajecia.dropdown) {
+    zajecia.dropdown = [];
+  }
+  if (!zajecia.dropdown.some((child) => child.href === "/cennik")) {
+    zajecia.dropdown.push({ href: "/cennik", label: cennik.label });
+  }
+
+  nextTree.splice(cennikIndex, 1);
+  return nextTree;
+}
+
 /**
  * Nawigacja strony z tabeli nav_items (edytowalna w panelu).
  * Gdy baza nie odpowiada lub tabela jest pusta - menu bazowe z kodu.
  */
 export async function getNavTree(): Promise<NavLink[]> {
   const sb = getSupabaseAdmin();
-  if (!sb) return DEFAULT_NAV;
+  if (!sb) return normalizeNavTree(DEFAULT_NAV);
   try {
     const { data, error } = await sb
       .from("nav_items")
@@ -17,7 +43,7 @@ export async function getNavTree(): Promise<NavLink[]> {
       .abortSignal(AbortSignal.timeout(6000));
     if (error) throw error;
     const rows = (data ?? []) as NavItemRow[];
-    if (!rows.length) return DEFAULT_NAV;
+    if (!rows.length) return normalizeNavTree(DEFAULT_NAV);
 
     const tops = rows.filter((r) => !r.parent_id);
     const tree: NavLink[] = tops.map((t) => {
@@ -30,10 +56,10 @@ export async function getNavTree(): Promise<NavLink[]> {
         ...(children.length ? { dropdown: children } : {}),
       };
     });
-    return tree.length ? tree : DEFAULT_NAV;
+    return normalizeNavTree(tree.length ? tree : DEFAULT_NAV);
   } catch (e) {
     console.warn("[navigation] getNavTree - fallback:", e);
-    return DEFAULT_NAV;
+    return normalizeNavTree(DEFAULT_NAV);
   }
 }
 

@@ -25,10 +25,10 @@ export const DEFAULT_NAV: NavLink[] = [
     dropdown: [
       { href: "/zajecia/dorosli", label: "GRUPA DOROSŁA" },
       { href: "/zajecia/dzieci", label: "GRUPA DZIECIĘCA" },
+      { href: "/cennik", label: "CENNIK" },
     ],
   },
   { href: "/aktualnosci", label: "AKTUALNOŚCI" },
-  { href: "/cennik", label: "CENNIK" },
   { href: "/program-nauczania", label: "PROGRAM NAUCZANIA" },
   { href: "/galeria", label: "GALERIA" },
   {

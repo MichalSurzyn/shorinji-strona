@@ -8,7 +8,7 @@ export default function HeroSection() {
   return (
     <>
       <h1 className="text-3xl md:text-4xl font-bold text-white mb-10">
-        Witamy w krakowskim dōjō Shorinji Kempo
+        Witamy w naszym Dōjō Shorinji Kempo
       </h1>
 
       <EditableSection
