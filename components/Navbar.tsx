@@ -65,8 +65,8 @@ export default function Navbar({ links }: { links?: NavLink[] }) {
                 src="https://res.cloudinary.com/dyn3apjzb/image/upload/v1772055354/Logo_pi10ya.jpg"
                 alt="Shorinji Kempo Logo"
                 width={320}
-                height={70}
-                className="h-12 md:h-16 w-auto object-contain"
+                height={130}
+                className="h-[130px] w-auto object-contain"
                 priority
               />
             </Link>
