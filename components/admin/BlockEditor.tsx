@@ -176,7 +176,7 @@ export default function BlockEditor({
               <strong>Link</strong> nad polem.
             </p>
             <p>
-              <strong>Zdjęcia</strong> dodajesz blokiem „Zdjęcie" – wybierasz
+              <strong>Zdjęcia</strong> dodajesz blokiem „Zdjęcie&rdquo; – wybierasz
               z Cloudinary albo wgrywasz z dysku, zero kodu.
             </p>
           </div>

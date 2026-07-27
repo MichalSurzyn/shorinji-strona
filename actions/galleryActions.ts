@@ -11,7 +11,7 @@ cloudinary.config({
 export async function getGalleryFolders() {
   try {
     const { folders } = await cloudinary.api.sub_folders('Galeria');
-    return folders.map((f: any) => ({ name: f.name, path: f.path }));
+    return folders.map((f: { name: string; path: string }) => ({ name: f.name, path: f.path }));
   } catch (error) {
     console.error("Błąd pobierania folderów:", error);
     return [];
@@ -32,7 +32,7 @@ export async function getImagesFromFolder(folderPath: string) {
       .max_results(50) // Limit żeby nam nie spaliło transferu przy setkach zdjęć
       .execute();
       
-    return result.resources.map((r: any) => r.public_id);
+    return result.resources.map((r: { public_id: string }) => r.public_id);
   } catch (error) {
     console.error("Błąd pobierania zdjęć:", error);
     return [];

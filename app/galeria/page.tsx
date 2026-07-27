@@ -23,7 +23,7 @@ export default async function GaleriaPage() {
           <GalleryClient folders={folders} />
         ) : (
           <div className="text-center text-red-500 py-20">
-            Nie znaleziono folderów w chmurze lub wystąpił błąd kluczy API. Upewnij się, że masz folder "Galeria" z podfolderami na Cloudinary.
+            Nie znaleziono folderów w chmurze lub wystąpił błąd kluczy API. Upewnij się, że masz folder &bdquo;Galeria&rdquo; z podfolderami na Cloudinary.
           </div>
         )}
       </div>

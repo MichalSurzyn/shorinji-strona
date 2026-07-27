@@ -6,8 +6,8 @@ export default function AdminImagesPage() {
       <div>
         <h1 className="text-2xl font-bold">Zdjęcia</h1>
         <p className="text-slate-500 mt-1 max-w-2xl">
-          Foldery „Galeria / …" to zakładki publicznej galerii - wgrane tam
-          zdjęcia od razu pojawiają się na stronie. Foldery „Strona / …"
+          Foldery „Galeria / …&rdquo; to zakładki publicznej galerii - wgrane tam
+          zdjęcia od razu pojawiają się na stronie. Foldery „Strona / …&rdquo;
           zawierają zdjęcia podstron (galerie pod artykułami).
         </p>
       </div>

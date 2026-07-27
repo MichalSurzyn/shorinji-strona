@@ -94,7 +94,7 @@ export default function PageBlocksEditor({
         <h2 className="font-bold">Nagłówek strony</h2>
         <div>
           <label className="block text-xs uppercase tracking-wider text-slate-500 mb-1.5">
-            Etykietka nad tytułem (żółta, opcjonalna - np. „Materiały szkoleniowe")
+            Etykietka nad tytułem (żółta, opcjonalna - np. „Materiały szkoleniowe&rdquo;)
           </label>
           <input value={kicker} onChange={(e) => setKicker(e.target.value)} className={inputCls} />
         </div>

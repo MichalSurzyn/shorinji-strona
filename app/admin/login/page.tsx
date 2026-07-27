@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 
 export default function AdminLoginPage() {
@@ -98,9 +99,9 @@ export default function AdminLoginPage() {
           </form>
         </div>
         <p className="text-center text-sm text-slate-500 mt-6">
-          <a href="/" className="hover:text-slate-700 transition-colors">
+          <Link href="/" className="hover:text-slate-700 transition-colors">
             ← Wróć na stronę
-          </a>
+          </Link>
         </p>
       </div>
     </div>
