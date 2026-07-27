@@ -1,10 +1,11 @@
+import { cache } from "react";
 import { getSupabaseAdmin } from "./supabaseAdmin";
-import type { NewsBlock } from "./newsTypes";
+import type { NewsBlock, PageContent } from "./newsTypes";
 
 /**
- * Nadpisania treści stron statycznych (cennik, kontakt, zajęcia itd.).
- * Klucz w site_settings: "page:<slug>", wartość: { blocks: NewsBlock[] }.
- * Brak wpisu / błąd bazy => strona pokazuje treść bazową z kodu.
+ * Treść stron serwisu w bazie (site_settings, klucz "page:<slug>").
+ * Wartość: { title?, lead?, kicker?, blocks } — jedno źródło prawdy,
+ * edytowane w panelu (Strony). Starsze wpisy mają samo { blocks }.
  */
 
 function key(slug: string) {
@@ -20,26 +21,50 @@ function isBlockArray(v: unknown): v is NewsBlock[] {
   );
 }
 
-export async function getPageBlocks(slug: string): Promise<NewsBlock[] | null> {
-  const sb = getSupabaseAdmin();
-  if (!sb) return null;
-  try {
-    const { data, error } = await sb
-      .from("site_settings")
-      .select("value")
-      .eq("key", key(slug))
-      .abortSignal(AbortSignal.timeout(6000))
-      .maybeSingle();
-    if (error) throw error;
-    const blocks = (data?.value as { blocks?: unknown } | null)?.blocks;
-    if (isBlockArray(blocks) && blocks.length > 0) return blocks;
-  } catch (e) {
-    console.warn(`[pageOverrides] getPageBlocks("${slug}") - fallback:`, e);
-  }
-  return null;
+function asText(v: unknown): string | null {
+  return typeof v === "string" && v.trim() ? v : null;
 }
 
-/** Slugi stron, które mają zapisane nadpisanie (do plakietek w panelu). */
+/**
+ * Pełna treść strony z bazy albo null (brak wpisu / błąd / brak konfiguracji).
+ * `cache()` deduplikuje odczyt w obrębie jednego renderu (PageHeader + PageBody).
+ */
+export const getPageContent = cache(
+  async (slug: string): Promise<PageContent | null> => {
+    const sb = getSupabaseAdmin();
+    if (!sb) return null;
+    try {
+      const { data, error } = await sb
+        .from("site_settings")
+        .select("value")
+        .eq("key", key(slug))
+        .abortSignal(AbortSignal.timeout(6000))
+        .maybeSingle();
+      if (error) throw error;
+      const v = data?.value as
+        | { blocks?: unknown; title?: unknown; lead?: unknown; kicker?: unknown }
+        | null;
+      if (!v || typeof v !== "object") return null;
+      return {
+        title: asText(v.title),
+        lead: asText(v.lead),
+        kicker: asText(v.kicker),
+        blocks: isBlockArray(v.blocks) ? v.blocks : [],
+      };
+    } catch (e) {
+      console.warn(`[pageOverrides] getPageContent("${slug}"):`, e);
+      return null;
+    }
+  }
+);
+
+/** Same bloki strony (kompatybilność ze starszym kodem). */
+export async function getPageBlocks(slug: string): Promise<NewsBlock[] | null> {
+  const content = await getPageContent(slug);
+  return content && content.blocks.length > 0 ? content.blocks : null;
+}
+
+/** Slugi stron, które mają zapisaną treść (do plakietek w panelu). */
 export async function listPageOverrideSlugs(): Promise<Set<string>> {
   const sb = getSupabaseAdmin();
   if (!sb) return new Set();

@@ -30,8 +30,8 @@ export default async function CustomPageRoute({ params }: Props) {
   if (!page) notFound();
 
   return (
-    <div className="relative pt-50 pb-20 min-h-screen">
-      <div className="w-[80%] mx-auto z-10 relative">
+    <div className="relative page-shell pb-20 min-h-screen">
+      <div className="container-site z-10 relative">
         <header className="mb-10">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
             {page.title}

@@ -1,26 +1,37 @@
 import { getSupabaseAdmin } from "./supabaseAdmin";
 import { DEFAULT_NAV, type NavItemRow, type NavLink } from "./navTypes";
 
-function normalizeNavTree(tree: NavLink[]): NavLink[] {
-  const cennikIndex = tree.findIndex((item) => item.href === "/cennik");
-  const zajeciaIndex = tree.findIndex((item) => item.label === "ZAJĘCIA");
+const CENNIK_ROUTE = "/zajecia/cennik";
 
-  if (cennikIndex === -1 || zajeciaIndex === -1) {
-    return tree;
-  }
+/**
+ * CENNIK ląduje jako podpozycja ZAJĘĆ (niezależnie od tego, czy w bazie
+ * jest jeszcze starym top-level linkiem /cennik). Ujednolica też adres
+ * na nową trasę /zajecia/cennik.
+ */
+function normalizeNavTree(tree: NavLink[]): NavLink[] {
+  const isCennik = (href?: string) => href === "/cennik" || href === CENNIK_ROUTE;
+  const cennikIndex = tree.findIndex((item) => isCennik(item.href));
+  const zajeciaIndex = tree.findIndex((item) => item.label === "ZAJĘCIA");
 
   const nextTree = tree.map((item) => ({
     ...item,
-    dropdown: item.dropdown ? [...item.dropdown] : item.dropdown,
+    dropdown: item.dropdown
+      ? item.dropdown.map((c) => (isCennik(c.href) ? { ...c, href: CENNIK_ROUTE } : c))
+      : item.dropdown,
   }));
+
+  if (cennikIndex === -1 || zajeciaIndex === -1) {
+    return nextTree;
+  }
+
   const cennik = nextTree[cennikIndex];
   const zajecia = nextTree[zajeciaIndex];
 
   if (!zajecia.dropdown) {
     zajecia.dropdown = [];
   }
-  if (!zajecia.dropdown.some((child) => child.href === "/cennik")) {
-    zajecia.dropdown.push({ href: "/cennik", label: cennik.label });
+  if (!zajecia.dropdown.some((child) => isCennik(child.href))) {
+    zajecia.dropdown.push({ href: CENNIK_ROUTE, label: cennik.label });
   }
 
   nextTree.splice(cennikIndex, 1);

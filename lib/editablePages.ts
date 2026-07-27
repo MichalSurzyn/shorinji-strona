@@ -45,7 +45,7 @@ export const EDITABLE_PAGES: EditablePage[] = [
   {
     slug: "cennik",
     label: "Cennik – tabele opłat i konto",
-    route: "/cennik",
+    route: "/zajecia/cennik",
     scope: "Wszystkie tabele opłat oraz sekcja konta bankowego.",
     prefill: [
       H("Składki regularne"),

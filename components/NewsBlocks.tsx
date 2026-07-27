@@ -4,11 +4,11 @@ import type { NewsBlock } from "@/lib/newsTypes";
 /**
  * Wspólny renderer bloków treści (ciemny motyw strony) - używany przez
  * aktualności, strony serwisu i podstrony tematyczne.
- * Inline: **pogrubienie**, ==żółte wyróżnienie==, [link](adres).
+ * Inline: **pogrubienie**, *kursywa*, ==żółte wyróżnienie==, [link](adres).
  */
 export function InlineText({ text }: { text: string }) {
   const parts = text
-    .split(/(\*\*[^*]+\*\*|==[^=]+==|\[[^\]]+\]\([^)\s]+\))/g)
+    .split(/(\*\*[^*]+\*\*|\*[^*\n]+\*|==[^=]+==|\[[^\]]+\]\([^)\s]+\))/g)
     .filter(Boolean);
   return (
     <>
@@ -18,6 +18,12 @@ export function InlineText({ text }: { text: string }) {
             <strong key={i} className="font-semibold text-white">
               {p.slice(2, -2)}
             </strong>
+          );
+        if (p.startsWith("*") && p.endsWith("*") && p.length > 2)
+          return (
+            <em key={i} className="italic">
+              {p.slice(1, -1)}
+            </em>
           );
         if (p.startsWith("==") && p.endsWith("=="))
           return (
@@ -246,17 +252,160 @@ export function BlockRenderer({ block }: { block: NewsBlock }) {
           ))}
         </ul>
       );
+    case "video": {
+      const id = youtubeId(block.url);
+      if (!id) return null;
+      const fourThree = block.aspect === "4:3";
+      return (
+        <figure className="pt-2">
+          <div
+            className={`${fourThree ? "aspect-[4/3]" : "aspect-video"} bg-neutral-800 rounded-2xl overflow-hidden border border-neutral-700 shadow-2xl relative`}
+          >
+            <iframe
+              className="absolute inset-0 w-full h-full"
+              src={`https://www.youtube.com/embed/${id}`}
+              title={block.caption ?? "Film YouTube"}
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          </div>
+          {block.caption && (
+            <figcaption className="text-sm text-neutral-500 mt-3 text-center">
+              {block.caption}
+            </figcaption>
+          )}
+        </figure>
+      );
+    }
+    case "download":
+      return (
+        <a
+          href={block.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex items-center gap-4 rounded-xl border border-yellow-500/40 bg-yellow-500/5 hover:bg-yellow-500/10 hover:border-yellow-500 transition-colors p-4 max-w-xl"
+        >
+          {block.imageId ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={clThumb(block.imageId, 200)}
+              alt=""
+              className="w-20 h-20 object-cover rounded-lg border border-neutral-700 flex-shrink-0"
+              loading="lazy"
+            />
+          ) : (
+            <span className="w-20 h-20 rounded-lg border border-yellow-500/30 bg-yellow-500/10 flex items-center justify-center flex-shrink-0" aria-hidden="true">
+              <svg className="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+              </svg>
+            </span>
+          )}
+          <span className="min-w-0">
+            <span className="block text-white font-semibold group-hover:text-yellow-100 transition-colors">
+              {block.label}
+            </span>
+            {block.note && (
+              <span className="block mt-0.5 text-sm text-neutral-500">{block.note}</span>
+            )}
+            <span className="mt-1 inline-flex items-center gap-1 text-xs uppercase tracking-wider text-yellow-500">
+              Pobierz →
+            </span>
+          </span>
+        </a>
+      );
+    case "person":
+      return <PersonCard block={block} />;
     default:
       return null;
   }
 }
 
+/** Wyciąga ID filmu z adresu YouTube (watch / youtu.be / embed / shorts) albo z samego ID. */
+export function youtubeId(url: string): string | null {
+  const trimmed = url.trim();
+  if (/^[\w-]{6,}$/.test(trimmed) && !trimmed.includes("/")) return trimmed;
+  const m = trimmed.match(
+    /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/
+  );
+  return m ? m[1] : null;
+}
+
+/** Karta osoby - w stylu karty instruktora z podstron zajęć. */
+function PersonCard({ block }: { block: Extract<NewsBlock, { type: "person" }> }) {
+  return (
+    <div className="rounded-xl border border-yellow-500/40 bg-yellow-500/5 backdrop-blur-sm overflow-hidden flex flex-col h-full">
+      {block.imageId && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={clUrl(block.imageId, 700)}
+          alt={block.name}
+          className="w-full aspect-[5/6] object-cover"
+          loading="lazy"
+        />
+      )}
+      <div className="p-6 flex-1 flex flex-col">
+        {block.role && (
+          <p className="text-yellow-500 text-xs uppercase tracking-[0.14em] font-semibold mb-1">
+            {block.role}
+          </p>
+        )}
+        <h3 className="text-2xl font-bold text-white tracking-wide">{block.name}</h3>
+        {block.subtitle && (
+          <p className="text-sm text-neutral-400 mt-1 italic">{block.subtitle}</p>
+        )}
+        {block.facts.length > 0 && (
+          <dl className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+            {block.facts.map((f, i) => (
+              <div key={i}>
+                <dt className="text-neutral-500 uppercase text-xs tracking-wider">{f.label}</dt>
+                <dd className="text-white font-medium">{f.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+        {block.note && (
+          <div className="mt-5 pt-5 border-t border-yellow-500/20 text-sm text-neutral-300">
+            <InlineText text={block.note} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function NewsBlocks({ blocks }: { blocks: NewsBlock[] }) {
+  // Kolejne bloki "person" grupujemy w siatkę - karty stają obok siebie.
+  const groups: (NewsBlock | NewsBlock[])[] = [];
+  for (const block of blocks) {
+    const last = groups[groups.length - 1];
+    if (block.type === "person") {
+      if (Array.isArray(last)) last.push(block);
+      else groups.push([block]);
+    } else {
+      groups.push(block);
+    }
+  }
+
   return (
     <div className="space-y-6 text-neutral-300 text-lg leading-relaxed">
-      {blocks.map((block, i) => (
-        <BlockRenderer key={i} block={block} />
-      ))}
+      {groups.map((g, i) =>
+        Array.isArray(g) ? (
+          <div
+            key={i}
+            className={`grid grid-cols-1 gap-6 pt-2 ${
+              g.length === 1 ? "md:grid-cols-[minmax(0,32rem)]" : "md:grid-cols-2"
+            }`}
+          >
+            {g.map((b, j) => (
+              <BlockRenderer key={j} block={b} />
+            ))}
+          </div>
+        ) : (
+          <BlockRenderer key={i} block={g} />
+        )
+      )}
     </div>
   );
 }

@@ -3,8 +3,11 @@
 export type FooterLink = { label: string; href: string };
 
 export interface FooterData {
+  /** (nieużywane w stopce od 2026-07 - kolumnę „o nas" zastąpiły linki) */
   about: string;
   social: { facebook: string; instagram: string; youtube: string };
+  /** Przydatne linki (dawna podstrona „Linki" ze starej strony). */
+  links: FooterLink[];
   downloads: FooterLink[];
   documents: FooterLink[];
   contact: {
@@ -26,6 +29,9 @@ export const DEFAULT_FOOTER: FooterData = {
     instagram: "https://www.instagram.com/shorinjikempopolska/",
     youtube: "https://www.youtube.com/@Dominik_Chowanski",
   },
+  // Bazowo pusto - realną listę (zweryfikowane linki ze starej strony)
+  // seeduje scripts/seed-content.mjs; edycja w panelu → Stopka.
+  links: [],
   downloads: [
     { label: "Deklaracja członkowska – od 18 lat", href: "/downloads/deklaracja-dorosli.pdf" },
     { label: "Deklaracja członkowska – do 18 lat", href: "/downloads/deklaracja-do-18.pdf" },

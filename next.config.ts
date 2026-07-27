@@ -27,6 +27,13 @@ const nextConfig: NextConfig = {
         destination: '/organizacja/zalozyciel',
         permanent: true,
       },
+      {
+        // Cennik przeniesiony pod Zajęcia (2026-07). 302 na start -
+        // po okresie przejściowym można zmienić na permanent.
+        source: '/cennik',
+        destination: '/zajecia/cennik',
+        permanent: false,
+      },
     ];
   },
 };

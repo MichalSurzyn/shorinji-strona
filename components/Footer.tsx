@@ -10,15 +10,28 @@ export default async function Footer() {
 
   return (
     <footer className="bg-neutral-900 text-neutral-300 py-12 border-t border-neutral-800 z-11">
-      <div className="w-[80%] mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container-site px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
 
-          {/* Kolumna 1: O nas + social */}
+          {/* Kolumna 1: Przydatne linki (ze starej podstrony „Linki") + social */}
           <div>
-            <h3 className="text-white text-lg font-semibold mb-4 tracking-wider">SHORINJI KEMPO</h3>
-            <p className="text-sm text-neutral-400 leading-relaxed mb-5">
-              {data.about}
-            </p>
+            <h3 className="text-white text-lg font-semibold mb-4 tracking-wider">LINKI</h3>
+            {data.links.length > 0 && (
+              <ul className="space-y-2 text-sm mb-5">
+                {data.links.map((l) => (
+                  <li key={l.href + l.label}>
+                    <a
+                      href={l.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-neutral-400 hover:text-yellow-500 transition-colors"
+                    >
+                      {l.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
             <div className="flex space-x-4">
               {data.social.facebook && (
                 <Link

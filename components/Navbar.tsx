@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -8,27 +8,39 @@ import { DEFAULT_NAV, type NavLink } from '@/lib/navTypes';
 
 export default function Navbar({ links }: { links?: NavLink[] }) {
   const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navRef = useRef<HTMLElement | null>(null);
 
   const pathname = usePathname();
 
   // Menu z bazy (przekazane przez layout); fallback - struktura z kodu.
   const navLinks: NavLink[] = links && links.length ? links : DEFAULT_NAV;
 
+  // Chowanie navbara przy scrollu w dół (bez re-subskrypcji na każdy scroll).
   useEffect(() => {
+    let lastY = window.scrollY;
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      if (currentScrollY > lastScrollY && currentScrollY > 50) {
-        setIsVisible(false);
-      } else {
-        setIsVisible(true);
-      }
-      setLastScrollY(currentScrollY);
+      const y = window.scrollY;
+      setIsVisible(!(y > lastY && y > 50));
+      lastY = y;
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, []);
+
+  // Realna wysokość navbara -> zmienna CSS --nav-h. Dzięki temu treść strony
+  // (padding-top w .page-shell) nigdy nie chowa się pod menu, niezależnie
+  // od rozmiaru logo czy zawijania linków.
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const apply = () =>
+      document.documentElement.style.setProperty('--nav-h', `${el.offsetHeight}px`);
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const isActive = (href?: string, dropdown?: { href: string; label: string }[]) => {
     if (href && pathname === href) return true;
@@ -40,11 +52,12 @@ export default function Navbar({ links }: { links?: NavLink[] }) {
   return (
     <>
       <nav
+        ref={navRef}
         className={`fixed w-full top-0 z-50 transition-transform duration-500 bg-black border-b border-neutral-800 ${
           isVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
-        <div className="w-full px-4 md:w-[80%] md:px-0 mx-auto">
+        <div className="w-full px-4 md:px-0 md:w-[90%] md:max-w-[87.5rem] mx-auto">
 
           {/* Wiersz 1: Logo + Social */}
           <div className="flex justify-between items-center py-4 border-b border-neutral-900">
@@ -64,9 +77,9 @@ export default function Navbar({ links }: { links?: NavLink[] }) {
               <Image
                 src="https://res.cloudinary.com/dyn3apjzb/image/upload/v1772055354/Logo_pi10ya.jpg"
                 alt="Shorinji Kempo Logo"
-                width={320}
-                height={110}
-                className="h-[110px] w-auto object-contain"
+                width={380}
+                height={130}
+                className="h-16 sm:h-20 md:h-24 xl:h-[8rem] w-auto object-contain"
                 priority
               />
             </Link>

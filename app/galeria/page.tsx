@@ -18,7 +18,7 @@ export default async function GaleriaPage() {
     <div className="min-h-screen bg-[#111111] pt-40 pb-20">
 
       {/* Główna zawartość - Przekazujemy foldery do naszego nowego komponentu */}
-      <div className="w-[80%] mx-auto">
+      <div className="container-site">
         {folders.length > 0 ? (
           <GalleryClient folders={folders} />
         ) : (

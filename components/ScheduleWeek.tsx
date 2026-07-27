@@ -88,7 +88,9 @@ export default function ScheduleWeek({ group, slots, title }: Props) {
                   ))}
                 </div>
               ) : (
-                <div className="text-sm text-neutral-600 italic flex-1 flex items-center">
+                // Ta sama wysokość linii co kafelek z godziną - "brak zajęć"
+                // i godziny w sąsiednich dniach są na jednej linii.
+                <div className="rounded-md border border-transparent px-3 py-2 text-sm text-neutral-600 italic">
                   brak zajęć
                 </div>
               )}

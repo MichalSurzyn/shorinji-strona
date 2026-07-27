@@ -19,6 +19,7 @@ export async function getFooterData(): Promise<FooterData> {
     return {
       about: v.about ?? DEFAULT_FOOTER.about,
       social: { ...DEFAULT_FOOTER.social, ...(v.social ?? {}) },
+      links: Array.isArray(v.links) ? v.links : DEFAULT_FOOTER.links,
       downloads: Array.isArray(v.downloads) ? v.downloads : DEFAULT_FOOTER.downloads,
       documents: Array.isArray(v.documents) ? v.documents : DEFAULT_FOOTER.documents,
       contact: { ...DEFAULT_FOOTER.contact, ...(v.contact ?? {}) },

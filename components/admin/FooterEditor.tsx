@@ -107,19 +107,15 @@ export default function FooterEditor({ initialData }: { initialData: FooterData 
         </div>
       )}
 
+      <LinkListEditor
+        title="Linki (pierwsza kolumna stopki)"
+        hint="Przydatne odnośniki - np. organizacje Shorinji Kempo, kanały YouTube."
+        links={data.links}
+        onChange={(links) => setData({ ...data, links })}
+      />
+
       <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
-        <h2 className="font-bold">O nas</h2>
-        <div>
-          <label className="block text-xs uppercase tracking-wider text-slate-500 mb-1.5">
-            Krótki opis (pierwsza kolumna stopki)
-          </label>
-          <textarea
-            value={data.about}
-            onChange={(e) => setData({ ...data, about: e.target.value })}
-            rows={3}
-            className={inputCls}
-          />
-        </div>
+        <h2 className="font-bold">Social media</h2>
         <div className="grid sm:grid-cols-3 gap-3">
           {(["facebook", "instagram", "youtube"] as const).map((key) => (
             <div key={key}>

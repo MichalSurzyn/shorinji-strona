@@ -13,6 +13,14 @@ interface KanjiProps {
   side: 'left' | 'right';
 }
 
+/**
+ * Dekoracyjne pionowe kanji przy krawędziach ekranu.
+ * Kolumna zajmuje CAŁĄ wysokość okna (inset-y-0) i centruje znaki
+ * flexboxem - zero przeliczania translate, więc nic się nie rozjeżdża
+ * przy zmianach szerokości/wysokości okna. Odstęp między znakami
+ * skaluje się z wysokością viewportu (gap w vh), a rozmiar znaku
+ * z szerokością (clamp), żeby całość zawsze mieściła się na ekranie.
+ */
 export default function VerticalKanji({ characters, side }: KanjiProps) {
   const [visibleCount, setVisibleCount] = useState(0);
   const [footerVisible, setFooterVisible] = useState(false);
@@ -29,20 +37,21 @@ export default function VerticalKanji({ characters, side }: KanjiProps) {
     if (!footer) return;
     const observer = new IntersectionObserver(
       ([entry]) => setFooterVisible(entry.isIntersecting),
-      { threshold: 0, rootMargin: '0px' },
+      { threshold: 0 },
     );
     observer.observe(footer);
     return () => observer.disconnect();
   }, []);
 
-  const positionClass = side === 'left' ? 'left-8 2xl:left-4' : 'right-8 2xl:right-4';
+  const positionClass = side === 'left' ? 'left-0' : 'right-0';
 
   return (
     <div
       aria-hidden="true"
-      className={`fixed top-1/2 -translate-y-1/2 hidden xl:flex flex-col gap-10 text-8xl text-white z-10 pointer-events-none transition-opacity duration-500 ${
+      className={`fixed inset-y-0 ${positionClass} w-24 2xl:w-28 hidden xl:flex flex-col items-center justify-center gap-[4vh] text-white z-10 pointer-events-none transition-opacity duration-500 ${
         footerVisible ? 'opacity-0' : 'opacity-20'
-      } ${positionClass} ${yujiMai.className}`}
+      } ${yujiMai.className}`}
+      style={{ fontSize: 'clamp(3.5rem, 4.5vw, 6rem)' }}
     >
       {characters.map((char, index) => (
         <span

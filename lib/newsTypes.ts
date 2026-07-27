@@ -26,7 +26,56 @@ export type NewsBlock =
       headers?: [string, string];
       rows: { label: string; price: string; note?: string }[];
     }
-  | { type: "links"; items: { label: string; url: string; note?: string }[] };
+  | { type: "links"; items: { label: string; url: string; note?: string }[] }
+  /** Osadzony film YouTube (pełny player, nie link). */
+  | {
+      type: "video";
+      /** Pełny URL filmu (watch/short/embed) albo samo ID. */
+      url: string;
+      caption?: string | null;
+      /** Proporcje playera; domyślnie 16:9. */
+      aspect?: "16:9" | "4:3";
+    }
+  /** Plik do pobrania z miniaturką (np. lektury, deklaracje). */
+  | {
+      type: "download";
+      label: string;
+      /** Adres pliku (np. /downloads/plik.pdf albo pełny URL). */
+      url: string;
+      /** Miniaturka / okładka z Cloudinary (opcjonalna). */
+      imageId?: string | null;
+      note?: string | null;
+    }
+  /** Karta osoby (instruktor, egzaminator...) — kolejne karty ustawiają się obok siebie. */
+  | {
+      type: "person";
+      name: string;
+      /** Podtytuł nad nazwiskiem, np. "Shibucho – mistrz kierujący filią". */
+      role?: string | null;
+      /** Dopisek pod nazwiskiem, np. "Egzaminator oraz Sędzia 2 kategorii". */
+      subtitle?: string | null;
+      /** Zdjęcie z Cloudinary. */
+      imageId?: string | null;
+      /** Pary etykieta → wartość (np. Bukai → 6 Dan). */
+      facts: { label: string; value: string }[];
+      /** Dodatkowa notka na dole karty (obsługuje formatowanie inline). */
+      note?: string | null;
+    };
+
+/**
+ * Pełna treść edytowalnej strony (site_settings, klucz "page:<slug>").
+ * `title`/`lead`/`kicker` to nagłówek strony — dawniej zahardkodowany w kodzie.
+ * Starsze wpisy mają tylko { blocks } — pola nagłówka są wtedy undefined.
+ */
+export interface PageContent {
+  /** Nagłówek H1 strony. */
+  title?: string | null;
+  /** Akapit pod nagłówkiem. */
+  lead?: string | null;
+  /** Mała żółta etykietka nad H1 (np. "Materiały szkoleniowe"). */
+  kicker?: string | null;
+  blocks: NewsBlock[];
+}
 
 export interface NewsArticle {
   id: string;

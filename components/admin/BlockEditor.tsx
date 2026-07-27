@@ -34,6 +34,9 @@ const BLOCK_LABELS: Record<NewsBlock["type"], string> = {
   gallery: "Galeria",
   table: "Tabela opłat",
   links: "Linki / nagrania",
+  video: "Film (YouTube)",
+  download: "Plik do pobrania",
+  person: "Osoba (karta)",
 };
 
 const ALL_ADD_OPTIONS: { type: NewsBlock["type"]; label: string; icon: string }[] = [
@@ -48,12 +51,15 @@ const ALL_ADD_OPTIONS: { type: NewsBlock["type"]; label: string; icon: string }[
   { type: "gallery", label: "Galeria", icon: "▦" },
   { type: "table", label: "Tabela opłat", icon: "𝄜" },
   { type: "links", label: "Linki / nagrania", icon: "▶" },
+  { type: "video", label: "Film (YouTube)", icon: "🎬" },
+  { type: "download", label: "Plik do pobrania", icon: "⬇" },
+  { type: "person", label: "Osoba (karta)", icon: "👤" },
 ];
 
 const MODE_BLOCKS: Record<EditorMode, NewsBlock["type"][]> = {
-  news: ["paragraph", "heading", "subheading", "list", "ordered", "quote", "callout", "image", "gallery", "table", "links"],
-  page: ["paragraph", "heading", "subheading", "list", "ordered", "quote", "callout", "image", "gallery", "table", "links"],
-  article: ["paragraph", "heading", "subheading", "list", "ordered", "quote", "image"],
+  news: ["paragraph", "heading", "subheading", "list", "ordered", "quote", "callout", "image", "gallery", "table", "links", "video", "download", "person"],
+  page: ["paragraph", "heading", "subheading", "list", "ordered", "quote", "callout", "image", "gallery", "table", "links", "video", "download", "person"],
+  article: ["paragraph", "heading", "subheading", "list", "ordered", "quote", "image", "video", "person"],
 };
 
 function newBlock(type: NewsBlock["type"]): NewsBlock {
@@ -69,6 +75,12 @@ function newBlock(type: NewsBlock["type"]): NewsBlock {
       return { type: "table", headers: ["Rodzaj opłaty", "Kwota"], rows: [{ label: "", price: "" }] };
     case "links":
       return { type: "links", items: [{ label: "", url: "" }] };
+    case "video":
+      return { type: "video", url: "", caption: "", aspect: "16:9" };
+    case "download":
+      return { type: "download", label: "", url: "", imageId: null, note: "" };
+    case "person":
+      return { type: "person", name: "", role: "", subtitle: "", imageId: null, facts: [], note: "" };
     default:
       return { type, text: "" } as NewsBlock;
   }
@@ -120,6 +132,8 @@ export default function BlockEditor({
         ...block,
         publicIds: [...block.publicIds, ...publicIds],
       });
+    } else if (block.type === "download" || block.type === "person") {
+      update(picker.index, { ...block, imageId: publicIds[0] });
     }
   }
 
@@ -140,6 +154,10 @@ export default function BlockEditor({
             <p>
               <code className="bg-slate-100 px-1 rounded">**pogrubienie**</code>{" "}
               → <strong>pogrubienie</strong>
+            </p>
+            <p>
+              <code className="bg-slate-100 px-1 rounded">*kursywa*</code>{" "}
+              → <em>kursywa</em>
             </p>
             {mode !== "article" && (
               <p>
@@ -385,9 +403,206 @@ function BlockBody({
       return <TableEditor block={block} onChange={onChange} />;
     case "links":
       return <LinksEditor block={block} onChange={onChange} />;
+    case "video":
+      return (
+        <div className="space-y-3">
+          <input
+            value={block.url}
+            onChange={(e) => onChange({ ...block, url: e.target.value })}
+            placeholder="https://www.youtube.com/watch?v=..."
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <div className="flex flex-wrap gap-2">
+            <select
+              value={block.aspect ?? "16:9"}
+              onChange={(e) => onChange({ ...block, aspect: e.target.value as "16:9" | "4:3" })}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              title="Proporcje playera"
+            >
+              <option value="16:9">16:9 (standard YouTube)</option>
+              <option value="4:3">4:3 (stare nagrania)</option>
+            </select>
+            <input
+              value={block.caption ?? ""}
+              onChange={(e) => onChange({ ...block, caption: e.target.value })}
+              placeholder="Podpis pod filmem (opcjonalnie)"
+              className="flex-1 min-w-[12rem] rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <p className="text-xs text-slate-400">
+            Film osadza się jako player na stronie. Wklej zwykły adres z YouTube.
+          </p>
+        </div>
+      );
+    case "download":
+      return (
+        <div className="flex flex-col sm:flex-row gap-4">
+          {block.imageId ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={clThumb(block.imageId, 200)}
+              alt=""
+              className="w-full sm:w-28 h-28 object-cover rounded-lg border border-slate-200"
+            />
+          ) : (
+            <div className="w-full sm:w-28 h-28 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-400 text-xs text-center px-2">
+              Miniaturka (opcjonalna)
+            </div>
+          )}
+          <div className="flex-1 space-y-2">
+            <input
+              value={block.label}
+              onChange={(e) => onChange({ ...block, label: e.target.value })}
+              placeholder="Nazwa pliku, np. Deklaracja członkowska"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <input
+              value={block.url}
+              onChange={(e) => onChange({ ...block, url: e.target.value })}
+              placeholder="/downloads/plik.pdf albo https://..."
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <div className="flex flex-wrap gap-2">
+              <input
+                value={block.note ?? ""}
+                onChange={(e) => onChange({ ...block, note: e.target.value })}
+                placeholder="Dopisek (np. PDF, 2 MB)"
+                className="flex-1 min-w-[10rem] rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <button
+                onClick={() => openPicker(false)}
+                type="button"
+                className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 transition-colors"
+              >
+                {block.imageId ? "Zmień miniaturkę" : "Wybierz miniaturkę"}
+              </button>
+              {block.imageId && (
+                <button
+                  onClick={() => onChange({ ...block, imageId: null })}
+                  type="button"
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-500 hover:text-red-600 transition-colors"
+                >
+                  Usuń miniaturkę
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    case "person":
+      return <PersonEditor block={block} onChange={onChange} openPicker={openPicker} />;
     default:
       return null;
   }
+}
+
+/* ------------------------ Karta osoby ------------------------ */
+
+function PersonEditor({
+  block,
+  onChange,
+  openPicker,
+}: {
+  block: Extract<NewsBlock, { type: "person" }>;
+  onChange: (b: NewsBlock) => void;
+  openPicker: (multi: boolean) => void;
+}) {
+  function setFact(i: number, patch: Partial<(typeof block.facts)[number]>) {
+    const facts = block.facts.map((f, idx) => (idx === i ? { ...f, ...patch } : f));
+    onChange({ ...block, facts });
+  }
+
+  return (
+    <div className="flex flex-col sm:flex-row gap-4">
+      <div className="space-y-2">
+        {block.imageId ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={clThumb(block.imageId, 300)}
+            alt=""
+            className="w-full sm:w-36 h-44 object-cover rounded-lg border border-slate-200"
+          />
+        ) : (
+          <div className="w-full sm:w-36 h-44 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-400 text-xs text-center px-2">
+            Zdjęcie osoby
+          </div>
+        )}
+        <button
+          onClick={() => openPicker(false)}
+          type="button"
+          className="w-full rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3 py-2 transition-colors"
+        >
+          {block.imageId ? "Zmień zdjęcie" : "Wybierz zdjęcie"}
+        </button>
+      </div>
+
+      <div className="flex-1 space-y-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <input
+            value={block.name}
+            onChange={(e) => onChange({ ...block, name: e.target.value })}
+            placeholder="Imię i nazwisko"
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <input
+            value={block.role ?? ""}
+            onChange={(e) => onChange({ ...block, role: e.target.value })}
+            placeholder="Rola (np. Shibucho – mistrz kierujący filią)"
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+        <input
+          value={block.subtitle ?? ""}
+          onChange={(e) => onChange({ ...block, subtitle: e.target.value })}
+          placeholder="Dopisek pod nazwiskiem (np. Egzaminator oraz Sędzia 2 kategorii)"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm italic focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 pt-1">
+          Fakty (etykieta → wartość)
+        </p>
+        {block.facts.map((f, i) => (
+          <div key={i} className="grid grid-cols-[1fr_1fr_2rem] gap-2 items-center">
+            <input
+              value={f.label}
+              onChange={(e) => setFact(i, { label: e.target.value })}
+              placeholder="np. Bukai (stopień techniczny)"
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <input
+              value={f.value}
+              onChange={(e) => setFact(i, { value: e.target.value })}
+              placeholder="np. 6 Dan"
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <button
+              type="button"
+              onClick={() => onChange({ ...block, facts: block.facts.filter((_, idx) => idx !== i) })}
+              className="text-slate-400 hover:text-red-600 transition-colors"
+              title="Usuń fakt"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => onChange({ ...block, facts: [...block.facts, { label: "", value: "" }] })}
+          className="rounded-lg border border-dashed border-slate-300 px-3 py-1.5 text-sm text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
+        >
+          + Dodaj fakt
+        </button>
+
+        <textarea
+          value={block.note ?? ""}
+          onChange={(e) => onChange({ ...block, note: e.target.value })}
+          rows={2}
+          placeholder="Notka na dole karty (np. lokalizacja, informacja o zapisach)"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+    </div>
+  );
 }
 
 /* ------------------------ Tabela opłat ------------------------ */
@@ -588,6 +803,14 @@ function TextAreaWithFormat({
           title="Pogrub zaznaczony tekst"
         >
           B
+        </button>
+        <button
+          onClick={() => wrap("*")}
+          type="button"
+          className="rounded-md border border-slate-300 px-2.5 py-1 text-xs italic font-semibold hover:bg-slate-100 transition-colors"
+          title="Kursywa (zaznaczony tekst)"
+        >
+          I
         </button>
         {mode !== "article" && (
           <button

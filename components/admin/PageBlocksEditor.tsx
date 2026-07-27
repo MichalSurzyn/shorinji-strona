@@ -2,61 +2,47 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { resetPageBlocks, savePageBlocks } from "@/actions/pageActions";
-import type { NewsBlock } from "@/lib/newsTypes";
+import { savePageContent } from "@/actions/pageActions";
+import type { NewsBlock, PageContent } from "@/lib/newsTypes";
 import BlockEditor from "./BlockEditor";
 
+const inputCls =
+  "w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
+
+/**
+ * Edytor całej strony: nagłówek (etykietka, H1, lead) + bloki treści.
+ * Wszystko trafia do bazy - strona renderuje wyłącznie to, co tu zapiszesz.
+ */
 export default function PageBlocksEditor({
   slug,
   label,
   route,
   scope,
-  initialBlocks,
-  baseBlocks,
+  initialContent,
 }: {
   slug: string;
   label: string;
   route: string;
   scope: string;
-  initialBlocks: NewsBlock[];
-  baseBlocks: NewsBlock[];
+  initialContent: PageContent;
 }) {
-  const [blocks, setBlocks] = useState<NewsBlock[]>(initialBlocks);
+  const [kicker, setKicker] = useState(initialContent.kicker ?? "");
+  const [title, setTitle] = useState(initialContent.title ?? "");
+  const [lead, setLead] = useState(initialContent.lead ?? "");
+  const [blocks, setBlocks] = useState<NewsBlock[]>(initialContent.blocks);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   async function handleSave() {
     setBusy(true);
     setMsg(null);
-    const res = await savePageBlocks(slug, blocks);
+    const res = await savePageContent(slug, { kicker, title, lead, blocks });
     setBusy(false);
     setMsg(
       res.ok
         ? { ok: true, text: "Zapisano. Zmiany są już widoczne na stronie." }
         : { ok: false, text: res.error }
     );
-  }
-
-  async function handleReset() {
-    if (
-      !confirm(
-        "Przywrócić oryginalną wersję z kodu strony? Zmiany zapisane w panelu zostaną usunięte."
-      )
-    )
-      return;
-    setBusy(true);
-    setMsg(null);
-    const res = await resetPageBlocks(slug);
-    setBusy(false);
-    if (res.ok) {
-      setBlocks(baseBlocks);
-      setMsg({
-        ok: true,
-        text: "Przywrócono wersję bazową - strona znów pokazuje oryginalny wygląd z kodu.",
-      });
-    } else {
-      setMsg({ ok: false, text: res.error });
-    }
   }
 
   return (
@@ -103,16 +89,41 @@ export default function PageBlocksEditor({
         </div>
       )}
 
+      {/* Nagłówek strony */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+        <h2 className="font-bold">Nagłówek strony</h2>
+        <div>
+          <label className="block text-xs uppercase tracking-wider text-slate-500 mb-1.5">
+            Etykietka nad tytułem (żółta, opcjonalna - np. „Materiały szkoleniowe")
+          </label>
+          <input value={kicker} onChange={(e) => setKicker(e.target.value)} className={inputCls} />
+        </div>
+        <div>
+          <label className="block text-xs uppercase tracking-wider text-slate-500 mb-1.5">
+            Tytuł (H1)
+          </label>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className={`${inputCls} text-lg font-bold`}
+          />
+        </div>
+        <div>
+          <label className="block text-xs uppercase tracking-wider text-slate-500 mb-1.5">
+            Akapit wprowadzający (pod tytułem, opcjonalny)
+          </label>
+          <textarea
+            value={lead}
+            onChange={(e) => setLead(e.target.value)}
+            rows={3}
+            className={inputCls}
+          />
+        </div>
+      </div>
+
       <BlockEditor value={blocks} onChange={setBlocks} mode="page" />
 
-      <div className="flex flex-wrap justify-between gap-3">
-        <button
-          onClick={handleReset}
-          disabled={busy}
-          className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-60 transition-colors"
-        >
-          Przywróć wersję bazową
-        </button>
+      <div className="flex justify-end">
         <button
           onClick={handleSave}
           disabled={busy}

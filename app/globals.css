@@ -9,6 +9,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Realna wysokość navbara - ustawia ją Navbar (ResizeObserver).
+     Dzięki temu treść nigdy nie chowa się pod menu, nawet po zmianie logo. */
+  --nav-h: 200px;
 }
 
 @theme inline {
@@ -25,8 +28,32 @@
   }
 }
 
+/* Typografia skaluje się z szerokością ekranu:
+   ~16px do 1280px, ~17.5px na FHD, ~19px na 2K/4K. */
+html {
+  font-size: clamp(16px, 12.8px + 0.25vw, 19px);
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Główny kontener treści - węższe marginesy niż dawne w-[80%]. */
+.container-site {
+  width: 90%;
+  max-width: 87.5rem; /* 1400px */
+  margin-inline: auto;
+}
+
+/* Odstęp od góry strony = wysokość navbara + oddech.
+   --nav-h aktualizuje się na żywo, więc zmiana logo nic nie psuje. */
+.page-shell {
+  padding-top: calc(var(--nav-h) + 2.5rem);
+}
+
+/* Kotwice (spis treści) nie chowają się pod fixed navbarem. */
+html {
+  scroll-padding-top: calc(var(--nav-h) + 1rem);
 }

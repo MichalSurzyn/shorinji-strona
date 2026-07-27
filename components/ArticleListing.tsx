@@ -8,8 +8,8 @@ type Props = {
 
 export default function ArticleListing({ group, baseHref }: Props) {
   return (
-    <div className="relative pt-50 pb-20 min-h-screen">
-      <div className="w-[80%] mx-auto z-10 relative">
+    <div className="relative page-shell pb-20 min-h-screen">
+      <div className="container-site z-10 relative">
 
         {/* Nagłówek sekcji */}
         <header className="mb-12">
