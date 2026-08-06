@@ -382,19 +382,19 @@ function PersonCard({
       // zamiast rozjeżdżać się na całą szerokość strony. Bez zdjęcia siatka
       // ma jedną kolumnę (inaczej treść wpadłaby w tor 300px od zdjęcia).
       <div
-        className={`grid grid-cols-1 gap-8 items-start ${
+        className={`grid grid-cols-1 gap-8 ${
           block.imageId
             ? "md:grid-cols-[300px_minmax(0,40rem)]"
             : "md:grid-cols-[minmax(0,40rem)]"
         }`}
       >
         {block.imageId && (
-          <div className="rounded-xl overflow-hidden border border-yellow-500/40 bg-yellow-500/5">
+          <div className="rounded-xl overflow-hidden border border-yellow-500/40 bg-yellow-500/5 min-h-[240px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={clUrl(block.imageId, 700)}
               alt={block.name}
-              className="w-full h-auto object-cover"
+              className="w-full h-full object-cover"
               loading="lazy"
             />
           </div>

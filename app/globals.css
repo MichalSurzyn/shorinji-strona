@@ -17,10 +17,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Typografia skaluje się z szerokością ekranu:
-   ~16px do 1280px, ~17.5px na FHD, ~19px na 2K/4K. */
+/* Typografia skaluje się z szerokością ekranu. Skala x0.8 względem
+   poprzedniej wersji (12.8px do 1280px, ~14px na FHD, 15.2px na 2K/4K) -
+   to samo, co dawało "oddalenie" strony do 80% w przeglądarce (rem-owe
+   klasy Tailwinda, w tym logo, skalują się z tym razem). */
 html {
-  font-size: clamp(16px, 12.8px + 0.25vw, 19px);
+  font-size: clamp(12.8px, 10.24px + 0.2vw, 15.2px);
 }
 
 /* Tło/kolor tekstu ustawia klasa na <body> (layout.tsx: bg-neutral-900
