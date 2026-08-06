@@ -40,10 +40,14 @@ export default function VerticalKanji({ characters, side }: KanjiProps) {
   return (
     <div
       aria-hidden="true"
-      className={`fixed inset-y-0 ${positionClass} hidden xl:flex flex-col items-center justify-center gap-[4vh] text-white z-10 pointer-events-none transition-opacity duration-500 ${
+      className={`fixed ${positionClass} hidden xl:flex flex-col items-center justify-center gap-[4vh] text-white z-10 pointer-events-none transition-opacity duration-500 ${
         footerVisible ? 'opacity-0' : 'opacity-20'
       } ${yujiMai.className}`}
       style={{
+        // Zaczynamy pod navbarem (--nav-h, ta sama zmienna co .page-shell),
+        // żeby fixed nav (z-50, tło pełne) nie zasłaniał górnych znaków.
+        top: 'var(--nav-h)',
+        bottom: 0,
         // Szerokość = margines strony (kontener to min(90%, 87.5rem), reszta / 2).
         width: 'calc((100% - min(90%, 87.5rem)) / 2)',
         fontSize: 'clamp(3.5rem, 4.5vw, 6rem)',

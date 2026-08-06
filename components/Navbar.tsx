@@ -75,10 +75,10 @@ export default function Navbar({ links }: { links?: NavLink[] }) {
 
             <Link href="/" className="flex-shrink-0 transition-opacity hover:opacity-80">
               <Image
-                src="https://res.cloudinary.com/dyn3apjzb/image/upload/v1772055354/Logo_pi10ya.jpg"
+                src="/SOEN.jpg"
                 alt="Shorinji Kempo Logo"
-                width={380}
-                height={130}
+                width={1022}
+                height={202}
                 className="h-12 sm:h-16 md:h-24 xl:h-32 w-auto max-w-[calc(100vw-7.5rem)] object-contain object-left"
                 priority
               />

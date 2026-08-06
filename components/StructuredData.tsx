@@ -7,8 +7,7 @@ import {
 } from "../lib/site";
 import { SCHEDULE } from "../data/schedule";
 
-const LOGO_URL =
-  "https://res.cloudinary.com/dyn3apjzb/image/upload/v1772055354/Logo_pi10ya.jpg";
+const LOGO_URL = `${SITE_URL}/SOEN.jpg`;
 
 const ISO_DAY_TO_SCHEMA: Record<number, string> = {
   1: "Monday",

@@ -14,8 +14,9 @@ export default async function GaleriaPage() {
   const folders = await getGalleryFolders();
 
   return (
-    // Zastosowałem odpowiedni odstęp od góry (pt-40/pt-56), żeby pasek nie zasłaniał
-    <div className="min-h-screen bg-[#111111] pt-40 pb-20">
+    // page-shell = calc(--nav-h + 2.5rem), ta sama zmienna co Navbar aktualizuje
+    // na żywo -> pasek zakładek nigdy nie chowa się pod menu (bez sztywnego pt-40).
+    <div className="page-shell min-h-screen bg-[#111111] pb-20">
 
       {/* Główna zawartość - Przekazujemy foldery do naszego nowego komponentu */}
       <div className="container-site">

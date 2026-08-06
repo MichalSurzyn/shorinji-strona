@@ -7,25 +7,14 @@
 @custom-variant hover (&:hover);
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
   /* Realna wysokość navbara - ustawia ją Navbar (ResizeObserver).
      Dzięki temu treść nigdy nie chowa się pod menu, nawet po zmianie logo. */
   --nav-h: 200px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 /* Typografia skaluje się z szerokością ekranu:
@@ -34,9 +23,11 @@ html {
   font-size: clamp(16px, 12.8px + 0.25vw, 19px);
 }
 
+/* Tło/kolor tekstu ustawia klasa na <body> (layout.tsx: bg-neutral-900
+   text-white) - strona ma jeden, stały ciemny motyw niezależny od
+   prefers-color-scheme. Tu tylko font (poza warstwami Tailwind, więc
+   NIE dawać tu background/color - @layer utilities zawsze by przegrało). */
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
 
