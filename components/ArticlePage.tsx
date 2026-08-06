@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getArticleImages } from "../actions/articleActions";
 import ArticleGallery from "./ArticleGallery";
-import { BlockRenderer, slugifyAnchor } from "./NewsBlocks";
+import NewsBlocks, { slugifyAnchor } from "./NewsBlocks";
 import type { NewsBlock } from "../lib/newsTypes";
 import type { ArticleTopic } from "../data/articles/types";
 
@@ -64,14 +64,17 @@ export default async function ArticlePage({
           <p className="text-neutral-300 text-lg max-w-3xl">{intro}</p>
         </header>
 
-        {/* Główny layout: tekst + sticky TOC po prawej (lg+) */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-10">
+        {/* Główny layout: tekst + sticky TOC po prawej (lg+).
+            Bez TOC nie rezerwujemy pustego toru 240px. */}
+        <div
+          className={`grid grid-cols-1 gap-10 ${
+            tocItems.length > 1 ? "lg:grid-cols-[1fr_240px]" : ""
+          }`}
+        >
           <main>
-            <div className="space-y-6 text-neutral-300 text-lg leading-relaxed">
-              {blocks.map((block, i) => (
-                <BlockRenderer key={i} block={block} />
-              ))}
-            </div>
+            {/* Wspólny renderer z grupowaniem: kolejne bloki "person"
+                stają obok siebie (np. egzaminatorzy). */}
+            <NewsBlocks blocks={blocks} />
 
             {/* Galeria zdjęć z Cloudinary (jeśli są) */}
             <ArticleGallery publicIds={images} alt={title} />

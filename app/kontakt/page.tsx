@@ -20,13 +20,12 @@ export default function KontaktPage() {
         {/* Nagłówek i treść z bazy (panel → Strony → Kontakt) */}
         <PageHeader slug="kontakt" />
 
+        {/* Formularz jako pierwszy - najczęstszy cel wejścia na tę stronę */}
+        <ContactForm source="kontakt" className="mb-14" />
+
         <LocationMap heading="Jak do nas trafić" className="mb-14" />
 
         <PageBody slug="kontakt" />
-
-        <div className="mt-14">
-          <ContactForm source="kontakt" />
-        </div>
       </div>
     </div>
   );

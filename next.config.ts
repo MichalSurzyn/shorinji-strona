@@ -6,8 +6,10 @@ const appRoot = dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   // Pozwól na requesty z LAN w trybie dev (Next 15+/16+).
-  // Dodaj kolejne adresy/maski, gdy zmieni się sieć.
-  allowedDevOrigins: ['192.168.18.64', '192.168.0.0/16', '10.0.0.0/8'],
+  // UWAGA: matcher Next porównuje segmenty hosta (jak w remotePatterns) -
+  // maski CIDR (192.168.0.0/16) NIE działają, `*` = dokładnie jeden segment.
+  // Celowo tylko typowe sieci domowe (bez 172.*.*.* - łapałby publiczne hosty).
+  allowedDevOrigins: ['192.168.*.*', '10.*.*.*'],
   turbopack: {
     root: appRoot,
   },

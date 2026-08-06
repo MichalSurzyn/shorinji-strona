@@ -15,22 +15,14 @@ interface KanjiProps {
 
 /**
  * Dekoracyjne pionowe kanji przy krawędziach ekranu.
- * Kolumna zajmuje CAŁĄ wysokość okna (inset-y-0) i centruje znaki
- * flexboxem - zero przeliczania translate, więc nic się nie rozjeżdża
- * przy zmianach szerokości/wysokości okna. Odstęp między znakami
- * skaluje się z wysokością viewportu (gap w vh), a rozmiar znaku
- * z szerokością (clamp), żeby całość zawsze mieściła się na ekranie.
+ * Kolumna ma szerokość CAŁEGO marginesu strony (miejsca między krawędzią
+ * ekranu a treścią `.container-site` = min(90%, 87.5rem)), a flexbox centruje
+ * znaki - kanji siedzą więc zawsze idealnie pośrodku między krawędzią a treścią.
+ * Pojawianie się znaków to czysta animacja CSS (keyframes w globals.css),
+ * dzięki czemu kanji widać nawet zanim/bez zhydratowania JS.
  */
 export default function VerticalKanji({ characters, side }: KanjiProps) {
-  const [visibleCount, setVisibleCount] = useState(0);
   const [footerVisible, setFooterVisible] = useState(false);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setVisibleCount((prev) => (prev < characters.length ? prev + 1 : prev));
-    }, 600);
-    return () => clearInterval(interval);
-  }, [characters.length]);
 
   useEffect(() => {
     const footer = document.querySelector('footer');
@@ -48,17 +40,20 @@ export default function VerticalKanji({ characters, side }: KanjiProps) {
   return (
     <div
       aria-hidden="true"
-      className={`fixed inset-y-0 ${positionClass} w-24 2xl:w-28 hidden xl:flex flex-col items-center justify-center gap-[4vh] text-white z-10 pointer-events-none transition-opacity duration-500 ${
+      className={`fixed inset-y-0 ${positionClass} hidden xl:flex flex-col items-center justify-center gap-[4vh] text-white z-10 pointer-events-none transition-opacity duration-500 ${
         footerVisible ? 'opacity-0' : 'opacity-20'
       } ${yujiMai.className}`}
-      style={{ fontSize: 'clamp(3.5rem, 4.5vw, 6rem)' }}
+      style={{
+        // Szerokość = margines strony (kontener to min(90%, 87.5rem), reszta / 2).
+        width: 'calc((100% - min(90%, 87.5rem)) / 2)',
+        fontSize: 'clamp(3.5rem, 4.5vw, 6rem)',
+      }}
     >
       {characters.map((char, index) => (
         <span
           key={index}
-          className={`transition-opacity duration-1000 ${
-            index < visibleCount ? 'opacity-100' : 'opacity-0'
-          }`}
+          className="kanji-fade-in"
+          style={{ animationDelay: `${index * 0.6}s` }}
         >
           {char}
         </span>

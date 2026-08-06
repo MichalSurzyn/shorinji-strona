@@ -507,8 +507,12 @@ function PersonEditor({
   onChange: (b: NewsBlock) => void;
   openPicker: (multi: boolean) => void;
 }) {
-  function setFact(i: number, patch: Partial<(typeof block.facts)[number]>) {
-    const facts = block.facts.map((f, idx) => (idx === i ? { ...f, ...patch } : f));
+  // Guard na dane spoza panelu (ręczny zapis do bazy może pominąć facts) -
+  // bez niego edytor wywalałby się przy otwarciu takiego bloku.
+  const blockFacts = block.facts ?? [];
+
+  function setFact(i: number, patch: Partial<(typeof blockFacts)[number]>) {
+    const facts = blockFacts.map((f, idx) => (idx === i ? { ...f, ...patch } : f));
     onChange({ ...block, facts });
   }
 
@@ -561,7 +565,7 @@ function PersonEditor({
         <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 pt-1">
           Fakty (etykieta → wartość)
         </p>
-        {block.facts.map((f, i) => (
+        {blockFacts.map((f, i) => (
           <div key={i} className="grid grid-cols-[1fr_1fr_2rem] gap-2 items-center">
             <input
               value={f.label}
@@ -577,7 +581,7 @@ function PersonEditor({
             />
             <button
               type="button"
-              onClick={() => onChange({ ...block, facts: block.facts.filter((_, idx) => idx !== i) })}
+              onClick={() => onChange({ ...block, facts: blockFacts.filter((_, idx) => idx !== i) })}
               className="text-slate-400 hover:text-red-600 transition-colors"
               title="Usuń fakt"
             >
@@ -587,7 +591,7 @@ function PersonEditor({
         ))}
         <button
           type="button"
-          onClick={() => onChange({ ...block, facts: [...block.facts, { label: "", value: "" }] })}
+          onClick={() => onChange({ ...block, facts: [...blockFacts, { label: "", value: "" }] })}
           className="rounded-lg border border-dashed border-slate-300 px-3 py-1.5 text-sm text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
         >
           + Dodaj fakt

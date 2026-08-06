@@ -4,14 +4,13 @@ import { DEFAULT_NAV, type NavItemRow, type NavLink } from "./navTypes";
 const CENNIK_ROUTE = "/zajecia/cennik";
 
 /**
- * CENNIK ląduje jako podpozycja ZAJĘĆ (niezależnie od tego, czy w bazie
- * jest jeszcze starym top-level linkiem /cennik). Ujednolica też adres
- * na nową trasę /zajecia/cennik.
+ * CENNIK ma ZAWSZE być podpozycją ZAJĘĆ:
+ *  - stary top-level link /cennik jest przenoszony do dropdownu,
+ *  - gdy cennika nie ma nigdzie w menu (np. usunięty w panelu), jest dodawany,
+ *  - stare adresy /cennik są ujednolicane na /zajecia/cennik.
  */
 function normalizeNavTree(tree: NavLink[]): NavLink[] {
   const isCennik = (href?: string) => href === "/cennik" || href === CENNIK_ROUTE;
-  const cennikIndex = tree.findIndex((item) => isCennik(item.href));
-  const zajeciaIndex = tree.findIndex((item) => item.label === "ZAJĘCIA");
 
   const nextTree = tree.map((item) => ({
     ...item,
@@ -20,21 +19,21 @@ function normalizeNavTree(tree: NavLink[]): NavLink[] {
       : item.dropdown,
   }));
 
-  if (cennikIndex === -1 || zajeciaIndex === -1) {
-    return nextTree;
+  const cennikIndex = nextTree.findIndex((item) => isCennik(item.href));
+  const zajecia = nextTree.find((item) => item.label.trim().toUpperCase() === "ZAJĘCIA");
+
+  if (zajecia) {
+    if (!zajecia.dropdown) zajecia.dropdown = [];
+    if (!zajecia.dropdown.some((child) => isCennik(child.href))) {
+      zajecia.dropdown.push({
+        href: CENNIK_ROUTE,
+        label: cennikIndex !== -1 ? nextTree[cennikIndex].label : "CENNIK",
+      });
+    }
+    // Top-level cennik znika dopiero, gdy jest już w dropdownie ZAJĘĆ.
+    if (cennikIndex !== -1) nextTree.splice(cennikIndex, 1);
   }
 
-  const cennik = nextTree[cennikIndex];
-  const zajecia = nextTree[zajeciaIndex];
-
-  if (!zajecia.dropdown) {
-    zajecia.dropdown = [];
-  }
-  if (!zajecia.dropdown.some((child) => isCennik(child.href))) {
-    zajecia.dropdown.push({ href: CENNIK_ROUTE, label: cennik.label });
-  }
-
-  nextTree.splice(cennikIndex, 1);
   return nextTree;
 }
 

@@ -57,3 +57,14 @@ body {
 html {
   scroll-padding-top: calc(var(--nav-h) + 1rem);
 }
+
+/* Sekwencyjne pojawianie się znaków kanji (VerticalKanji).
+   Czysty CSS - działa też zanim załaduje się JS (np. wolna sieć / LAN). */
+@keyframes kanji-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.kanji-fade-in {
+  opacity: 0;
+  animation: kanji-fade 1s ease forwards;
+}

@@ -332,8 +332,80 @@ export function youtubeId(url: string): string | null {
   return m ? m[1] : null;
 }
 
-/** Karta osoby - w stylu karty instruktora z podstron zajęć. */
-function PersonCard({ block }: { block: Extract<NewsBlock, { type: "person" }> }) {
+/**
+ * Karta osoby.
+ * - layout "wide" (jedna osoba): zdjęcie z lewej, treść z prawej, pełna szerokość
+ *   (jak dawna karta instruktora - bez pustki po prawej stronie).
+ * - layout "tile" (kilka osób obok siebie): pionowa karta ze zdjęciem u góry.
+ */
+function PersonCard({
+  block,
+  layout = "tile",
+}: {
+  block: Extract<NewsBlock, { type: "person" }>;
+  layout?: "wide" | "tile";
+}) {
+  // Guard na dane spoza panelu (ręczny zapis do bazy może pominąć facts).
+  const facts = block.facts ?? [];
+  const details = (
+    <>
+      {block.role && (
+        <p className="text-yellow-500 text-xs uppercase tracking-[0.14em] font-semibold mb-1">
+          {block.role}
+        </p>
+      )}
+      <h3 className="text-2xl md:text-3xl font-bold text-white tracking-wide">{block.name}</h3>
+      {block.subtitle && (
+        <p className="text-sm text-neutral-400 mt-1 italic">{block.subtitle}</p>
+      )}
+      {facts.length > 0 && (
+        <dl className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+          {facts.map((f, i) => (
+            <div key={i}>
+              <dt className="text-neutral-500 uppercase text-xs tracking-wider">{f.label}</dt>
+              <dd className="text-white font-medium">{f.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {block.note && (
+        <div className="mt-5 pt-5 border-t border-yellow-500/20 text-sm text-neutral-300">
+          <InlineText text={block.note} />
+        </div>
+      )}
+    </>
+  );
+
+  if (layout === "wide") {
+    return (
+      // Treść ograniczona (max 40rem) - napisy trzymają się blisko zdjęcia,
+      // zamiast rozjeżdżać się na całą szerokość strony. Bez zdjęcia siatka
+      // ma jedną kolumnę (inaczej treść wpadłaby w tor 300px od zdjęcia).
+      <div
+        className={`grid grid-cols-1 gap-8 items-start ${
+          block.imageId
+            ? "md:grid-cols-[300px_minmax(0,40rem)]"
+            : "md:grid-cols-[minmax(0,40rem)]"
+        }`}
+      >
+        {block.imageId && (
+          <div className="rounded-xl overflow-hidden border border-yellow-500/40 bg-yellow-500/5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={clUrl(block.imageId, 700)}
+              alt={block.name}
+              className="w-full h-auto object-cover"
+              loading="lazy"
+            />
+          </div>
+        )}
+        <div className="rounded-xl border border-yellow-500/40 bg-yellow-500/5 backdrop-blur-sm p-6">
+          {details}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-xl border border-yellow-500/40 bg-yellow-500/5 backdrop-blur-sm overflow-hidden flex flex-col h-full">
       {block.imageId && (
@@ -341,36 +413,11 @@ function PersonCard({ block }: { block: Extract<NewsBlock, { type: "person" }> }
         <img
           src={clUrl(block.imageId, 700)}
           alt={block.name}
-          className="w-full aspect-[5/6] object-cover"
+          className="w-full aspect-[3/4] object-cover"
           loading="lazy"
         />
       )}
-      <div className="p-6 flex-1 flex flex-col">
-        {block.role && (
-          <p className="text-yellow-500 text-xs uppercase tracking-[0.14em] font-semibold mb-1">
-            {block.role}
-          </p>
-        )}
-        <h3 className="text-2xl font-bold text-white tracking-wide">{block.name}</h3>
-        {block.subtitle && (
-          <p className="text-sm text-neutral-400 mt-1 italic">{block.subtitle}</p>
-        )}
-        {block.facts.length > 0 && (
-          <dl className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-            {block.facts.map((f, i) => (
-              <div key={i}>
-                <dt className="text-neutral-500 uppercase text-xs tracking-wider">{f.label}</dt>
-                <dd className="text-white font-medium">{f.value}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
-        {block.note && (
-          <div className="mt-5 pt-5 border-t border-yellow-500/20 text-sm text-neutral-300">
-            <InlineText text={block.note} />
-          </div>
-        )}
-      </div>
+      <div className="p-6 flex-1 flex flex-col">{details}</div>
     </div>
   );
 }
@@ -390,22 +437,23 @@ export default function NewsBlocks({ blocks }: { blocks: NewsBlock[] }) {
 
   return (
     <div className="space-y-6 text-neutral-300 text-lg leading-relaxed">
-      {groups.map((g, i) =>
-        Array.isArray(g) ? (
-          <div
-            key={i}
-            className={`grid grid-cols-1 gap-6 pt-2 ${
-              g.length === 1 ? "md:grid-cols-[minmax(0,32rem)]" : "md:grid-cols-2"
-            }`}
-          >
+      {groups.map((g, i) => {
+        if (!Array.isArray(g)) return <BlockRenderer key={i} block={g} />;
+        // Jedna osoba: pozioma karta na pełną szerokość. Kilka: kafelki obok siebie.
+        if (g.length === 1) {
+          const person = g[0] as Extract<NewsBlock, { type: "person" }>;
+          return <PersonCard key={i} block={person} layout="wide" />;
+        }
+        return (
+          // max-w ogranicza kafelki, żeby zdjęcia nie rosły do absurdalnych
+          // rozmiarów na szerokich ekranach (spójna skala ze stronami zajęć).
+          <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 max-w-4xl">
             {g.map((b, j) => (
-              <BlockRenderer key={j} block={b} />
+              <PersonCard key={j} block={b as Extract<NewsBlock, { type: "person" }>} />
             ))}
           </div>
-        ) : (
-          <BlockRenderer key={i} block={g} />
-        )
-      )}
+        );
+      })}
     </div>
   );
 }
