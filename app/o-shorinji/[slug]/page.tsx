@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ArticlePage from "../../../components/ArticlePage";
 import { o_shorinji } from "../../../data/articles/o-shorinji";
-import { resolveArticleBlocks } from "../../../lib/articleContent";
+import {
+  getArticleOverride,
+  resolveArticleBlocks,
+  resolveArticleGroup,
+} from "../../../lib/articleContent";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -13,24 +17,31 @@ export async function generateStaticParams() {
   return o_shorinji.articles.map((a) => ({ slug: a.slug }));
 }
 
+// Tytuł i opis dla wyszukiwarek biorą pod uwagę nadpisanie z panelu -
+// wcześniej szły wyłącznie z kodu, więc zmiana tytułu w panelu nie
+// zmieniała <title> ani opisu w wynikach wyszukiwania.
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
-  const article = o_shorinji.articles.find((a) => a.slug === slug);
-  if (!article) return { title: "Nie znaleziono" };
+  const base = o_shorinji.articles.find((a) => a.slug === slug);
+  if (!base) return { title: "Nie znaleziono" };
+  const override = await getArticleOverride("o-shorinji", slug);
   return {
-    title: article.title,
-    description: article.intro,
+    title: override?.title?.trim() || base.title,
+    description: override?.intro?.trim() || base.intro,
     alternates: { canonical: `/o-shorinji/${slug}` },
   };
 }
 
 export default async function Page({ params }: Params) {
   const { slug } = await params;
-  const idx = o_shorinji.articles.findIndex((a) => a.slug === slug);
+  // Grupa z nadpisaniami - żeby linki poprzedni/następny pokazywały
+  // tytuły zmienione w panelu, a nie bazowe z kodu.
+  const group = await resolveArticleGroup(o_shorinji);
+  const idx = group.articles.findIndex((a) => a.slug === slug);
   if (idx === -1) notFound();
   const article = await resolveArticleBlocks("o-shorinji", slug, o_shorinji.articles[idx]);
-  const prev = idx > 0 ? o_shorinji.articles[idx - 1] : undefined;
-  const next = idx < o_shorinji.articles.length - 1 ? o_shorinji.articles[idx + 1] : undefined;
+  const prev = idx > 0 ? group.articles[idx - 1] : undefined;
+  const next = idx < group.articles.length - 1 ? group.articles[idx + 1] : undefined;
   return (
     <ArticlePage
       topic="o-shorinji"

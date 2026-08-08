@@ -1,4 +1,5 @@
-import type { Article } from "../data/articles/types";
+import { cache } from "react";
+import type { Article, ArticleGroup } from "../data/articles/types";
 import { getSupabaseAdmin } from "./supabaseAdmin";
 import { parseMarkdownToSections } from "./markdown";
 import { sectionsToBlocks } from "./blockConvert";
@@ -18,30 +19,91 @@ export type ArticleOverrideRow = {
   updated_at?: string;
 };
 
-/** Pobiera nadpisanie treści (z Supabase) dla danej podstrony. null = brak / błąd / brak konfiguracji. */
-export async function getArticleOverride(
-  topic: string,
-  slug: string,
-): Promise<ArticleOverrideRow | null> {
-  const sb = getSupabaseAdmin();
-  if (!sb) return null;
-  try {
-    const { data, error } = await sb
-      .from(TABLE)
-      .select("*")
-      .eq("topic", topic)
-      .eq("slug", slug)
-      .abortSignal(AbortSignal.timeout(6000))
-      .maybeSingle();
-    if (error) {
-      console.warn(`[articleContent] odczyt ${topic}/${slug}:`, error.message);
+/**
+ * Pobiera nadpisanie treści (z Supabase) dla danej podstrony.
+ * null = brak / błąd / brak konfiguracji.
+ *
+ * `cache()` deduplikuje odczyt w obrębie jednego renderu - generateMetadata
+ * i komponent strony pytają o to samo, a zapytanie leci raz.
+ */
+export const getArticleOverride = cache(
+  async (topic: string, slug: string): Promise<ArticleOverrideRow | null> => {
+    const sb = getSupabaseAdmin();
+    if (!sb) return null;
+    try {
+      const { data, error } = await sb
+        .from(TABLE)
+        .select("*")
+        .eq("topic", topic)
+        .eq("slug", slug)
+        .abortSignal(AbortSignal.timeout(6000))
+        .maybeSingle();
+      if (error) {
+        console.warn(`[articleContent] odczyt ${topic}/${slug}:`, error.message);
+        return null;
+      }
+      return (data as ArticleOverrideRow) ?? null;
+    } catch (e) {
+      console.warn(`[articleContent] wyjątek przy ${topic}/${slug}:`, e);
       return null;
     }
-    return (data as ArticleOverrideRow) ?? null;
-  } catch (e) {
-    console.warn(`[articleContent] wyjątek przy ${topic}/${slug}:`, e);
-    return null;
-  }
+  },
+);
+
+/**
+ * Tytuły i wstępy wszystkich nadpisań w obrębie tematu - jednym zapytaniem.
+ * Używane przez listing tematu i nawigację poprzedni/następny.
+ */
+export const getTopicOverrides = cache(
+  async (topic: string): Promise<Map<string, { title: string | null; intro: string | null }>> => {
+    const sb = getSupabaseAdmin();
+    if (!sb) return new Map();
+    try {
+      const { data, error } = await sb
+        .from(TABLE)
+        .select("slug,title,intro")
+        .eq("topic", topic)
+        .abortSignal(AbortSignal.timeout(6000));
+      if (error) throw error;
+      return new Map(
+        (data ?? []).map((r) => [
+          String(r.slug),
+          { title: r.title as string | null, intro: r.intro as string | null },
+        ]),
+      );
+    } catch (e) {
+      console.warn(`[articleContent] nadpisania tematu ${topic}:`, e);
+      return new Map();
+    }
+  },
+);
+
+/**
+ * Grupa tematyczna z uwzględnieniem nadpisań z panelu: tytuł i wstęp
+ * każdego artykułu bierzemy z bazy, gdy tam są.
+ *
+ * Bez tego listing tematu (kafelki), metadane SEO i nawigacja
+ * poprzedni/następny pokazywały wersję z kodu - redaktor zmieniał tytuł
+ * w panelu, widział zmianę na samej podstronie, a na liście dalej stary.
+ *
+ * Z kodu pochodzi nadal kolejność, slugi i zestaw artykułów - tego panel
+ * na razie nie edytuje.
+ */
+export async function resolveArticleGroup(group: ArticleGroup): Promise<ArticleGroup> {
+  const overrides = await getTopicOverrides(group.topic);
+  if (!overrides.size) return group;
+  return {
+    ...group,
+    articles: group.articles.map((a) => {
+      const ov = overrides.get(a.slug);
+      if (!ov) return a;
+      return {
+        ...a,
+        title: ov.title?.trim() || a.title,
+        intro: ov.intro?.trim() || a.intro,
+      };
+    }),
+  };
 }
 
 export interface ResolvedArticle {
