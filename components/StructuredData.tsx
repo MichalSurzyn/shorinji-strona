@@ -5,7 +5,7 @@ import {
   SITE_DESCRIPTION,
   SOCIAL_LINKS,
 } from "../lib/site";
-import { SCHEDULE } from "../data/schedule";
+import type { ScheduleSlot } from "../data/schedule";
 
 const LOGO_URL = `${SITE_URL}/SOEN.jpg`;
 
@@ -23,9 +23,9 @@ const ISO_DAY_TO_SCHEMA: Record<number, string> = {
  * Buduje listę godzin otwarcia (treningów) na podstawie planu zajęć.
  * Dla każdego dnia bierze najwcześniejszy start i najpóźniejszy koniec.
  */
-function openingHours() {
+function openingHours(slots: ScheduleSlot[]) {
   const byDay = new Map<number, { start: string; end: string }>();
-  for (const slot of SCHEDULE) {
+  for (const slot of slots) {
     const current = byDay.get(slot.day);
     if (!current) {
       byDay.set(slot.day, { start: slot.start, end: slot.end });
@@ -50,8 +50,13 @@ function openingHours() {
  * Dane strukturalne JSON-LD dla wyszukiwarek (lokalne SEO).
  * Renderowane site-wide w layout, opisuje krakowskie dōjō jako
  * SportsActivityLocation (podtyp LocalBusiness).
+ *
+ * `slots` przekazuje layout z getSchedule(), czyli z harmonogramu
+ * zapisanego w panelu. Wcześniej komponent importował SCHEDULE wprost
+ * z kodu i godziny podawane wyszukiwarkom rozjeżdżały się z tymi,
+ * które widział odwiedzający po edycji planu w panelu.
  */
-export default function StructuredData() {
+export default function StructuredData({ slots }: { slots: ScheduleSlot[] }) {
   const data = {
     "@context": "https://schema.org",
     "@type": "SportsActivityLocation",
@@ -80,7 +85,7 @@ export default function StructuredData() {
       SOCIAL_LINKS.instagram,
       SOCIAL_LINKS.youtube,
     ],
-    openingHoursSpecification: openingHours(),
+    openingHoursSpecification: openingHours(slots),
   };
 
   return (

@@ -7,6 +7,7 @@ import VerticalKanji from "@/components/VerticalKanji";
 import StructuredData from "../components/StructuredData";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "../lib/site";
 import { getNavTree } from "../lib/navigation";
+import { getSchedule } from "../lib/schedule";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -63,13 +64,14 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Menu z bazy danych (edytowalne w panelu), z fallbackiem do kodu.
-  const navLinks = await getNavTree();
+  // Menu i harmonogram z bazy danych (edytowalne w panelu), z fallbackiem
+  // do kodu. Oba odczyty równolegle - nie zależą od siebie.
+  const [navLinks, scheduleSlots] = await Promise.all([getNavTree(), getSchedule()]);
 
   return (
     <html lang="pl">
       <body className={`${inter.className} bg-neutral-900 text-white min-h-screen flex flex-col`}>
-        <StructuredData />
+        <StructuredData slots={scheduleSlots} />
         <Navbar links={navLinks} />
         {/* Zawartość główna strony (flex-grow wypycha stopkę na dół) */}
         <main className="flex-grow">
