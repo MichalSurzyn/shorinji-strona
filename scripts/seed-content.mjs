@@ -28,7 +28,28 @@ function parseEnv(txt) {
   return out;
 }
 
-const env = parseEnv(readFileSync(join(ROOT, ".env.local"), "utf8"));
+// Next.js czyta .env.local ORAZ .env (pierwszy ma pierwszeństwo). Skrypt
+// robi tak samo - wcześniej wymagał .env.local i wywalał się wyjątkiem
+// ENOENT w projekcie, w którym zmienne siedzą w .env.
+function loadEnv() {
+  const merged = {};
+  for (const name of [".env", ".env.local"]) {
+    try {
+      Object.assign(merged, parseEnv(readFileSync(join(ROOT, name), "utf8")));
+    } catch (e) {
+      if (e.code !== "ENOENT") throw e;
+    }
+  }
+  if (!Object.keys(merged).length) {
+    throw new Error(`Brak pliku .env lub .env.local w ${ROOT}`);
+  }
+  return merged;
+}
+
+const env = loadEnv();
+for (const required of ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]) {
+  if (!env[required]) throw new Error(`Brak zmiennej ${required} w .env / .env.local`);
+}
 const URL_ = env.NEXT_PUBLIC_SUPABASE_URL.replace(/\/$/, "");
 const KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 const H = {
