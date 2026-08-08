@@ -4,10 +4,15 @@ import { DEFAULT_NAV, type NavItemRow, type NavLink } from "./navTypes";
 const CENNIK_ROUTE = "/zajecia/cennik";
 
 /**
- * CENNIK ma ZAWSZE być podpozycją ZAJĘĆ:
- *  - stary top-level link /cennik jest przenoszony do dropdownu,
- *  - gdy cennika nie ma nigdzie w menu (np. usunięty w panelu), jest dodawany,
- *  - stare adresy /cennik są ujednolicane na /zajecia/cennik.
+ * Migracja starego adresu cennika w menu (cennik przeniesiony pod ZAJĘCIA
+ * w 07.2026):
+ *  - adres /cennik jest ujednolicany na /zajecia/cennik,
+ *  - link, który został na najwyższym poziomie, wędruje do dropdownu ZAJĘĆ.
+ *
+ * UWAGA: ta funkcja NICZEGO do menu nie dodaje. Wcześniej dokładała CENNIK
+ * przy każdym renderze, gdy go nie znalazła - przez co usunięcie cennika
+ * w panelu nie działało: kod cofał tę decyzję. Menu pochodzi z panelu
+ * (nav_items) i to panel rozstrzyga, co jest widoczne.
  */
 function normalizeNavTree(tree: NavLink[]): NavLink[] {
   const isCennik = (href?: string) => href === "/cennik" || href === CENNIK_ROUTE;
@@ -19,20 +24,19 @@ function normalizeNavTree(tree: NavLink[]): NavLink[] {
       : item.dropdown,
   }));
 
+  // Bez cennika na najwyższym poziomie nie ma czego migrować.
   const cennikIndex = nextTree.findIndex((item) => isCennik(item.href));
-  const zajecia = nextTree.find((item) => item.label.trim().toUpperCase() === "ZAJĘCIA");
+  if (cennikIndex === -1) return nextTree;
 
-  if (zajecia) {
-    if (!zajecia.dropdown) zajecia.dropdown = [];
-    if (!zajecia.dropdown.some((child) => isCennik(child.href))) {
-      zajecia.dropdown.push({
-        href: CENNIK_ROUTE,
-        label: cennikIndex !== -1 ? nextTree[cennikIndex].label : "CENNIK",
-      });
-    }
-    // Top-level cennik znika dopiero, gdy jest już w dropdownie ZAJĘĆ.
-    if (cennikIndex !== -1) nextTree.splice(cennikIndex, 1);
+  // Bez pozycji ZAJĘCIA nie ma dokąd go przenieść - zostaje, gdzie jest.
+  const zajecia = nextTree.find((item) => item.label.trim().toUpperCase() === "ZAJĘCIA");
+  if (!zajecia) return nextTree;
+
+  if (!zajecia.dropdown) zajecia.dropdown = [];
+  if (!zajecia.dropdown.some((child) => isCennik(child.href))) {
+    zajecia.dropdown.push({ href: CENNIK_ROUTE, label: nextTree[cennikIndex].label });
   }
+  nextTree.splice(cennikIndex, 1);
 
   return nextTree;
 }
