@@ -21,6 +21,17 @@ export interface CloudFolder {
   path: string;
 }
 
+/** Folder w widoku kafelków: z okładką i liczbą zdjęć. */
+export interface CloudFolderPodglad extends CloudFolder {
+  /** Rodzaj folderu - decyduje o opisie w panelu. */
+  rodzaj: "galeria" | "strona";
+  /** Nazwa bez przedrostka technicznego, np. „Pokazy". */
+  nazwaKrotka: string;
+  /** publicId pierwszego zdjęcia albo null dla pustego folderu. */
+  okladka: string | null;
+  liczba: number;
+}
+
 /**
  * Foldery dostępne w panelu: podfoldery "Galeria" (zakładki publicznej
  * galerii) oraz drzewo "Strona/<temat>/<slug>" (zdjęcia podstron).
@@ -97,6 +108,55 @@ export async function listImages(folderPath: string): Promise<CloudImage[]> {
     console.warn("listImages:", e);
     return [];
   }
+}
+
+/**
+ * Foldery razem z okładką i liczbą zdjęć - do widoku kafelków w panelu.
+ *
+ * Zamiast jednego zapytania na folder pobieramy zasoby hurtem i grupujemy
+ * po `asset_folder`. Przy kilkunastu folderach to różnica między jednym
+ * a kilkunastoma wywołaniami Cloudinary.
+ */
+export async function listFolderPreviews(): Promise<CloudFolderPodglad[]> {
+  await requireUser();
+  const foldery = await listImageFolders();
+
+  const licznik = new Map<string, { liczba: number; okladka: string | null }>();
+  try {
+    const result = await cloudinary.api.resources({
+      resource_type: "image",
+      type: "upload",
+      max_results: 500,
+      direction: "desc",
+    });
+    for (const r of (result.resources ?? []) as (CloudResource & {
+      asset_folder?: string;
+    })[]) {
+      const f = r.asset_folder;
+      if (!f) continue;
+      const biezace = licznik.get(f) ?? { liczba: 0, okladka: null };
+      biezace.liczba += 1;
+      if (!biezace.okladka) biezace.okladka = r.public_id;
+      licznik.set(f, biezace);
+    }
+  } catch (e) {
+    // Bez liczników widok nadal działa - pokaże foldery bez okładek.
+    console.warn("listFolderPreviews:", e);
+  }
+
+  return foldery.map((f) => {
+    const dane = licznik.get(f.path) ?? { liczba: 0, okladka: null };
+    const galeria = f.path.startsWith("Galeria");
+    // "Galeria / Pokazy" -> "Pokazy"; "Strona / buddyzm / podstawy" -> "buddyzm / podstawy"
+    const nazwaKrotka = f.name.replace(/^(Galeria|Strona)\s*\/\s*/, "");
+    return {
+      ...f,
+      rodzaj: galeria ? ("galeria" as const) : ("strona" as const),
+      nazwaKrotka,
+      okladka: dane.okladka,
+      liczba: dane.liczba,
+    };
+  });
 }
 
 export async function createImageFolder(name: string) {
