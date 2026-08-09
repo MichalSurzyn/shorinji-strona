@@ -8,10 +8,39 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export async function getGalleryFolders() {
+export interface GalleryFolder {
+  name: string;
+  path: string;
+  /** Do trzech zdjęć na okładkę albumu (nałożone na siebie). */
+  covers: string[];
+  count: number;
+}
+
+export async function getGalleryFolders(): Promise<GalleryFolder[]> {
   try {
     const { folders } = await cloudinary.api.sub_folders('Galeria');
-    return folders.map((f: { name: string; path: string }) => ({ name: f.name, path: f.path }));
+    const lista = folders as { name: string; path: string }[];
+
+    // Zdjęcia wszystkich albumów jednym zapytaniem, zamiast jednego na album.
+    const wszystkie = await cloudinary.search
+      .expression('folder:Galeria/*')
+      .sort_by('created_at', 'desc')
+      .max_results(500)
+      .execute();
+
+    const wgFolderu = new Map<string, string[]>();
+    for (const r of (wszystkie.resources ?? []) as { public_id: string; folder?: string; asset_folder?: string }[]) {
+      const f = r.asset_folder ?? r.folder;
+      if (!f) continue;
+      const biezace = wgFolderu.get(f) ?? [];
+      biezace.push(r.public_id);
+      wgFolderu.set(f, biezace);
+    }
+
+    return lista.map((f) => {
+      const zdjecia = wgFolderu.get(f.path) ?? [];
+      return { name: f.name, path: f.path, covers: zdjecia.slice(0, 3), count: zdjecia.length };
+    });
   } catch (error) {
     console.error("Błąd pobierania folderów:", error);
     return [];

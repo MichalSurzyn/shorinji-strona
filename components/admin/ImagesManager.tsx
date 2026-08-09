@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   createImageFolder,
   deleteImage,
+  deleteImageFolder,
   getUploadSignature,
   listFolderPreviews,
   listImages,
@@ -119,6 +120,56 @@ export default function ImagesManager() {
       text: `Utworzono zakładkę „${name}". Wgraj do niej zdjęcia - pusta zakładka nie pokaże się na stronie.`,
     });
     odswiezFoldery();
+  }
+
+  /**
+   * Usuwa zakładkę galerii. Pierwsze wywołanie serwera niczego nie kasuje -
+   * zwraca liczbę zdjęć, żeby pytanie mówiło o realnym skutku, a nie
+   * o abstrakcyjnym „folderze".
+   */
+  async function handleDeleteFolder(f: CloudFolderPodglad) {
+    setMsg(null);
+    try {
+      const wstepny = await deleteImageFolder(f.path, false);
+
+      if (!wstepny.ok && "error" in wstepny) {
+        setMsg({ ok: false, text: wstepny.error });
+        return;
+      }
+
+      if (!wstepny.ok && "wymagaPotwierdzenia" in wstepny) {
+        const ile = wstepny.liczba;
+        if (
+          !confirm(
+            `Usunąć zakładkę „${f.nazwaKrotka}" razem z ${ile} ${ile === 1 ? "zdjęciem" : "zdjęciami"}?\n\n` +
+              "Zdjęcia znikną ze strony wszędzie, gdzie były użyte.\n\n" +
+              "Tej operacji nie da się cofnąć."
+          )
+        )
+          return;
+      } else if (
+        !confirm(`Usunąć pustą zakładkę „${f.nazwaKrotka}"?\n\nZniknie z galerii na stronie.`)
+      ) {
+        return;
+      }
+
+      const res = await deleteImageFolder(f.path, true);
+      if (!res.ok) {
+        setMsg({ ok: false, text: "error" in res ? res.error : "Nie udało się usunąć zakładki." });
+        return;
+      }
+      setMsg({
+        ok: true,
+        text:
+          res.usunieto > 0
+            ? `Usunięto zakładkę „${f.nazwaKrotka}" i ${res.usunieto} ${res.usunieto === 1 ? "zdjęcie" : "zdjęć"}.`
+            : `Usunięto pustą zakładkę „${f.nazwaKrotka}".`,
+      });
+      if (otwarty?.path === f.path) setOtwarty(null);
+      odswiezFoldery();
+    } catch (e) {
+      setMsg({ ok: false, text: opiszBlad(e, "usunąć zakładki") });
+    }
   }
 
   async function handleDelete(publicId: string) {
@@ -350,37 +401,39 @@ export default function ImagesManager() {
   }
 
   /* ---------------- Widok listy folderów ---------------- */
+  /** Kafelek folderu. Usuwanie tylko dla zakladek galerii - foldery zdjec
+   *  podstron sa powiazane z trescia stron. */
   const Kafelek = ({ f }: { f: CloudFolderPodglad }) => (
-    <button
-      onClick={() => setOtwarty(f)}
-      className="group text-left rounded-2xl border border-slate-200 bg-white overflow-hidden hover:border-indigo-400 hover:shadow-md transition-all"
-    >
-      <div className="aspect-[4/3] bg-slate-100 flex items-center justify-center overflow-hidden">
-        {f.okladka ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={clThumb(f.okladka, 400)}
-            alt=""
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <span aria-hidden className="text-4xl text-slate-300">
-            ▢
+    <div className="group relative rounded-2xl border border-slate-200 bg-white overflow-hidden hover:border-indigo-400 hover:shadow-md transition-all">
+      <button onClick={() => setOtwarty(f)} className="block w-full text-left">
+        <span className="flex aspect-[4/3] bg-slate-100 items-center justify-center overflow-hidden">
+          {f.okladka ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={clThumb(f.okladka, 400)} alt="" className="w-full h-full object-cover" loading="lazy" />
+          ) : (
+            <span aria-hidden className="text-4xl text-slate-300">▢</span>
+          )}
+        </span>
+        <span className="block px-4 py-3">
+          <span className="block font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
+            {f.nazwaKrotka}
           </span>
-        )}
-      </div>
-      <div className="px-4 py-3">
-        <p className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
-          {f.nazwaKrotka}
-        </p>
-        <p className="text-sm text-slate-500">
-          {f.liczba === 0
-            ? "pusty"
-            : `${f.liczba} ${f.liczba === 1 ? "zdjęcie" : "zdjęć"}`}
-        </p>
-      </div>
-    </button>
+          <span className="block text-sm text-slate-500">
+            {f.liczba === 0 ? "pusta" : `${f.liczba} ${f.liczba === 1 ? "zdjęcie" : "zdjęć"}`}
+          </span>
+        </span>
+      </button>
+      {f.rodzaj === "galeria" && (
+        <button
+          onClick={() => handleDeleteFolder(f)}
+          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 hover:bg-red-600 text-white text-sm transition-colors"
+          aria-label={`Usuń zakładkę ${f.nazwaKrotka}`}
+          title="Usuń tę zakładkę galerii"
+        >
+          ✕
+        </button>
+      )}
+    </div>
   );
 
   return (

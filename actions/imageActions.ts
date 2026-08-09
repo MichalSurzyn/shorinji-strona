@@ -172,6 +172,63 @@ export async function createImageFolder(name: string) {
   }
 }
 
+/**
+ * Usuwa folder galerii razem z zawartością.
+ *
+ * Dwa kroki, bo Cloudinary nie skasuje folderu, w którym cokolwiek jest.
+ * Cloud działa w trybie dynamic folders - public_id nie zawiera ścieżki,
+ * więc kasowanie „po prefiksie" tu nie zadziała i trzeba wskazać zasoby
+ * po identyfikatorach.
+ *
+ * Pierwsze wywołanie bez `potwierdzone` niczego nie usuwa - zwraca liczbę
+ * zdjęć, żeby panel mógł zapytać wprost: „usuniesz 28 zdjęć".
+ */
+export async function deleteImageFolder(
+  path: string,
+  potwierdzone = false
+): Promise<
+  | { ok: true; usunieto: number }
+  | { ok: false; error: string }
+  | { ok: false; wymagaPotwierdzenia: true; liczba: number }
+> {
+  await requireUser();
+
+  // Foldery podstron odpowiadają treści serwisu - ich usunięcie zostawiłoby
+  // strony z odnośnikami do nieistniejących zdjęć.
+  if (!path.startsWith("Galeria/")) {
+    return {
+      ok: false as const,
+      error:
+        "Usuwać można tylko zakładki galerii. Foldery zdjęć podstron są powiązane z treścią strony.",
+    };
+  }
+
+  try {
+    const zasoby = await cloudinary.api.resources_by_asset_folder(path, {
+      max_results: 500,
+    });
+    const publicIds = ((zasoby.resources ?? []) as CloudResource[]).map((r) => r.public_id);
+
+    if (publicIds.length && !potwierdzone) {
+      return { ok: false as const, wymagaPotwierdzenia: true as const, liczba: publicIds.length };
+    }
+
+    // delete_resources przyjmuje najwyżej 100 identyfikatorów naraz.
+    for (let i = 0; i < publicIds.length; i += 100) {
+      await cloudinary.api.delete_resources(publicIds.slice(i, i + 100));
+    }
+    await cloudinary.api.delete_folder(path);
+    return { ok: true as const, usunieto: publicIds.length };
+  } catch (e) {
+    console.warn("deleteImageFolder:", e);
+    return {
+      ok: false as const,
+      error:
+        "Nie udało się usunąć zakładki. Jeśli błąd się powtórzy, przekaż to osobie technicznej.",
+    };
+  }
+}
+
 export async function deleteImage(publicId: string) {
   await requireUser();
   try {

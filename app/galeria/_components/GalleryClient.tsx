@@ -1,121 +1,195 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { CldImage } from 'next-cloudinary';
-import Masonry from 'react-masonry-css';
-import { getImagesFromFolder } from '../../../actions/galleryActions';
+import { useEffect, useRef, useState } from "react";
+import { CldImage } from "next-cloudinary";
+import Masonry from "react-masonry-css";
+import { getImagesFromFolder, type GalleryFolder } from "../../../actions/galleryActions";
 
-interface Folder {
-  name: string;
-  path: string;
+/**
+ * Galeria w dwóch widokach.
+ *
+ * 1. Albumy - kafelki ze zdjęciami nałożonymi na siebie, jak stos odbitek.
+ * 2. Album otwarty - te same zdjęcia rozlane w siatkę.
+ *
+ * Wcześniej był tylko pasek zakładek na górze i jedna siatka. Przy kilku
+ * albumach nie widać było, co jest w środku, dopóki się nie kliknęło.
+ */
+
+const KOLUMNY = { default: 4, 1280: 3, 768: 2, 640: 1 };
+
+/** Album „Wszystkie zdjęcia" - wirtualny, zbiera zawartość pozostałych. */
+const WSZYSTKIE = "all";
+
+function Stos({ covers, alt }: { covers: string[]; alt: string }) {
+  // Trzy zdjęcia lekko obrócone, żeby kafelek wyglądał jak stos odbitek.
+  // Puste albumy dostają zaślepkę zamiast pustego prostokąta.
+  const obroty = ["-rotate-6", "rotate-3", "rotate-0"];
+  const widoczne = covers.slice(0, 3);
+
+  if (!widoczne.length) {
+    return (
+      <div className="aspect-square rounded-xl border border-neutral-800 bg-neutral-900 flex items-center justify-center">
+        <span aria-hidden className="text-4xl text-neutral-700">
+          ▢
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative aspect-square">
+      {widoczne.map((publicId, i) => (
+        <div
+          key={publicId}
+          className={`absolute inset-0 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900 shadow-lg transition-transform duration-500 ${obroty[i]} group-hover:rotate-0`}
+          style={{ zIndex: i, scale: `${1 - (widoczne.length - 1 - i) * 0.04}` }}
+        >
+          <CldImage
+            width="600"
+            height="600"
+            src={publicId}
+            sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw"
+            alt={i === widoczne.length - 1 ? alt : ""}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ))}
+    </div>
+  );
 }
 
-interface GalleryClientProps {
-  folders: Folder[];
-}
+export default function GalleryClient({ folders }: { folders: GalleryFolder[] }) {
+  const [otwarty, setOtwarty] = useState<GalleryFolder | null>(null);
+  // Raz wczytany album zostaje w pamięci - powrót do niego nie kosztuje
+  // kolejnego zapytania do Cloudinary.
+  const [cache, setCache] = useState<Record<string, string[]>>({});
+  // Albumy, o które już zapytaliśmy. Referencja, nie stan - nic w renderze
+  // od tego nie zależy, a stan wymuszałby zapis wewnątrz efektu i kaskadę
+  // renderów.
+  const wZapytaniu = useRef<Set<string>>(new Set());
 
-export default function GalleryClient({ folders }: GalleryClientProps) {
-  // Dodajemy wirtualny folder "Wszystkie" (z gwiazdką) na sam początek listy zakładek
-  const allTabs = [{ name: '*', path: 'all' }, ...folders];
-  
-  // Domyślnie ładujemy gwiazdkę (wszystkie zdjęcia)
-  const [activeFolder, setActiveFolder] = useState<Folder>(allTabs[0]);
-  const [images, setImages] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // PAMIĘĆ PODRĘCZNA (CACHE) dla API
-  // Kiedy raz załadujesz zakładkę, zdjęcia zapisują się tutaj. 
-  // Wróć do niej, a załaduje się natychmiast, za 0 zapytań do API Cloudinary!
-  const [imageCache, setImageCache] = useState<Record<string, string[]>>({});
+  // Lista zdjęć jest WYPROWADZONA z pamięci podręcznej, nie trzymana osobno.
+  const images = otwarty ? cache[otwarty.path] : undefined;
+  const isLoading = !!otwarty && images === undefined;
 
   useEffect(() => {
-    const fetchImages = async () => {
-      // Optymalizacja: Sprawdzamy, czy mamy już te zdjęcia w naszej pamięci
-      if (imageCache[activeFolder.path]) {
-        setImages(imageCache[activeFolder.path]);
-        return; 
-      }
+    if (!otwarty) return;
+    const sciezka = otwarty.path;
+    if (cache[sciezka] !== undefined || wZapytaniu.current.has(sciezka)) return;
+    wZapytaniu.current.add(sciezka);
 
-      setIsLoading(true);
-      const publicIds = await getImagesFromFolder(activeFolder.path);
-      
-      // Zapisujemy nowy wynik do pamięci podręcznej oraz do wyświetlenia
-      setImageCache(prev => ({ ...prev, [activeFolder.path]: publicIds }));
-      setImages(publicIds);
-      setIsLoading(false);
+    let aktualne = true;
+    getImagesFromFolder(sciezka)
+      .then((publicIds) => {
+        if (aktualne) setCache((p) => ({ ...p, [sciezka]: publicIds }));
+      })
+      .catch(() => {
+        // Pusta tablica zamiast wiecznego „wczytywanie" - odwiedzający
+        // dostanie komunikat o pustym albumie zamiast zawieszonej strony.
+        if (aktualne) setCache((p) => ({ ...p, [sciezka]: [] }));
+      });
+    return () => {
+      aktualne = false;
     };
+  }, [otwarty, cache]);
 
-    fetchImages();
-  }, [activeFolder, imageCache]);
+  const wszystkieZdjec = folders.reduce((s, f) => s + f.count, 0);
 
-  const breakpointColumnsObj = {
-    default: 4,
-    1280: 3,
-    768: 2,
-    640: 1
+  /* ---------------- Widok albumu ---------------- */
+  if (otwarty) {
+    return (
+      <div className="w-full">
+        <div className="flex flex-wrap items-baseline justify-between gap-4 border-b border-neutral-800 pb-4 mb-10">
+          <div>
+            <button
+              onClick={() => setOtwarty(null)}
+              className="text-sm text-neutral-400 hover:text-yellow-500 transition-colors"
+            >
+              ← Wszystkie albumy
+            </button>
+            <h2 className="text-2xl md:text-3xl font-bold text-white capitalize mt-1">
+              {otwarty.path === WSZYSTKIE ? "Wszystkie zdjęcia" : otwarty.name}
+            </h2>
+          </div>
+          {!isLoading && (images?.length ?? 0) > 0 && (
+            <p className="text-sm text-neutral-500">
+              {images!.length} {images!.length === 1 ? "zdjęcie" : "zdjęć"}
+            </p>
+          )}
+        </div>
+
+        {isLoading ? (
+          <div className="text-center text-yellow-500 py-20 animate-pulse font-bold tracking-widest uppercase">
+            Wczytywanie zdjęć...
+          </div>
+        ) : (images?.length ?? 0) === 0 ? (
+          <div className="text-center text-neutral-500 py-20">Ten album jest jeszcze pusty.</div>
+        ) : (
+          <Masonry
+            breakpointCols={KOLUMNY}
+            className="flex w-auto -ml-4"
+            columnClassName="pl-4 bg-clip-padding space-y-4"
+          >
+            {images!.map((publicId) => (
+              <div
+                key={publicId}
+                className="relative group overflow-hidden rounded-xl bg-neutral-900 border border-neutral-800"
+              >
+                <CldImage
+                  width="800"
+                  height="800"
+                  src={publicId}
+                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                  alt={`Zdjęcie z albumu ${otwarty.name}`}
+                  className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-yellow-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              </div>
+            ))}
+          </Masonry>
+        )}
+      </div>
+    );
+  }
+
+  /* ---------------- Widok albumów ---------------- */
+  const albumWszystkie: GalleryFolder = {
+    name: "Wszystkie zdjęcia",
+    path: WSZYSTKIE,
+    covers: folders.flatMap((f) => f.covers).slice(0, 3),
+    count: wszystkieZdjec,
   };
 
   return (
     <div className="w-full">
-      {/* Pasek zakładek */}
-      <div className="flex flex-wrap justify-center items-baseline gap-6 border-b border-neutral-800 pb-4 mb-10">
-        {allTabs.map((folder) => (
-          <button
-            key={folder.path}
-            onClick={() => setActiveFolder(folder)}
-            className={`font-bold uppercase tracking-wider transition-colors relative pb-2 ${
-              activeFolder.path === folder.path 
-                ? 'text-yellow-500' 
-                : 'text-neutral-400 hover:text-yellow-500'
-            }`}
-          >
-            {/* Specjalne stylowanie gwiazdki (większa, przesunięta) */}
-            {folder.name === '*' ? (
-              <span className="text-2xl md:text-3xl inline-block translate-y-2">*</span>
-            ) : (
-              <span className="text-sm md:text-base capitalize">{folder.name}</span>
-            )}
+      <header className="border-b border-neutral-800 pb-6 mb-10">
+        <p className="text-yellow-500 text-xs uppercase tracking-[0.18em] font-semibold mb-2">
+          Shorinji Kempo Kraków
+        </p>
+        <h1 className="text-4xl md:text-5xl font-bold text-white">Galeria</h1>
+        <p className="text-neutral-300 mt-2 max-w-2xl">
+          Zdjęcia z treningów, pokazów i seminariów. Wybierz album, żeby zobaczyć
+          wszystkie zdjęcia.
+        </p>
+      </header>
 
-            {/* Złota linia pokazująca się pod aktualnie wybraną zakładką */}
-            {activeFolder.path === folder.path && (
-              <span className="absolute left-0 bottom-[-17px] w-full h-[2px] bg-yellow-500"></span>
-            )}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+        {[albumWszystkie, ...folders].map((f) => (
+          <button
+            key={f.path}
+            onClick={() => setOtwarty(f)}
+            className="group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 rounded-xl"
+          >
+            <Stos covers={f.covers} alt={`Album ${f.name}`} />
+            <p className="mt-4 font-bold uppercase tracking-wider text-sm text-neutral-200 group-hover:text-yellow-500 transition-colors">
+              {f.name}
+            </p>
+            <p className="text-xs text-neutral-500 mt-0.5">
+              {f.count === 0 ? "pusty" : `${f.count} ${f.count === 1 ? "zdjęcie" : "zdjęć"}`}
+            </p>
           </button>
         ))}
       </div>
-
-      {isLoading ? (
-        <div className="text-center text-yellow-500 py-20 animate-pulse font-bold tracking-widest uppercase">
-          Wczytywanie zwojów...
-        </div>
-      ) : (
-        <Masonry
-          breakpointCols={breakpointColumnsObj}
-          className="flex w-auto -ml-4" 
-          columnClassName="pl-4 bg-clip-padding space-y-4"
-        >
-          {images.map((publicId) => (
-            <div key={publicId} className="relative group overflow-hidden rounded-xl bg-neutral-900 border border-neutral-800">
-              <CldImage
-                width="800"
-                height="800"
-                src={publicId}
-                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                alt="Galeria Shorinji Kempo"
-                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              {/* Delikatny złoty filtr po najechaniu, idealnie pasujący do paska */}
-              <div className="absolute inset-0 bg-yellow-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-            </div>
-          ))}
-        </Masonry>
-      )}
-
-      {!isLoading && images.length === 0 && (
-        <div className="text-center text-neutral-500 py-20">
-          Brak zdjęć w tym folderze.
-        </div>
-      )}
     </div>
   );
 }

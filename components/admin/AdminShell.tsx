@@ -63,7 +63,7 @@ export default function AdminShell({
           拳
         </div>
         <div className="leading-tight">
-          <div className="font-bold text-slate-900">Panel admina</div>
+          <div className="font-bold text-slate-900">Panel strony</div>
           <div className="text-xs text-slate-500">Shorinji Kempo Kraków</div>
         </div>
       </div>
