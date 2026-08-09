@@ -1,4 +1,18 @@
-@import "tailwindcss";
+/* Tailwind v4 domyślnie skanuje CAŁY projekt w poszukiwaniu nazw klas,
+   pomijając tylko to, co jest w .gitignore. Wciągał przez to katalog docs/,
+   a wystarczyło, że dokumentacja zawierała ścieżkę Windows w rodzaju
+   `...\1608beca-...`, żeby Tailwind wziął `\1608be` za sekwencję ucieczki
+   w nazwie zmiennej CSS i wywalił cały build błędem
+   "Invalid code point 1444030" wskazującym mylnie na ten plik.
+
+   Ograniczamy skanowanie do katalogów, w których faktycznie są klasy
+   (sprawdzone: className występuje wyłącznie w app/ i components/).
+   `source(none)` wyłącza automatyczne wykrywanie, `@source` dodaje katalogi
+   jawnie - dzięki temu treść dokumentacji nigdy nie zepsuje stylów. */
+@import "tailwindcss" source(none);
+
+@source "../app";
+@source "../components";
 
 /* Tailwind v4 breaking change:
    Domyślnie `hover:` używa `@media (hover: hover)`, więc na touch / w niektórych

@@ -117,14 +117,48 @@ export default function BlockEditor({
     null
   );
 
+  /**
+   * Historia stanów treści - do cofania. Trzymamy ostatnie dziesięć,
+   * bo to wystarcza na pomyłkę, a nie rośnie w nieskończoność.
+   *
+   * Cofanie zamiast pytania „na pewno?" przy każdym usunięciu: modal
+   * przy każdej operacji uczy odruchowego klikania „tak" i podnosi liczbę
+   * przypadkowych skasowań zamiast ją obniżać.
+   */
+  const historia = useRef<NewsBlock[][]>([]);
+  const [glebokosc, setGlebokosc] = useState(0);
+  const [ostatniaAkcja, setOstatniaAkcja] = useState<string | null>(null);
+
+  function zmien(next: NewsBlock[], opisAkcji?: string) {
+    historia.current = [...historia.current, value].slice(-10);
+    setGlebokosc(historia.current.length);
+    setOstatniaAkcja(opisAkcji ?? null);
+    onChange(next);
+  }
+
+  function cofnij() {
+    const poprzedni = historia.current[historia.current.length - 1];
+    if (!poprzedni) return;
+    historia.current = historia.current.slice(0, -1);
+    setGlebokosc(historia.current.length);
+    setOstatniaAkcja(null);
+    onChange(poprzedni);
+  }
+
   function update(index: number, block: NewsBlock) {
     const next = [...value];
     next[index] = block;
+    // Edycja treści pola nie trafia do historii - inaczej każde naciśnięcie
+    // klawisza byłoby osobnym krokiem i cofanie stałoby się bezużyteczne.
     onChange(next);
   }
 
   function remove(index: number) {
-    onChange(value.filter((_, i) => i !== index));
+    const usuwany = value[index];
+    zmien(
+      value.filter((_, i) => i !== index),
+      `Usunięto element: ${BLOCK_LABELS[usuwany.type]}`
+    );
   }
 
   function move(index: number, dir: -1 | 1) {
@@ -132,11 +166,11 @@ export default function BlockEditor({
     if (target < 0 || target >= value.length) return;
     const next = [...value];
     [next[index], next[target]] = [next[target], next[index]];
-    onChange(next);
+    zmien(next, "Przesunięto element");
   }
 
   function add(type: NewsBlock["type"]) {
-    onChange([...value, newBlock(type)]);
+    zmien([...value, newBlock(type)], `Dodano element: ${BLOCK_LABELS[type]}`);
     if (type === "image") setPicker({ index: value.length, multi: false });
     if (type === "gallery") setPicker({ index: value.length, multi: true });
   }
@@ -163,6 +197,25 @@ export default function BlockEditor({
 
   return (
     <div className="space-y-3">
+      {/* Pasek cofania - pojawia się dopiero, gdy jest co cofnąć */}
+      {glebokosc > 0 && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5"
+        >
+          <span className="text-sm text-slate-600">
+            {ostatniaAkcja ?? "Ostatnia zmiana w treści"}
+          </span>
+          <button
+            type="button"
+            onClick={cofnij}
+            className="rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-700 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
+          >
+            ↶ Cofnij
+          </button>
+        </div>
+      )}
+
       {/* Pomoc - formatowanie (prawy rog) */}
       <div className="flex justify-end">
         <details className="group relative z-10 text-sm">
@@ -204,9 +257,12 @@ export default function BlockEditor({
       </div>
 
       {value.length === 0 && (
-        <p className="text-sm text-slate-400 border border-dashed border-slate-300 rounded-xl p-6 text-center">
-          Brak treści - dodaj pierwszy blok poniżej.
-        </p>
+        <div className="border border-dashed border-slate-300 rounded-xl p-6 text-center">
+          <p className="text-sm font-medium text-slate-600">Ta strona jest jeszcze pusta.</p>
+          <p className="text-sm text-slate-400 mt-1">
+            Zacznij od elementu „Tekst&rdquo; poniżej - resztę dołożysz później.
+          </p>
+        </div>
       )}
 
       {value.map((block, i) => (

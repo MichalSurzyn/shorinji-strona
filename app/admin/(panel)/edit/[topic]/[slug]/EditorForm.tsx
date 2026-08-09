@@ -82,7 +82,7 @@ export default function EditorForm({
             rel="noopener noreferrer"
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 transition-colors"
           >
-            Podgląd ↗
+            Zobacz zapisaną wersję ↗
           </a>
           <button
             onClick={handleSave}
