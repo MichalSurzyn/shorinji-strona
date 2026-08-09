@@ -20,10 +20,19 @@ const KOLUMNY = { default: 4, 1280: 3, 768: 2, 640: 1 };
 /** Album „Wszystkie zdjęcia" - wirtualny, zbiera zawartość pozostałych. */
 const WSZYSTKIE = "all";
 
+/**
+ * Okładka albumu: do trzech zdjęć nałożonych na siebie, jak stos odbitek.
+ *
+ * Obrót przypisujemy według GŁĘBOKOŚCI (0 = wierzch), nie według indeksu
+ * w tablicy. Przy przypisaniu po indeksie liczba zdjęć decydowała o tym,
+ * czy wierzchnie jest przekrzywione - album z dwoma zdjęciami wyglądał jak
+ * stos, a z dwudziestoma jak pojedyncze zdjęcie.
+ *
+ * Warstwy pod spodem zostają w skali 1. Pomniejszone o 8% chowały się
+ * całkowicie: kwadrat obrócony o 6° wystaje poza swój obrys o około 5%,
+ * czyli mniej, niż zabierało pomniejszenie.
+ */
 function Stos({ covers, alt }: { covers: string[]; alt: string }) {
-  // Trzy zdjęcia lekko obrócone, żeby kafelek wyglądał jak stos odbitek.
-  // Puste albumy dostają zaślepkę zamiast pustego prostokąta.
-  const obroty = ["-rotate-6", "rotate-3", "rotate-0"];
   const widoczne = covers.slice(0, 3);
 
   if (!widoczne.length) {
@@ -36,24 +45,34 @@ function Stos({ covers, alt }: { covers: string[]; alt: string }) {
     );
   }
 
+  /** Obrót według głębokości: wierzch prosto, spód najbardziej odchylony. */
+  const obrotDlaGlebokosci = ["rotate-0", "rotate-6", "-rotate-6"];
+
   return (
     <div className="relative aspect-square">
-      {widoczne.map((publicId, i) => (
-        <div
-          key={publicId}
-          className={`absolute inset-0 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900 shadow-lg transition-transform duration-500 ${obroty[i]} group-hover:rotate-0`}
-          style={{ zIndex: i, scale: `${1 - (widoczne.length - 1 - i) * 0.04}` }}
-        >
-          <CldImage
-            width="600"
-            height="600"
-            src={publicId}
-            sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw"
-            alt={i === widoczne.length - 1 ? alt : ""}
-            className="w-full h-full object-cover"
-          />
-        </div>
-      ))}
+      {widoczne.map((publicId, i) => {
+        const glebokosc = widoczne.length - 1 - i; // 0 = wierzch
+        const naWierzchu = glebokosc === 0;
+        return (
+          <div
+            key={publicId}
+            className={`absolute inset-0 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900 transition-transform duration-500 ${
+              obrotDlaGlebokosci[glebokosc]
+            } ${naWierzchu ? "shadow-2xl shadow-black/60" : "shadow-lg"} group-hover:rotate-0`}
+            style={{ zIndex: i }}
+          >
+            <CldImage
+              width="600"
+              height="600"
+              src={publicId}
+              sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw"
+              /* Opis tylko dla wierzchniego - pozostałe są dekoracją. */
+              alt={naWierzchu ? alt : ""}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
