@@ -36,7 +36,6 @@ export default async function EditPage({ params }: Props) {
       initialTitle={ov?.title?.trim() || base.title}
       initialIntro={ov?.intro?.trim() || base.intro}
       initialBlocks={overrideToBlocks(ov) ?? baseBlocks}
-      baseBlocks={baseBlocks}
     />
   );
 }

@@ -4,7 +4,6 @@ import { organizacja } from "@/data/articles/organizacja";
 import { buddyzm } from "@/data/articles/buddyzm";
 import { EDITABLE_PAGES } from "@/lib/editablePages";
 import { listCustomPages } from "@/lib/customPages";
-import MigrateButton from "@/components/admin/MigrateButton";
 import type { ArticleGroup } from "@/data/articles/types";
 
 const GROUPS: ArticleGroup[] = [o_shorinji, organizacja, buddyzm];
@@ -15,14 +14,12 @@ export default async function AdminPagesList() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Podstrony</h1>
+        <h1 className="text-2xl font-bold">Strony</h1>
         <p className="text-slate-500 mt-1 max-w-2xl">
-          Wybierz podstronę, którą chcesz edytować. Wszystkie używają tego
-          samego edytora blokowego co aktualności.
+          Wybierz stronę, którą chcesz zmienić. Wszystkie edytuje się tak samo
+          jak aktualności.
         </p>
       </div>
-
-      <MigrateButton />
 
       <section>
         <div className="flex items-center justify-between mb-3">

@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { saveTopicArticle } from "@/app/admin/actions";
+import { opiszBlad } from "@/lib/adminErrors";
+import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import type { NewsBlock } from "@/lib/newsTypes";
 import BlockEditor from "@/components/admin/BlockEditor";
 
@@ -13,8 +15,6 @@ type Props = {
   initialTitle: string;
   initialIntro: string;
   initialBlocks: NewsBlock[];
-  /** Treść bazowa z kodu - do przycisku „Przywróć treść bazową". */
-  baseBlocks: NewsBlock[];
 };
 
 export default function EditorForm({
@@ -24,24 +24,38 @@ export default function EditorForm({
   initialTitle,
   initialIntro,
   initialBlocks,
-  baseBlocks,
 }: Props) {
   const [title, setTitle] = useState(initialTitle);
   const [intro, setIntro] = useState(initialIntro);
   const [blocks, setBlocks] = useState<NewsBlock[]>(initialBlocks);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [zapisany, setZapisany] = useState({
+    title: initialTitle,
+    intro: initialIntro,
+    blocks: initialBlocks,
+  });
+
+  const biezacy = useMemo(() => ({ title, intro, blocks }), [title, intro, blocks]);
+  const zmieniono = czyZmieniono(biezacy, zapisany);
+  useUnsavedChanges(zmieniono, title || slug);
 
   async function handleSave() {
     setSaving(true);
     setMsg(null);
-    const res = await saveTopicArticle(topic, slug, { title, intro, blocks });
-    setSaving(false);
-    setMsg(
-      res.ok
-        ? { ok: true, text: "Zapisano. Zmiana jest już widoczna na stronie." }
-        : { ok: false, text: res.error }
-    );
+    try {
+      const res = await saveTopicArticle(topic, slug, { title, intro, blocks });
+      if (res.ok) {
+        setZapisany({ title, intro, blocks });
+        setMsg({ ok: true, text: "Zapisano. Zmiana jest już widoczna na stronie." });
+      } else {
+        setMsg({ ok: false, text: opiszBlad(res.error) });
+      }
+    } catch (e) {
+      setMsg({ ok: false, text: opiszBlad(e) });
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -122,21 +136,6 @@ export default function EditorForm({
           <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
             Treść podstrony
           </h2>
-          <button
-            type="button"
-            onClick={() => {
-              if (
-                confirm(
-                  "Wczytać oryginalną treść z kodu strony? Zastąpi obecną zawartość edytora."
-                )
-              ) {
-                setBlocks(baseBlocks);
-              }
-            }}
-            className="text-xs text-slate-400 hover:text-indigo-600 transition-colors"
-          >
-            Przywróć treść bazową
-          </button>
         </div>
         <BlockEditor
           value={blocks}

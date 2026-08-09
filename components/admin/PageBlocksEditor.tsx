@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { savePageContent } from "@/actions/pageActions";
+import { opiszBlad } from "@/lib/adminErrors";
+import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import type { NewsBlock, PageContent } from "@/lib/newsTypes";
 import BlockEditor from "./BlockEditor";
 
@@ -32,17 +34,41 @@ export default function PageBlocksEditor({
   const [blocks, setBlocks] = useState<NewsBlock[]>(initialContent.blocks);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  // Ostatni stan potwierdzony zapisem - punkt odniesienia dla ostrzeżenia
+  // o niezapisanych zmianach.
+  const [zapisany, setZapisany] = useState(initialContent);
+
+  const biezacy = useMemo(
+    () => ({ kicker, title, lead, blocks }),
+    [kicker, title, lead, blocks]
+  );
+  const zmieniono = czyZmieniono(biezacy, {
+    kicker: zapisany.kicker ?? "",
+    title: zapisany.title ?? "",
+    lead: zapisany.lead ?? "",
+    blocks: zapisany.blocks,
+  });
+  useUnsavedChanges(zmieniono, label);
 
   async function handleSave() {
     setBusy(true);
     setMsg(null);
-    const res = await savePageContent(slug, { kicker, title, lead, blocks });
-    setBusy(false);
-    setMsg(
-      res.ok
-        ? { ok: true, text: "Zapisano. Zmiany są już widoczne na stronie." }
-        : { ok: false, text: res.error }
-    );
+    try {
+      const res = await savePageContent(slug, { kicker, title, lead, blocks });
+      if (res.ok) {
+        setZapisany({ kicker, title, lead, blocks });
+        setMsg({ ok: true, text: "Zapisano. Zmiany są już widoczne na stronie." });
+      } else {
+        setMsg({ ok: false, text: opiszBlad(res.error) });
+      }
+    } catch (e) {
+      // Bez tego wyjątek (wygasła sesja, brak sieci) zostawiał przycisk
+      // w stanie „Zapisywanie..." na zawsze i redaktor nie wiedział,
+      // czy tekst się zapisał.
+      setMsg({ ok: false, text: opiszBlad(e) });
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -59,6 +85,14 @@ export default function PageBlocksEditor({
           <p className="text-sm text-slate-500 mt-1 max-w-2xl">{scope}</p>
         </div>
         <div className="flex items-center gap-2">
+          {zmieniono && !busy && (
+            <span
+              role="status"
+              className="rounded-full bg-amber-100 text-amber-800 px-3 py-1 text-xs font-medium"
+            >
+              Niezapisane zmiany
+            </span>
+          )}
           <a
             href={route}
             target="_blank"

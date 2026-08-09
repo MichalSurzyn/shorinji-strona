@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   createCustomPage,
   deleteCustomPage,
   saveCustomPage,
   type CustomPageInput,
 } from "@/actions/customPageActions";
+import { opiszBlad } from "@/lib/adminErrors";
+import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import type { CustomPage } from "@/lib/customPages";
 import type { NewsBlock } from "@/lib/newsTypes";
 import BlockEditor from "./BlockEditor";
@@ -55,27 +57,54 @@ export default function CustomPageEditor({
     };
   }
 
+  // Stan potwierdzony zapisem. Dla nowej podstrony to pusty formularz,
+  // więc dopóki nic nie wpisano, ostrzeżenie się nie pojawia.
+  const [zapisany, setZapisany] = useState<CustomPageInput>({
+    slug: page?.slug ?? "",
+    title: page?.title ?? "",
+    intro: (page?.intro ?? "").trim() || null,
+    blocks: page?.blocks ?? [],
+    published: page?.published ?? true,
+    inMenu: initialInMenu,
+  });
+
+  const biezacy = useMemo(
+    () => ({ slug: slug || slugify(title), title, intro: intro.trim() || null, blocks, published, inMenu }),
+    [slug, title, intro, blocks, published, inMenu]
+  );
+  const zmieniono = czyZmieniono(biezacy, zapisany);
+  useUnsavedChanges(zmieniono, title || "nowa podstrona");
+
   async function handleSave() {
     setBusy(true);
     setMsg(null);
-    const input = buildInput();
-    if (isNew) {
-      const res = await createCustomPage(input);
-      setBusy(false);
-      if (res.ok) {
-        router.replace(`/admin/wlasne/${res.id}`);
-        router.refresh();
+    try {
+      const input = buildInput();
+      if (isNew) {
+        const res = await createCustomPage(input);
+        if (res.ok) {
+          // Po utworzeniu przechodzimy na adres edycji - stan zapisany
+          // ustawiamy najpierw, żeby ostrzeżenie o niezapisanych zmianach
+          // nie zatrzymało tej nawigacji.
+          setZapisany(input);
+          router.replace(`/admin/wlasne/${res.id}`);
+          router.refresh();
+        } else {
+          setMsg({ ok: false, text: opiszBlad(res.error, "utworzyć podstrony") });
+        }
       } else {
-        setMsg({ ok: false, text: res.error });
+        const res = await saveCustomPage(page.id, input);
+        if (res.ok) {
+          setZapisany(input);
+          setMsg({ ok: true, text: "Zapisano. Zmiany są już widoczne na stronie." });
+        } else {
+          setMsg({ ok: false, text: opiszBlad(res.error) });
+        }
       }
-    } else {
-      const res = await saveCustomPage(page.id, input);
+    } catch (e) {
+      setMsg({ ok: false, text: opiszBlad(e) });
+    } finally {
       setBusy(false);
-      setMsg(
-        res.ok
-          ? { ok: true, text: "Zapisano. Zmiany są już widoczne na stronie." }
-          : { ok: false, text: res.error }
-      );
     }
   }
 

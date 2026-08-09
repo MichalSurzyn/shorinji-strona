@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   createNewsArticle,
   deleteNewsArticle,
   saveNewsArticle,
   type NewsInput,
 } from "@/actions/newsActions";
+import { opiszBlad } from "@/lib/adminErrors";
+import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import { clThumb } from "@/lib/cloudinary";
 import type { NewsArticle, NewsBlock } from "@/lib/newsTypes";
 import BlockEditor from "./BlockEditor";
@@ -65,31 +67,66 @@ export default function ArticleEditor({
     };
   }
 
+  // Stan potwierdzony zapisem - punkt odniesienia dla ostrzeżenia
+  // o niezapisanych zmianach.
+  const [zapisany, setZapisany] = useState<NewsInput>({
+    slug: article?.slug ?? "",
+    title: article?.title ?? "",
+    excerpt: (article?.excerpt ?? "").trim() || null,
+    cover_image: article?.cover_image || null,
+    content: article?.content ?? [],
+    published: article?.published ?? true,
+    published_at: new Date(
+      toLocalInput(article?.published_at ?? new Date().toISOString())
+    ).toISOString(),
+  });
+
+  const biezacy = useMemo(
+    () => ({
+      slug: slug || slugify(title),
+      title,
+      excerpt: excerpt.trim() || null,
+      cover_image: cover || null,
+      content: blocks,
+      published,
+      published_at: new Date(publishedAt).toISOString(),
+    }),
+    [slug, title, excerpt, cover, blocks, published, publishedAt]
+  );
+  const zmieniono = czyZmieniono(biezacy, zapisany);
+  useUnsavedChanges(zmieniono, title || "nowy artykuł");
+
   async function handleSave() {
     if (!title.trim()) {
-      setMsg({ ok: false, text: "Artykuł musi mieć tytuł." });
+      setMsg({ ok: false, text: "Artykuł musi mieć tytuł. Wpisz go i zapisz jeszcze raz." });
       return;
     }
     setSaving(true);
     setMsg(null);
-    const input = buildInput();
-    if (isNew) {
-      const res = await createNewsArticle(input);
-      setSaving(false);
-      if (res.ok) {
-        router.replace(`/admin/artykuly/${res.id}`);
-        router.refresh();
+    try {
+      const input = buildInput();
+      if (isNew) {
+        const res = await createNewsArticle(input);
+        if (res.ok) {
+          setZapisany(input);
+          router.replace(`/admin/artykuly/${res.id}`);
+          router.refresh();
+        } else {
+          setMsg({ ok: false, text: opiszBlad(res.error, "utworzyć artykułu") });
+        }
       } else {
-        setMsg({ ok: false, text: `Błąd: ${res.error}` });
+        const res = await saveNewsArticle(article.id, input);
+        if (res.ok) {
+          setZapisany(input);
+          setMsg({ ok: true, text: "Zapisano. Zmiany są już widoczne na stronie." });
+        } else {
+          setMsg({ ok: false, text: opiszBlad(res.error) });
+        }
       }
-    } else {
-      const res = await saveNewsArticle(article.id, input);
+    } catch (e) {
+      setMsg({ ok: false, text: opiszBlad(e) });
+    } finally {
       setSaving(false);
-      setMsg(
-        res.ok
-          ? { ok: true, text: "Zapisano. Zmiany są już widoczne na stronie." }
-          : { ok: false, text: `Błąd: ${res.error}` }
-      );
     }
   }
 
@@ -101,12 +138,19 @@ export default function ArticleEditor({
       )
     )
       return;
-    const res = await deleteNewsArticle(article.id);
-    if (res.ok) {
-      router.replace("/admin/artykuly");
-      router.refresh();
-    } else {
-      setMsg({ ok: false, text: `Błąd usuwania: ${res.error}` });
+    try {
+      const res = await deleteNewsArticle(article.id);
+      if (res.ok) {
+        // Artykuł już nie istnieje - zdejmujemy ostrzeżenie, żeby nie
+        // blokowało powrotu na listę.
+        setZapisany(biezacy);
+        router.replace("/admin/artykuly");
+        router.refresh();
+      } else {
+        setMsg({ ok: false, text: opiszBlad(res.error, "usunąć artykułu") });
+      }
+    } catch (e) {
+      setMsg({ ok: false, text: opiszBlad(e, "usunąć artykułu") });
     }
   }
 
