@@ -22,38 +22,58 @@ interface Props {
   defaultFolder?: string;
 }
 
+/**
+ * Nazwy elementów strony widziane przez redaktora.
+ *
+ * Świadomie unikamy słowa „blok" i skrótów z kodu (H1, H2, callout).
+ * Nazwa ma mówić, CO Z TEGO WYJDZIE na stronie, a nie jak się to nazywa
+ * w formacie zapisu.
+ */
 const BLOCK_LABELS: Record<NewsBlock["type"], string> = {
-  heading: "Nagłówek",
+  heading: "Nagłówek sekcji",
   subheading: "Podtytuł",
-  paragraph: "Akapit",
-  callout: "Wyróżnienie (ramka)",
+  paragraph: "Tekst",
+  callout: "Wyróżniona ramka",
   quote: "Cytat",
-  list: "Lista",
+  list: "Lista wypunktowana",
   ordered: "Lista numerowana",
   image: "Zdjęcie",
-  gallery: "Galeria",
-  table: "Tabela opłat",
-  links: "Linki / nagrania",
-  video: "Film (YouTube)",
-  download: "Plik do pobrania",
-  person: "Osoba (karta)",
+  gallery: "Kilka zdjęć obok siebie",
+  table: "Tabela",
+  links: "Lista odnośników",
+  video: "Film z YouTube",
+  download: "Dokument do pobrania",
+  person: "Karta osoby",
+};
+
+/** Podpowiedź pod nazwą w menu dodawania - co ten element robi. */
+const BLOCK_HINTS: Partial<Record<NewsBlock["type"], string>> = {
+  paragraph: "Zwykły akapit tekstu",
+  heading: "Dzieli długi tekst na części",
+  subheading: "Mniejszy nagłówek wewnątrz sekcji",
+  callout: "Tekst na kolorowym tle, do rzeczy najważniejszych",
+  table: "Wiersze i kolumny, na przykład cennik",
+  links: "Odnośniki jeden pod drugim, na przykład nagrania",
+  download: "Nazwa dokumentu i przycisk pobierania",
+  person: "Zdjęcie, imię i opis - na przykład instruktor",
+  gallery: "Siatka zdjęć",
 };
 
 const ALL_ADD_OPTIONS: { type: NewsBlock["type"]; label: string; icon: string }[] = [
-  { type: "paragraph", label: "Akapit", icon: "¶" },
-  { type: "heading", label: "Nagłówek", icon: "H" },
+  { type: "paragraph", label: "Tekst", icon: "¶" },
+  { type: "heading", label: "Nagłówek sekcji", icon: "H" },
   { type: "subheading", label: "Podtytuł", icon: "h" },
-  { type: "list", label: "Lista", icon: "≡" },
-  { type: "ordered", label: "Lista 1-2-3", icon: "①" },
+  { type: "list", label: "Lista wypunktowana", icon: "≡" },
+  { type: "ordered", label: "Lista numerowana", icon: "①" },
   { type: "quote", label: "Cytat", icon: "❝" },
-  { type: "callout", label: "Wyróżnienie", icon: "▢" },
+  { type: "callout", label: "Wyróżniona ramka", icon: "▢" },
   { type: "image", label: "Zdjęcie", icon: "▣" },
-  { type: "gallery", label: "Galeria", icon: "▦" },
-  { type: "table", label: "Tabela opłat", icon: "𝄜" },
-  { type: "links", label: "Linki / nagrania", icon: "▶" },
-  { type: "video", label: "Film (YouTube)", icon: "🎬" },
-  { type: "download", label: "Plik do pobrania", icon: "⬇" },
-  { type: "person", label: "Osoba (karta)", icon: "👤" },
+  { type: "gallery", label: "Kilka zdjęć", icon: "▦" },
+  { type: "table", label: "Tabela", icon: "𝄜" },
+  { type: "links", label: "Lista odnośników", icon: "▶" },
+  { type: "video", label: "Film z YouTube", icon: "🎬" },
+  { type: "download", label: "Dokument do pobrania", icon: "⬇" },
+  { type: "person", label: "Karta osoby", icon: "👤" },
 ];
 
 const MODE_BLOCKS: Record<EditorMode, NewsBlock["type"][]> = {
@@ -237,8 +257,10 @@ export default function BlockEditor({
       ))}
 
       <div className="border border-dashed border-slate-300 rounded-xl p-4">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
-          Dodaj blok
+        <p className="text-sm font-semibold text-slate-700 mb-1">Dodaj element</p>
+        <p className="text-xs text-slate-500 mb-3">
+          Nowy element pojawi się na dole strony. Możesz go potem przesunąć
+          strzałkami.
         </p>
         <div className="flex flex-wrap gap-2">
           {addOptions.map((opt) => (
@@ -246,6 +268,7 @@ export default function BlockEditor({
               key={opt.type}
               onClick={() => add(opt.type)}
               type="button"
+              title={BLOCK_HINTS[opt.type] ?? opt.label}
               className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
             >
               <span className="text-indigo-500 font-bold">{opt.icon}</span>

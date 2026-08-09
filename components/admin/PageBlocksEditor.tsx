@@ -125,17 +125,22 @@ export default function PageBlocksEditor({
 
       {/* Nagłówek strony */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-        <h2 className="font-bold">Nagłówek strony</h2>
+        <h2 className="font-bold">Góra strony</h2>
         <div>
-          <label className="block text-xs uppercase tracking-wider text-slate-500 mb-1.5">
-            Etykietka nad tytułem (żółta, opcjonalna - np. „Materiały szkoleniowe&rdquo;)
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Nadtytuł <span className="font-normal text-slate-400">(opcjonalny)</span>
           </label>
+          <p className="text-xs text-slate-500 mb-1.5">
+            Krótkie słowo nad tytułem, żółtymi literami. Na przykład: Zawody,
+            Egzaminy, Materiały szkoleniowe.
+          </p>
           <input value={kicker} onChange={(e) => setKicker(e.target.value)} className={inputCls} />
         </div>
         <div>
-          <label className="block text-xs uppercase tracking-wider text-slate-500 mb-1.5">
-            Tytuł (H1)
-          </label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Tytuł strony</label>
+          <p className="text-xs text-slate-500 mb-1.5">
+            Duży napis na samej górze strony.
+          </p>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -143,9 +148,12 @@ export default function PageBlocksEditor({
           />
         </div>
         <div>
-          <label className="block text-xs uppercase tracking-wider text-slate-500 mb-1.5">
-            Akapit wprowadzający (pod tytułem, opcjonalny)
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Wprowadzenie <span className="font-normal text-slate-400">(opcjonalne)</span>
           </label>
+          <p className="text-xs text-slate-500 mb-1.5">
+            Dwa, trzy zdania pod tytułem, wyróżnione większą czcionką.
+          </p>
           <textarea
             value={lead}
             onChange={(e) => setLead(e.target.value)}

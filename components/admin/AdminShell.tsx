@@ -5,16 +5,25 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 
+/**
+ * Menu panelu nazwane rzeczami, które redaktor widzi na stronie klubu,
+ * a nie pojęciami z kodu. „Nawigacja" nie mówi nic osobie, która szuka
+ * sposobu na zmianę menu na górze strony; „Harmonogram" brzmi urzędowo
+ * przy grafiku zajęć.
+ *
+ * Kolejność wynika z częstości użycia: aktualności i zdjęcia zmienia się
+ * co tydzień, dane organizacji raz na kilka lat.
+ */
 const NAV = [
   { href: "/admin", label: "Pulpit", icon: "▦" },
-  { href: "/admin/strony", label: "Podstrony", icon: "❏" },
   { href: "/admin/artykuly", label: "Aktualności", icon: "✎" },
-  { href: "/admin/nawigacja", label: "Nawigacja (menu)", icon: "☰" },
-  { href: "/admin/stopka", label: "Stopka", icon: "▁" },
+  { href: "/admin/strony", label: "Strony", icon: "❏" },
   { href: "/admin/zdjecia", label: "Zdjęcia", icon: "▣" },
-  { href: "/admin/harmonogram", label: "Harmonogram", icon: "◷" },
+  { href: "/admin/harmonogram", label: "Grafik zajęć", icon: "◷" },
   { href: "/admin/wiadomosci", label: "Wiadomości", icon: "✉" },
-  { href: "/admin/admini", label: "Administratorzy", icon: "♟" },
+  { href: "/admin/nawigacja", label: "Menu na górze strony", icon: "☰" },
+  { href: "/admin/stopka", label: "Stopka strony", icon: "▁" },
+  { href: "/admin/admini", label: "Dostęp do panelu", icon: "♟" },
 ];
 
 export default function AdminShell({
