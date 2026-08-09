@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { resetFooter, saveFooter } from "@/actions/footerActions";
+import { opiszBlad } from "@/lib/adminErrors";
+import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import type { FooterData, FooterLink } from "@/lib/footerTypes";
 
 const inputCls =
@@ -67,29 +69,52 @@ export default function FooterEditor({ initialData }: { initialData: FooterData 
   const [data, setData] = useState<FooterData>(initialData);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [zapisany, setZapisany] = useState<FooterData>(initialData);
+
+  const zmieniono = czyZmieniono(data, zapisany);
+  useUnsavedChanges(zmieniono, "Stopka strony");
 
   async function handleSave() {
     setBusy(true);
     setMsg(null);
-    const res = await saveFooter(data);
-    setBusy(false);
-    setMsg(
-      res.ok
-        ? { ok: true, text: "Zapisano. Stopka na stronie jest już zaktualizowana." }
-        : { ok: false, text: res.error }
-    );
+    try {
+      const res = await saveFooter(data);
+      if (res.ok) {
+        setZapisany(data);
+        setMsg({ ok: true, text: "Zapisano. Stopka na stronie jest już zaktualizowana." });
+      } else {
+        setMsg({ ok: false, text: opiszBlad(res.error) });
+      }
+    } catch (e) {
+      setMsg({ ok: false, text: opiszBlad(e) });
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function handleReset() {
-    if (!confirm("Przywrócić stopkę bazową z kodu strony?")) return;
+    if (
+      !confirm(
+        "Przywrócić startową wersję stopki?\n\nWróci układ z dnia uruchomienia strony. Wszystkie Twoje zmiany w stopce zostaną skasowane."
+      )
+    )
+      return;
     setBusy(true);
     setMsg(null);
-    const res = await resetFooter();
-    setBusy(false);
-    if (res.ok) {
-      setMsg({ ok: true, text: "Przywrócono wartości bazowe." });
-    } else {
-      setMsg({ ok: false, text: res.error });
+    try {
+      const res = await resetFooter();
+      if (res.ok) {
+        setMsg({
+          ok: true,
+          text: "Przywrócono startową wersję stopki. Odśwież stronę, żeby zobaczyć wczytane wartości.",
+        });
+      } else {
+        setMsg({ ok: false, text: opiszBlad(res.error, "przywrócić stopki") });
+      }
+    } catch (e) {
+      setMsg({ ok: false, text: opiszBlad(e, "przywrócić stopki") });
+    } finally {
+      setBusy(false);
     }
   }
 

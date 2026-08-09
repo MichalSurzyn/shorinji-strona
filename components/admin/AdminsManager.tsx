@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { opiszBlad } from "@/lib/adminErrors";
 import {
   addAdmin,
   changeOwnPassword,
@@ -32,37 +33,78 @@ export default function AdminsManager({
     e.preventDefault();
     setBusy(true);
     setMsg(null);
-    const res = await addAdmin(email.trim(), password, name.trim());
-    setBusy(false);
-    if (res.ok) {
-      setMsg({ ok: true, text: `Dodano administratora ${email}.` });
-      setEmail("");
-      setName("");
-      setPassword("");
-      refresh();
-    } else {
-      setMsg({ ok: false, text: res.error });
+    try {
+      const res = await addAdmin(email.trim(), password, name.trim());
+      if (res.ok) {
+        setMsg({
+          ok: true,
+          text: `Konto ${email} jest gotowe. Przekaż tej osobie adres e-mail i hasło - po pierwszym zalogowaniu może je zmienić.`,
+        });
+        setEmail("");
+        setName("");
+        setPassword("");
+        refresh();
+      } else {
+        setMsg({ ok: false, text: opiszBlad(res.error, "dodać konta") });
+      }
+    } catch (e) {
+      setMsg({ ok: false, text: opiszBlad(e, "dodać konta") });
+    } finally {
+      setBusy(false);
     }
   }
 
   async function handleRemove(admin: AdminUser) {
-    if (!confirm(`Usunąć konto ${admin.email}?`)) return;
-    const res = await removeAdmin(admin.id);
-    if (res.ok) refresh();
-    else setMsg({ ok: false, text: res.error });
+    // Usunięcie konta jest nieodwracalne i odbiera dostęp natychmiast,
+    // więc potwierdzenie musi mówić, co dokładnie się stanie.
+    if (
+      !confirm(
+        `Odebrać dostęp do panelu osobie ${admin.email}?\n\n` +
+          "Ta osoba natychmiast straci możliwość logowania. Treści, które dodała, zostaną na stronie.\n\n" +
+          "Tej operacji nie da się cofnąć - konto trzeba będzie założyć od nowa."
+      )
+    )
+      return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await removeAdmin(admin.id);
+      if (res.ok) {
+        setMsg({ ok: true, text: `Odebrano dostęp: ${admin.email}.` });
+        refresh();
+      } else {
+        setMsg({ ok: false, text: opiszBlad(res.error, "odebrać dostępu") });
+      }
+    } catch (e) {
+      setMsg({ ok: false, text: opiszBlad(e, "odebrać dostępu") });
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function handlePassword(e: React.FormEvent) {
     e.preventDefault();
+    if (newPass.length < 6) {
+      setMsg({ ok: false, text: "Hasło musi mieć co najmniej 6 znaków." });
+      return;
+    }
     setBusy(true);
     setMsg(null);
-    const res = await changeOwnPassword(newPass);
-    setBusy(false);
-    if (res.ok) {
-      setMsg({ ok: true, text: "Hasło zmienione." });
-      setNewPass("");
-    } else {
-      setMsg({ ok: false, text: res.error });
+    try {
+      const res = await changeOwnPassword(newPass);
+      if (res.ok) {
+        setMsg({
+          ok: true,
+          text: "Hasło zmienione. Zapisz je w bezpiecznym miejscu - będzie potrzebne przy następnym logowaniu.",
+        });
+        setNewPass("");
+      } else {
+        setMsg({ ok: false, text: opiszBlad(res.error, "zmienić hasła") });
+      }
+    } catch (e) {
+      setMsg({ ok: false, text: opiszBlad(e, "zmienić hasła") });
+    } finally {
+      setBusy(false);
     }
   }
 
