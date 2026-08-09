@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { resetSchedule, saveSchedule } from "@/actions/scheduleActions";
 import { DAY_NAMES, type ScheduleSlot } from "@/data/schedule";
+import { opiszBlad } from "@/lib/adminErrors";
+import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 
 const DAYS: { value: ScheduleSlot["day"]; label: string }[] = (
   [1, 2, 3, 4, 5, 6, 7] as const
@@ -18,6 +20,18 @@ export default function ScheduleEditor({
   const [slots, setSlots] = useState<ScheduleSlot[]>(initialSlots);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [zapisany, setZapisany] = useState<ScheduleSlot[]>(initialSlots);
+  const [cofnij, setCofnij] = useState<{ slot: ScheduleSlot; pozycja: number } | null>(null);
+
+  const zmieniono = czyZmieniono(slots, zapisany);
+  useUnsavedChanges(zmieniono, "Grafik zajęć");
+
+  /** Godziny w porządku tygodnia - do podglądu, bez przestawiania pól. */
+  const podglad = useMemo(
+    () =>
+      [...slots].sort((a, b) => a.day - b.day || a.start.localeCompare(b.start)),
+    [slots]
+  );
 
   function update(i: number, patch: Partial<ScheduleSlot>) {
     setSlots((prev) =>
@@ -26,7 +40,21 @@ export default function ScheduleEditor({
   }
 
   function remove(i: number) {
+    // Zapamiętujemy usunięte zajęcia, żeby dało się je przywrócić jednym
+    // kliknięciem. Bez tego pomyłka oznacza wpisanie wszystkiego od nowa.
+    const usuwany = slots[i];
+    setCofnij({ slot: usuwany, pozycja: i });
     setSlots((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function przywroc() {
+    if (!cofnij) return;
+    setSlots((prev) => {
+      const next = [...prev];
+      next.splice(Math.min(cofnij.pozycja, next.length), 0, cofnij.slot);
+      return next;
+    });
+    setCofnij(null);
   }
 
   function add() {
@@ -46,45 +74,56 @@ export default function ScheduleEditor({
   async function handleSave() {
     setBusy(true);
     setMsg(null);
-    const res = await saveSchedule(slots);
-    setBusy(false);
-    setMsg(
-      res.ok
-        ? { ok: true, text: "Zapisano. Nowe godziny są już widoczne na stronie." }
-        : { ok: false, text: res.error }
-    );
+    try {
+      const res = await saveSchedule(slots);
+      if (res.ok) {
+        setZapisany(slots);
+        setCofnij(null);
+        setMsg({
+          ok: true,
+          text: "Zapisano. Nowe godziny są już na stronach zajęć, w kalendarzu do telefonu i w wizytówce Google.",
+        });
+      } else {
+        setMsg({ ok: false, text: opiszBlad(res.error) });
+      }
+    } catch (e) {
+      setMsg({ ok: false, text: opiszBlad(e) });
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function handleReset() {
     if (
       !confirm(
-        "Przywrócić harmonogram bazowy z kodu strony? Zmiany z panelu zostaną usunięte."
+        "Przywrócić grafik startowy?\n\nWróci układ zajęć z dnia uruchomienia strony. Wszystkie Twoje zmiany zostaną skasowane."
       )
     )
       return;
     setBusy(true);
     setMsg(null);
-    const res = await resetSchedule();
-    setBusy(false);
-    if (res.ok) {
-      setSlots(baseSlots);
-      setMsg({ ok: true, text: "Przywrócono harmonogram bazowy." });
-    } else {
-      setMsg({ ok: false, text: res.error });
+    try {
+      const res = await resetSchedule();
+      if (res.ok) {
+        setSlots(baseSlots);
+        setZapisany(baseSlots);
+        setCofnij(null);
+        setMsg({ ok: true, text: "Przywrócono grafik startowy." });
+      } else {
+        setMsg({ ok: false, text: opiszBlad(res.error, "przywrócić grafiku") });
+      }
+    } catch (e) {
+      setMsg({ ok: false, text: opiszBlad(e, "przywrócić grafiku") });
+    } finally {
+      setBusy(false);
     }
   }
-
-  const sorted = [...slots].sort(
-    (a, b) =>
-      (a.group === b.group ? 0 : a.group === "dzieci" ? -1 : 1) ||
-      a.day - b.day ||
-      a.start.localeCompare(b.start)
-  );
 
   return (
     <div className="space-y-4">
       {msg && (
         <div
+          role="status"
           className={`rounded-lg px-4 py-3 text-sm ${
             msg.ok
               ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
@@ -95,9 +134,37 @@ export default function ScheduleEditor({
         </div>
       )}
 
+      {cofnij && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5"
+        >
+          <span className="text-sm text-slate-600">
+            Usunięto zajęcia: {DAY_NAMES[cofnij.slot.day].long}, {cofnij.slot.start}
+          </span>
+          <button
+            type="button"
+            onClick={przywroc}
+            className="rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-700 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
+          >
+            ↶ Cofnij
+          </button>
+        </div>
+      )}
+
+      {zmieniono && (
+        <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5">
+          Masz niezapisane zmiany. Kliknij „Zapisz&rdquo; na dole, żeby trafiły na stronę.
+        </p>
+      )}
+
+      {/* Wiersze w stałej kolejności wpisywania.
+          Wcześniej lista była sortowana do wyświetlenia, a indeks pola
+          wyszukiwany przez indexOf - zmiana dnia albo godziny natychmiast
+          przestawiała wiersz w inne miejsce, dosłownie spod kursora.
+          Podgląd w kolejności tygodnia jest niżej, osobno. */}
       <div className="space-y-3">
-        {sorted.map((slot) => {
-          const i = slots.indexOf(slot);
+        {slots.map((slot, i) => {
           return (
             <div
               key={i}
@@ -183,8 +250,31 @@ export default function ScheduleEditor({
         type="button"
         className="w-full rounded-xl border border-dashed border-slate-300 py-3 text-sm font-medium text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
       >
-        + Dodaj termin
+        + Dodaj zajęcia
       </button>
+
+      {/* Podgląd w kolejności tygodnia - tak, jak zobaczy to odwiedzający.
+          Oddzielony od pól, żeby edycja nie przestawiała wierszy. */}
+      {podglad.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <h3 className="font-semibold text-slate-900">Tak wygląda tydzień</h3>
+          <p className="text-sm text-slate-500 mb-3">
+            Kolejność jak na stronie. {zmieniono ? "Uwzględnia niezapisane zmiany." : ""}
+          </p>
+          <ul className="divide-y divide-slate-100 text-sm">
+            {podglad.map((s, i) => (
+              <li key={i} className="flex flex-wrap justify-between gap-2 py-2">
+                <span className="text-slate-700">
+                  <strong>{DAY_NAMES[s.day].long}</strong> · {s.start}&ndash;{s.end}
+                </span>
+                <span className="text-slate-500">
+                  {s.group === "dzieci" ? "Grupa dziecięca" : "Grupa dorosła"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="flex flex-wrap justify-between gap-3 pt-2">
         <button
@@ -193,7 +283,7 @@ export default function ScheduleEditor({
           type="button"
           className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-60 transition-colors"
         >
-          Przywróć wersję bazową
+          Przywróć grafik startowy
         </button>
         <button
           onClick={handleSave}
@@ -201,7 +291,7 @@ export default function ScheduleEditor({
           type="button"
           className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white px-6 py-2.5 text-sm font-semibold transition-colors"
         >
-          {busy ? "Zapisywanie..." : "Zapisz harmonogram"}
+          {busy ? "Zapisywanie..." : "Zapisz grafik"}
         </button>
       </div>
     </div>
