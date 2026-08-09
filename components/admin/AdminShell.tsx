@@ -23,6 +23,7 @@ const NAV = [
   { href: "/admin/wiadomosci", label: "Wiadomości", icon: "✉" },
   { href: "/admin/nawigacja", label: "Menu na górze strony", icon: "☰" },
   { href: "/admin/stopka", label: "Stopka strony", icon: "▁" },
+  { href: "/admin/dane-organizacji", label: "Dane organizacji", icon: "🏛" },
   { href: "/admin/admini", label: "Dostęp do panelu", icon: "♟" },
 ];
 
