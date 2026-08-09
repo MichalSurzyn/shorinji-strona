@@ -482,3 +482,44 @@ Wszystko stoi na jednym projekcie Supabase i jednym koncie Cloudinary. `content-
 **D6. Typografia polska w edytorze.** Cała treść bazowa używa „…" i półpauz, edytor produkuje proste cudzysłowy i dywizy, nic nie normalizuje — po kilku edycjach strona wygląda niechlujnie. Brak też obsługi spacji nierozdzielających. Drobiazg, ale dokładnie ten, który widać na publicznej stronie klubu.
 
 **D7. Brak jakiejkolwiek diagnostyki po stronie panelu.** Błędy lądują w `console.warn` na serwerze. Gdy instruktor powie „nie działa", nie ma śladu: żadnego logu zdarzeń, żadnego ekranu „stan połączenia z bazą / Cloudinary / limity", żadnej informacji o wyczerpaniu darmowego transferu Cloudinary (a `galleryActions.ts:32` wprost tnie do 50 zdjęć „żeby nie spaliło transferu"). Dla produktu, którego użytkownik nie ma kogo zapytać, to brak pierwszej kategorii.
+
+---
+
+# Uzupełnienia po przeglądzie panelu przez właściciela (09.08.2026)
+
+Uwagi zgłoszone po obejrzeniu panelu na żywo, poza zakresem pierwotnego audytu.
+
+## U1. Wgrywanie zdjęć: widok folderów zamiast rzędu przycisków
+
+**Zgłoszenie:** „Przydałby się bardziej czytelny interfejs do wrzucania zdjęć,
+np. wygląd folderów, a nie jak teraz jakieś buttony."
+
+**Pliki:** `components/admin/ImagesManager.tsx`, `components/admin/ImagePicker.tsx`,
+`actions/imageActions.ts`
+
+**Na czym polega problem:** foldery Cloudinary są dziś listą przycisków z surowymi
+ścieżkami (`Galeria/Pokazy`, `Strona/buddyzm/podstawy`). Redaktor nie widzi, ile
+zdjęć jest w środku ani co to za miejsce, a ścieżka z ukośnikiem jest pojęciem
+technicznym. Nie ma też podglądu zawartości przed wejściem.
+
+**Kierunek:** siatka kafelków przypominająca eksplorator plików - miniatura
+pierwszego zdjęcia jako okładka folderu, nazwa po ludzku ("Galeria: Pokazy",
+"Zdjęcia podstrony: Buddyzm, podstawy" - zgodnie ze słownikiem), licznik zdjęć,
+ścieżka powrotu (okruszki). Upload przez przeciągnięcie plików na kafelek folderu.
+Wiąże się z punktami 1.9 (zdjęcia przestają milczeć) i 2.7 (własna trasa uploadu -
+odrzucona, zostają lepsze komunikaty i zmniejszanie w przeglądarce).
+
+**Nakład:** M
+
+## U2. Podgląd pokazuje wersję zapisaną, nie edytowaną
+
+**Zgłoszenie:** „Podgląd edycji nie działa, pokazuje po prostu stronę w nowej karcie,
+ale i tak trzeba zapisać zmiany najpierw, by je zobaczyć."
+
+**Stan:** zgodny z dzisiejszą implementacją - przycisk „Podgląd ↗" otwiera publiczny
+adres strony, czyli wersję zapisaną. To dokładnie problem opisany w punkcie 2.3
+(podgląd wersji roboczej przez Draft Mode). Właściciel wybrał wariant „podgląd szkicu
+w nowej karcie" i zaznaczył, że na razie może zostać jak jest.
+
+**Do czasu wdrożenia 2.3:** przycisk powinien nazywać się tak, jak działa - np.
+„Zobacz zapisaną wersję ↗" - żeby nie obiecywał podglądu zmian, których nie pokazuje.
