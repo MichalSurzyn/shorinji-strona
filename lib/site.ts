@@ -37,12 +37,3 @@ export const SOCIAL_LINKS = {
   youtube: "https://www.youtube.com/@Dominik_Chowanski",
 } as const;
 
-/** Mapa Google osadzana w iframe – nie wymaga klucza API. */
-export const MAPS_EMBED_URL = `https://www.google.com/maps?q=${encodeURIComponent(
-  FULL_ADDRESS,
-)}&output=embed`;
-
-/** Link otwierający mapę / nawigację w nowej karcie. */
-export const MAPS_LINK_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-  FULL_ADDRESS,
-)}`;

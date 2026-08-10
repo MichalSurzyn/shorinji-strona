@@ -50,18 +50,3 @@ export async function getSchedule(): Promise<ScheduleSlot[]> {
   return SCHEDULE;
 }
 
-/** Czy istnieje nadpisanie harmonogramu w bazie. */
-export async function hasScheduleOverride(): Promise<boolean> {
-  const sb = getSupabaseAdmin();
-  if (!sb) return false;
-  try {
-    const { data } = await sb
-      .from("site_settings")
-      .select("key")
-      .eq("key", KEY)
-      .maybeSingle();
-    return !!data;
-  } catch {
-    return false;
-  }
-}

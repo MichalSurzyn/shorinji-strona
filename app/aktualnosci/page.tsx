@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { clUrl } from "@/lib/cloudinary";
 import { getNews } from "@/lib/news";
+import { PageHeader } from "@/components/PageContent";
 
 export const revalidate = 300;
 
@@ -26,19 +27,10 @@ export default async function AktualnosciPage() {
   return (
     <div className="relative page-shell pb-20 min-h-screen">
       <div className="container-site z-10 relative">
-        <header className="mb-10">
-          <p className="text-yellow-500 text-xs uppercase tracking-[0.18em] font-semibold mb-2">
-            Co słychać w dōjō
-          </p>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
-            Aktualności
-          </h1>
-          <p className="text-neutral-300 text-lg max-w-3xl">
-            Ogłoszenia i wydarzenia z życia krakowskich filii: seminaria,
-            pokazy, zmiany w harmonogramie, obozy i egzaminy. Bieżące
-            informacje znajdziesz też na naszym Facebooku i Instagramie.
-          </p>
-        </header>
+        {/* Nagłówek z bazy (Strony → Aktualności). Dotąd był zaszyty tutaj,
+            więc jedyna strona, na której klub najczęściej coś zmienia, miała
+            nieedytowalny tekst wstępny. */}
+        <PageHeader slug="aktualnosci" />
 
         {articles.length === 0 ? (
           <p className="text-neutral-500 py-16">

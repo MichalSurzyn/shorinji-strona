@@ -43,6 +43,21 @@ export const EDITABLE_PAGES: EditablePage[] = [
     ],
   },
   {
+    slug: "aktualnosci",
+    label: "Aktualności – nagłówek listy",
+    route: "/aktualnosci",
+    scope:
+      "Tekst nad listą aktualności. Same artykuły dodaje się w zakładce Aktualności.",
+    prefill: [],
+  },
+  {
+    slug: "galeria",
+    label: "Galeria – nagłówek",
+    route: "/galeria",
+    scope: "Tekst nad albumami. Same zdjęcia dodaje się w zakładce Zdjęcia.",
+    prefill: [],
+  },
+  {
     slug: "cennik",
     label: "Cennik – tabele opłat i konto",
     route: "/zajecia/cennik",

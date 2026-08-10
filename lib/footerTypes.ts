@@ -3,8 +3,6 @@
 export type FooterLink = { label: string; href: string };
 
 export interface FooterData {
-  /** (nieużywane w stopce od 2026-07 - kolumnę „o nas" zastąpiły linki) */
-  about: string;
   social: { facebook: string; instagram: string; youtube: string };
   /** Przydatne linki (dawna podstrona „Linki" ze starej strony). */
   links: FooterLink[];
@@ -22,8 +20,6 @@ export interface FooterData {
 
 /** Stopka bazowa z kodu - fallback, gdy baza nie odpowiada. */
 export const DEFAULT_FOOTER: FooterData = {
-  about:
-    "Japońska sztuka walki łącząca skuteczną samoobronę z głębokim rozwojem osobistym.",
   social: {
     facebook: "https://www.facebook.com/shorinjikempopolska",
     instagram: "https://www.instagram.com/shorinjikempopolska/",

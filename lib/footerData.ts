@@ -17,7 +17,6 @@ export async function getFooterData(): Promise<FooterData> {
     if (!v || typeof v !== "object") return DEFAULT_FOOTER;
     // Scal z domyślnymi - brakujące pola nie wywrócą stopki.
     return {
-      about: v.about ?? DEFAULT_FOOTER.about,
       social: { ...DEFAULT_FOOTER.social, ...(v.social ?? {}) },
       links: Array.isArray(v.links) ? v.links : DEFAULT_FOOTER.links,
       downloads: Array.isArray(v.downloads) ? v.downloads : DEFAULT_FOOTER.downloads,

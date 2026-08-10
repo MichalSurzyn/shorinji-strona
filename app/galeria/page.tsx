@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getGalleryFolders } from "../../actions/galleryActions";
 import GalleryClient from "./_components/GalleryClient";
+import { PageHeader } from "@/components/PageContent";
 
 export const metadata: Metadata = {
   title: "Galeria",
@@ -20,6 +21,12 @@ export default async function GaleriaPage() {
 
       {/* Główna zawartość - Przekazujemy foldery do naszego nowego komponentu */}
       <div className="container-site">
+        {/* Nagłówek z bazy (Strony → Galeria). Renderowany po stronie serwera,
+            poza komponentem klienckim, żeby tekst był w HTML od razu -
+            także dla wyszukiwarek i przy wyłączonym JavaScripcie. */}
+        <div className="border-b border-neutral-800 pb-6 mb-10">
+          <PageHeader slug="galeria" className="" />
+        </div>
         {folders.length > 0 ? (
           <GalleryClient folders={folders} />
         ) : (

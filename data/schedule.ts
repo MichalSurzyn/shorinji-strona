@@ -37,4 +37,3 @@ export const SCHEDULE: ScheduleSlot[] = [
   { group: "dorosli", day: 7, start: "18:00", end: "21:00", location: LOCATION },
 ];
 
-export const CONTACT_EMAIL_FOR_SCHEDULE = "pl.shorinjikempo@gmail.com";

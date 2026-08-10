@@ -1,16 +1,9 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createSupabaseServer, requireUser } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/server";
 import { upsertArticleOverride } from "@/lib/articleContent";
 import type { NewsBlock } from "@/lib/newsTypes";
-
-export async function logoutAction() {
-  const supabase = await createSupabaseServer();
-  await supabase.auth.signOut();
-  redirect("/admin/login");
-}
 
 /** Zapis podstrony tematycznej (o-shorinji / organizacja / buddyzm) - bloki. */
 export async function saveTopicArticle(

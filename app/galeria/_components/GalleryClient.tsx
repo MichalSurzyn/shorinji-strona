@@ -181,17 +181,6 @@ export default function GalleryClient({ folders }: { folders: GalleryFolder[] })
 
   return (
     <div className="w-full">
-      <header className="border-b border-neutral-800 pb-6 mb-10">
-        <p className="text-yellow-500 text-xs uppercase tracking-[0.18em] font-semibold mb-2">
-          Shorinji Kempo Kraków
-        </p>
-        <h1 className="text-4xl md:text-5xl font-bold text-white">Galeria</h1>
-        <p className="text-neutral-300 mt-2 max-w-2xl">
-          Zdjęcia z treningów, pokazów i seminariów. Wybierz album, żeby zobaczyć
-          wszystkie zdjęcia.
-        </p>
-      </header>
-
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
         {[albumWszystkie, ...folders].map((f) => (
           <button

@@ -58,12 +58,6 @@ export const getPageContent = cache(
   }
 );
 
-/** Same bloki strony (kompatybilność ze starszym kodem). */
-export async function getPageBlocks(slug: string): Promise<NewsBlock[] | null> {
-  const content = await getPageContent(slug);
-  return content && content.blocks.length > 0 ? content.blocks : null;
-}
-
 /** Slugi stron, które mają zapisaną treść (do plakietek w panelu). */
 export async function listPageOverrideSlugs(): Promise<Set<string>> {
   const sb = getSupabaseAdmin();
