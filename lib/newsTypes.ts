@@ -69,7 +69,17 @@ export type NewsBlock =
    * ze znacznikami wyróżnienia. Był więc edytowany jak proza, bez żadnej
    * kontroli - a to najdroższy w skutkach ciąg znaków na stronie.
    */
-  | { type: "bank" };
+  | { type: "bank" }
+  /**
+   * Dane kontaktowe: telefon, e-mail i profile spolecznosciowe.
+   * Jak "bank" - blok NIE przechowuje danych, bierze je z zakladki
+   * „Dane organizacji".
+   *
+   * Wczesniej numer telefonu i adres e-mail byly wpisane w tresc strony
+   * Kontakt jako tekst. Zmiana numeru w panelu poprawiala stopke i mape,
+   * a ta sekcja pokazywala dalej stary - trzecia kopia tych samych danych.
+   */
+  | { type: "kontakt" };
 
 /**
  * Pełna treść edytowalnej strony (site_settings, klucz "page:<slug>").

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { resetFooter, saveFooter } from "@/actions/footerActions";
+import { saveFooter } from "@/actions/footerActions";
 import { opiszBlad } from "@/lib/adminErrors";
 import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import type { FooterData, FooterLink } from "@/lib/footerTypes";
@@ -94,32 +94,6 @@ export default function FooterEditor({ initialData }: { initialData: FooterData 
     }
   }
 
-  async function handleReset() {
-    if (
-      !confirm(
-        "Przywrócić startową wersję stopki?\n\nWróci układ z dnia uruchomienia strony. Wszystkie Twoje zmiany w stopce zostaną skasowane."
-      )
-    )
-      return;
-    setBusy(true);
-    setMsg(null);
-    try {
-      const res = await resetFooter();
-      if (res.ok) {
-        setMsg({
-          ok: true,
-          text: "Przywrócono startową wersję stopki. Odśwież stronę, żeby zobaczyć wczytane wartości.",
-        });
-      } else {
-        setMsg({ ok: false, text: opiszBlad(res.error, "przywrócić stopki") });
-      }
-    } catch (e) {
-      setMsg({ ok: false, text: opiszBlad(e, "przywrócić stopki") });
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
     <div className="space-y-5">
       <PasekAkcji
@@ -129,15 +103,6 @@ export default function FooterEditor({ initialData }: { initialData: FooterData 
         busy={busy}
         podglad="/"
         onZapisz={handleSave}
-        dodatkowe={
-          <button
-            onClick={handleReset}
-            disabled={busy}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-60 transition-colors whitespace-nowrap"
-          >
-            Przywróć startową stopkę
-          </button>
-        }
       />
 
       {msg && (

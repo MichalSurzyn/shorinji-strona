@@ -46,6 +46,7 @@ const BLOCK_LABELS: Record<NewsBlock["type"], string> = {
   download: "Dokument do pobrania",
   person: "Karta osoby",
   bank: "Numer konta do wpłat",
+  kontakt: "Telefon, e-mail i profile",
 };
 
 /** Podpowiedź pod nazwą w menu dodawania - co ten element robi. */
@@ -60,6 +61,7 @@ const BLOCK_HINTS: Partial<Record<NewsBlock["type"], string>> = {
   person: "Zdjęcie, imię i opis - na przykład instruktor",
   gallery: "Siatka zdjęć",
   bank: "Numer konta pobierany z zakładki Dane organizacji",
+  kontakt: "Dane kontaktowe pobierane z zakładki Dane organizacji",
 };
 
 const ALL_ADD_OPTIONS: { type: NewsBlock["type"]; label: string; icon: string }[] = [
@@ -78,11 +80,12 @@ const ALL_ADD_OPTIONS: { type: NewsBlock["type"]; label: string; icon: string }[
   { type: "download", label: "Dokument do pobrania", icon: "⬇" },
   { type: "person", label: "Karta osoby", icon: "👤" },
   { type: "bank", label: "Numer konta", icon: "🏦" },
+  { type: "kontakt", label: "Dane kontaktowe", icon: "✆" },
 ];
 
 const MODE_BLOCKS: Record<EditorMode, NewsBlock["type"][]> = {
   news: ["paragraph", "heading", "subheading", "list", "ordered", "quote", "callout", "image", "gallery", "table", "links", "video", "download", "person"],
-  page: ["paragraph", "heading", "subheading", "list", "ordered", "quote", "callout", "image", "gallery", "table", "links", "video", "download", "person", "bank"],
+  page: ["paragraph", "heading", "subheading", "list", "ordered", "quote", "callout", "image", "gallery", "table", "links", "video", "download", "person", "bank", "kontakt"],
   article: ["paragraph", "heading", "subheading", "list", "ordered", "quote", "image", "video", "person"],
 };
 
@@ -521,25 +524,24 @@ function BlockBody({
           </p>
         </div>
       );
+    case "kontakt":
     case "bank":
-      // Blok celowo nie ma pól. Numer konta jest sprawdzany sumą kontrolną
-      // i musi mieć jedno miejsce edycji - inaczej wróciłby do stanu, w którym
-      // dało się go zmienić jak zwykły akapit.
+      // Bloki celowo nie mają pól - dane mają jedno miejsce edycji.
       return (
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
           <p className="text-sm text-slate-700">
-            Ten element pokazuje numer konta wpisany w zakładce{" "}
+            Ten element pokazuje dane wpisane w zakładce{" "}
             <Link
               href="/admin/dane-organizacji"
               className="text-indigo-600 underline underline-offset-2 hover:text-indigo-800"
             >
               Dane organizacji
             </Link>
-            , razem z nazwą odbiorcy i informacją o tytule przelewu.
+            . Zmiana tam poprawia je od razu wszędzie na stronie.
           </p>
           <p className="text-xs text-slate-500 mt-1.5">
-            Nie da się go zmienić tutaj celowo: numer jest sprawdzany sumą
-            kontrolną i ma jedno miejsce edycji.
+            Nie da się ich zmienić tutaj celowo - inaczej te same dane byłyby
+            w dwóch miejscach i rozjechałyby się przy pierwszej zmianie.
           </p>
         </div>
       );

@@ -1,6 +1,6 @@
 import { clThumb, clUrl } from "@/lib/cloudinary";
-import { formatIban } from "@/lib/organizationTypes";
-import type { OrgBank } from "@/lib/organizationTypes";
+import { formatIban, formatTelefon } from "@/lib/organizationTypes";
+import type { OrgBank, OrgKontakt, OrgSocial } from "@/lib/organizationTypes";
 import type { NewsBlock } from "@/lib/newsTypes";
 
 /**
@@ -70,10 +70,13 @@ export function slugifyAnchor(s: string): string {
 export function BlockRenderer({
   block,
   bank,
+  kontakt,
 }: {
   block: NewsBlock;
   /** Dane konta z zakladki "Dane organizacji" - potrzebne blokowi "bank". */
   bank?: OrgBank;
+  /** Dane kontaktowe i profile - potrzebne blokowi "kontakt". */
+  kontakt?: { kontakt: OrgKontakt; social: OrgSocial };
 }) {
   switch (block.type) {
     case "heading":
@@ -99,6 +102,48 @@ export function BlockRenderer({
           <InlineText text={block.text} />
         </p>
       );
+    case "kontakt": {
+      if (!kontakt) return null;
+      const { kontakt: k, social } = kontakt;
+      const profile = [
+        ["Facebook", social.facebook],
+        ["Instagram", social.instagram],
+        ["YouTube", social.youtube],
+      ].filter(([, url]) => !!url) as [string, string][];
+      return (
+        <div className="space-y-2">
+          {k.telefon && (
+            <p>
+              <strong className="font-semibold text-white">Telefon:</strong>{" "}
+              <a href={`tel:${k.telefon}`} className="text-yellow-500 hover:text-yellow-400 transition-colors">
+                {formatTelefon(k.telefon)}
+              </a>
+            </p>
+          )}
+          {k.email && (
+            <p>
+              <strong className="font-semibold text-white">E-mail:</strong>{" "}
+              <a href={`mailto:${k.email}`} className="text-yellow-500 hover:text-yellow-400 transition-colors break-all">
+                {k.email}
+              </a>
+            </p>
+          )}
+          {profile.length > 0 && (
+            <p>
+              <strong className="font-semibold text-white">Znajdź nas w sieci:</strong>{" "}
+              {profile.map(([nazwa, url], i) => (
+                <span key={nazwa}>
+                  {i > 0 && <span className="text-neutral-500"> · </span>}
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="text-yellow-500 hover:text-yellow-400 transition-colors">
+                    {nazwa}
+                  </a>
+                </span>
+              ))}
+            </p>
+          )}
+        </div>
+      );
+    }
     case "bank": {
       // Blok nie przechowuje danych - bierze je z zakładki „Dane organizacji",
       // gdzie numer przechodzi kontrolę sumy IBAN. Bez danych nie renderujemy
@@ -465,9 +510,11 @@ function PersonCard({
 export default function NewsBlocks({
   blocks,
   bank,
+  kontakt,
 }: {
   blocks: NewsBlock[];
   bank?: OrgBank;
+  kontakt?: { kontakt: OrgKontakt; social: OrgSocial };
 }) {
   // Kolejne bloki "person" grupujemy w siatkę - karty stają obok siebie.
   const groups: (NewsBlock | NewsBlock[])[] = [];
@@ -484,7 +531,7 @@ export default function NewsBlocks({
   return (
     <div className="space-y-6 text-neutral-300 text-lg leading-relaxed">
       {groups.map((g, i) => {
-        if (!Array.isArray(g)) return <BlockRenderer key={i} block={g} bank={bank} />;
+        if (!Array.isArray(g)) return <BlockRenderer key={i} block={g} bank={bank} kontakt={kontakt} />;
         // Jedna osoba: pozioma karta na pełną szerokość. Kilka: kafelki obok siebie.
         if (g.length === 1) {
           const person = g[0] as Extract<NewsBlock, { type: "person" }>;

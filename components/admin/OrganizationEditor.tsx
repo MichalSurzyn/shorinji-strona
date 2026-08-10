@@ -210,7 +210,7 @@ export default function OrganizationEditor({ initial }: { initial: OrganizationD
           etykieta="Numer konta (IBAN)"
           podpowiedz={
             dane.bank.iban && !ibanBlad
-              ? `Poprawny. Na stronie pokaże się jako: ${formatIban(dane.bank.iban)}`
+              ? `Na stronie pokaże się jako: ${formatIban(dane.bank.iban)}`
               : "Możesz wpisać ze spacjami - poprawimy zapis sami."
           }
           szeroki

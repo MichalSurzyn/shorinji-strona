@@ -44,7 +44,13 @@ export async function PageBody({ slug }: { slug: string }) {
   // Dane konta pobieramy tylko wtedy, gdy strona faktycznie ma blok „bank" -
   // nie ma powodu odpytywać bazy na stronach, które go nie używają.
   // getOrganization() jest cache'owane, więc powtórzenie nic nie kosztuje.
-  const maBank = content.blocks.some((b) => b.type === "bank");
-  const org = maBank ? await getOrganization() : null;
-  return <NewsBlocks blocks={content.blocks} bank={org?.bank} />;
+  const potrzebneDane = content.blocks.some((b) => b.type === "bank" || b.type === "kontakt");
+  const org = potrzebneDane ? await getOrganization() : null;
+  return (
+    <NewsBlocks
+      blocks={content.blocks}
+      bank={org?.bank}
+      kontakt={org ? { kontakt: org.kontakt, social: org.social } : undefined}
+    />
+  );
 }
