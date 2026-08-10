@@ -273,6 +273,9 @@ Do naprawy przy okazji menu — strony-listingi i tak wymagają edytowalnych nag
 - Powiadomienie e-mailem o nowej wiadomości z formularza — **wymaga usługi wysyłkowej, decyzja właściciela**
 - Edytor markdown → WYSIWYG. Właściciel świadomie zostawił markdown. Tańszy wariant:
   podgląd na żywo pod polem. Droższy: prawdziwy WYSIWYG + konwersja całej treści.
+- Sekcja z usługami zewnętrznymi, kosztami i zużyciem (OVH, Netlify, Supabase, Cloudinary)
+  — plan w `docs/panel-integracje-i-koszty.md`. Do tego pytania właściciela o pocztę na
+  domenie klubu i o wspólne konto do usług.
 
 ---
 
@@ -304,6 +307,7 @@ ma to opisać jako stan faktyczny.
 | `docs/polityka-weryfikacja.md` | 23 zastrzeżenia do draftu |
 | `docs/checklista-odbioru.md` | lista do sprawdzenia klikaniem, z opisem oczekiwanego zachowania |
 | `docs/menu-architektura.md` | propozycja architektury drzewa stron (dodana na końcu tej sesji) |
+| `docs/panel-integracje-i-koszty.md` | plan sekcji z usługami zewnętrznymi, kosztami i zużyciem (nic nie zrobione) |
 
 ---
 
