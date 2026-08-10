@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   getUploadSignature,
-  listImageFolders,
+  listFolderPreviews,
   listImages,
-  type CloudFolder,
+  type CloudFolderPodglad,
   type CloudImage,
 } from "@/actions/imageActions";
 import { clThumb } from "@/lib/cloudinary";
@@ -21,8 +21,13 @@ interface Props {
 }
 
 /**
- * Modal wyboru zdjęć: przeglądanie folderów Cloudinary + upload z dysku.
- * Zero wpisywania ID ręcznie - klikasz miniaturę, gotowe.
+ * Wybór zdjęć: najpierw foldery jako kafelki z okładkami, potem zdjęcia
+ * w środku. Zero wpisywania identyfikatorów - klikasz miniaturę, gotowe.
+ *
+ * Wcześniej foldery były rzędem pigułek z surowymi ścieżkami
+ * („Strona / buddyzm / podstawy"). Nie było widać, ile zdjęć jest w środku
+ * ani co to za miejsce, a ukośnik w nazwie to pojęcie techniczne.
+ * Ten sam układ kafelków co w zakładce Zdjęcia i w galerii na stronie.
  */
 export default function ImagePicker({
   open,
@@ -31,9 +36,11 @@ export default function ImagePicker({
   onClose,
   onSelect,
 }: Props) {
-  const [folders, setFolders] = useState<CloudFolder[]>([]);
-  const [activeFolder, setActiveFolder] = useState<string>(defaultFolder ?? "all");
+  const [foldery, setFoldery] = useState<CloudFolderPodglad[]>([]);
+  /** null = widok folderów; wartość = otwarty folder. */
+  const [otwarty, setOtwarty] = useState<CloudFolderPodglad | null>(null);
   const [images, setImages] = useState<CloudImage[]>([]);
+  const [ladowanieFolderow, setLadowanieFolderow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -56,24 +63,32 @@ export default function ImagePicker({
   useEffect(() => {
     if (!open) return;
     setSelected([]);
-    const start = defaultFolder ?? "all";
-    setActiveFolder(start);
-    listImageFolders().then(setFolders);
-    loadImages(start);
+    setLadowanieFolderow(true);
+    listFolderPreviews()
+      .then((lista) => {
+        setFoldery(lista);
+        // Folder tej podstrony otwieramy od razu - najczęściej to o niego chodzi.
+        const domyslny = lista.find((f) => f.path === defaultFolder);
+        if (domyslny) {
+          setOtwarty(domyslny);
+          loadImages(domyslny.path);
+        } else {
+          setOtwarty(null);
+        }
+      })
+      .finally(() => setLadowanieFolderow(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  useEffect(() => {
-    if (open) loadImages(activeFolder);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFolder]);
+  function otworz(f: CloudFolderPodglad) {
+    setOtwarty(f);
+    loadImages(f.path);
+  }
 
   function toggle(publicId: string) {
     if (multi) {
       setSelected((prev) =>
-        prev.includes(publicId)
-          ? prev.filter((p) => p !== publicId)
-          : [...prev, publicId]
+        prev.includes(publicId) ? prev.filter((p) => p !== publicId) : [...prev, publicId]
       );
     } else {
       onSelect([publicId]);
@@ -83,9 +98,9 @@ export default function ImagePicker({
 
   async function handleUpload(files: FileList | null) {
     if (!files?.length) return;
+    const targetFolder = otwarty?.path ?? defaultFolder;
+    if (!targetFolder) return;
     setUploading(true);
-    const targetFolder =
-      activeFolder === "all" ? defaultFolder ?? "Galeria/Pokazy" : activeFolder;
     const uploaded: string[] = [];
 
     try {
@@ -93,8 +108,8 @@ export default function ImagePicker({
         setUploadInfo(`Wysyłanie ${i + 1} z ${files.length}...`);
         const sig = await getUploadSignature(targetFolder);
         const fd = new FormData();
-        // Zmniejszamy tak samo jak w zakladce Zdjecia - inaczej ta droga
-        // omijala by zmniejszanie i usuwanie wspolrzednych GPS.
+        // Zmniejszamy tak samo jak w zakładce Zdjęcia - inaczej ta droga
+        // omijałaby zmniejszanie i usuwanie współrzędnych GPS.
         const plikDoWyslania = await zmniejszZdjecie(files[i]);
         fd.append("file", plikDoWyslania);
         fd.append("api_key", sig.apiKey);
@@ -126,95 +141,145 @@ export default function ImagePicker({
 
   if (!open) return null;
 
-  const isDefault = (path: string) => path === defaultFolder;
+  const galerie = foldery.filter((f) => f.rodzaj === "galeria");
+  const strony = foldery.filter((f) => f.rodzaj === "strona");
+
+  const Kafelek = ({ f }: { f: CloudFolderPodglad }) => (
+    <button
+      onClick={() => otworz(f)}
+      className={`group text-left rounded-xl border overflow-hidden transition-all ${
+        f.path === defaultFolder
+          ? "border-indigo-400 ring-1 ring-indigo-200 hover:border-indigo-600"
+          : "border-slate-200 hover:border-indigo-400"
+      }`}
+    >
+      <span className="flex aspect-[4/3] bg-slate-100 items-center justify-center overflow-hidden">
+        {f.okladka ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={clThumb(f.okladka, 300)}
+            alt=""
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <span aria-hidden className="text-3xl text-slate-300">
+            ▢
+          </span>
+        )}
+      </span>
+      <span className="block px-3 py-2">
+        <span className="block text-sm font-medium text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
+          {f.path === defaultFolder ? `★ ${f.nazwaKrotka}` : f.nazwaKrotka}
+        </span>
+        <span className="block text-xs text-slate-500">
+          {f.liczba === 0 ? "pusty" : `${f.liczba} ${f.liczba === 1 ? "zdjęcie" : "zdjęć"}`}
+        </span>
+      </span>
+    </button>
+  );
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative bg-white text-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-          <h3 className="font-bold text-lg">
-            {multi ? "Wybierz zdjęcia" : "Wybierz zdjęcie"}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 text-2xl leading-none"
-            aria-label="Zamknij"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="px-6 py-3 border-b border-slate-100 flex flex-wrap items-center gap-2">
-          {defaultFolder && !folders.some((f) => f.path === defaultFolder) && (
+        <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-200">
+          <div className="min-w-0">
+            {otwarty && (
+              <button
+                onClick={() => setOtwarty(null)}
+                className="text-sm text-slate-400 hover:text-indigo-600 transition-colors"
+              >
+                ← Wszystkie foldery
+              </button>
+            )}
+            <h3 className="font-bold text-lg truncate">
+              {otwarty
+                ? otwarty.rodzaj === "galeria"
+                  ? `Galeria: ${otwarty.nazwaKrotka}`
+                  : `Zdjęcia strony: ${otwarty.nazwaKrotka}`
+                : multi
+                  ? "Wybierz zdjęcia"
+                  : "Wybierz zdjęcie"}
+            </h3>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {otwarty && (
+              <>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handleUpload(e.target.files)}
+                />
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="text-sm rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-medium px-3.5 py-1.5 transition-colors whitespace-nowrap"
+                >
+                  {uploading ? (uploadInfo ?? "Wysyłanie...") : "⬆ Wgraj z dysku"}
+                </button>
+              </>
+            )}
             <button
-              onClick={() => setActiveFolder(defaultFolder)}
-              className={`text-sm rounded-full px-3 py-1.5 transition-colors ${
-                activeFolder === defaultFolder
-                  ? "bg-indigo-600 text-white"
-                  : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-              }`}
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-700 text-2xl leading-none"
+              aria-label="Zamknij"
             >
-              ★ Folder podstrony
-            </button>
-          )}
-          <button
-            onClick={() => setActiveFolder("all")}
-            className={`text-sm rounded-full px-3 py-1.5 transition-colors ${
-              activeFolder === "all"
-                ? "bg-indigo-600 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            Wszystkie
-          </button>
-          {folders.map((f) => (
-            <button
-              key={f.path}
-              onClick={() => setActiveFolder(f.path)}
-              className={`text-sm rounded-full px-3 py-1.5 transition-colors ${
-                activeFolder === f.path
-                  ? "bg-indigo-600 text-white"
-                  : isDefault(f.path)
-                    ? "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {isDefault(f.path) ? `★ ${f.name}` : f.name}
-            </button>
-          ))}
-
-          <div className="ml-auto">
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={(e) => handleUpload(e.target.files)}
-            />
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="text-sm rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-medium px-3.5 py-1.5 transition-colors"
-              title={
-                activeFolder === "all"
-                  ? "Zdjęcia trafią do folderu podstrony"
-                  : `Zdjęcia trafią do: ${activeFolder}`
-              }
-            >
-              {uploading ? uploadInfo ?? "Wysyłanie..." : "⬆ Wgraj z dysku"}
+              ×
             </button>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {loading ? (
-            <p className="text-center text-slate-400 py-16">Ładowanie zdjęć...</p>
+          {/* --- Widok folderów --- */}
+          {!otwarty ? (
+            ladowanieFolderow ? (
+              <p className="text-center text-slate-400 py-16">Wczytywanie folderów...</p>
+            ) : (
+              <div className="space-y-6">
+                {galerie.length > 0 && (
+                  <section>
+                    <h4 className="text-xs uppercase tracking-[0.16em] text-slate-400 font-semibold mb-2">
+                      Galeria na stronie
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {galerie.map((f) => (
+                        <Kafelek key={f.path} f={f} />
+                      ))}
+                    </div>
+                  </section>
+                )}
+                {strony.length > 0 && (
+                  <section>
+                    <h4 className="text-xs uppercase tracking-[0.16em] text-slate-400 font-semibold mb-2">
+                      Zdjęcia podstron
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {strony.map((f) => (
+                        <Kafelek key={f.path} f={f} />
+                      ))}
+                    </div>
+                  </section>
+                )}
+                {foldery.length === 0 && (
+                  <p className="text-center text-slate-400 py-16">
+                    Nie ma jeszcze żadnego folderu ze zdjęciami.
+                  </p>
+                )}
+              </div>
+            )
+          ) : /* --- Widok zdjęć w folderze --- */ loading ? (
+            <p className="text-center text-slate-400 py-16">Wczytywanie zdjęć...</p>
           ) : images.length === 0 ? (
-            <p className="text-center text-slate-400 py-16">
-              Brak zdjęć w tym folderze. Możesz wgrać nowe przyciskiem powyżej.
-            </p>
+            <div className="text-center py-16">
+              <p className="font-medium text-slate-600">Ten folder jest pusty.</p>
+              <p className="text-sm text-slate-400 mt-1">
+                Wgraj zdjęcia przyciskiem &bdquo;Wgraj z dysku&rdquo; powyżej.
+              </p>
+            </div>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
               {images.map((img) => {
@@ -228,7 +293,6 @@ export default function ImagePicker({
                         ? "border-indigo-600 ring-2 ring-indigo-300"
                         : "border-transparent hover:border-indigo-300"
                     }`}
-                    title={img.publicId}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -251,9 +315,7 @@ export default function ImagePicker({
 
         {multi && (
           <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
-            <span className="text-sm text-slate-500">
-              Zaznaczono: {selected.length}
-            </span>
+            <span className="text-sm text-slate-500">Zaznaczono: {selected.length}</span>
             <div className="flex gap-2">
               <button
                 onClick={onClose}
