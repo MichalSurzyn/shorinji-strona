@@ -25,6 +25,8 @@ export async function getNews(limit?: number): Promise<NewsArticle[]> {
       .from("articles")
       .select("id,slug,title,excerpt,cover_image,published,published_at")
       .eq("published", true)
+      // Rzeczy w koszu nie moga wrocic na strone.
+      .is("deleted_at", null)
       .order("published_at", { ascending: false })
       .abortSignal(AbortSignal.timeout(6000));
     if (limit) q = q.limit(limit);
@@ -46,6 +48,7 @@ export async function getNewsBySlug(slug: string): Promise<NewsArticle | null> {
         .select("*")
         .eq("slug", slug)
         .eq("published", true)
+        .is("deleted_at", null)
         .abortSignal(AbortSignal.timeout(6000))
         .maybeSingle();
       if (error) throw error;

@@ -41,6 +41,7 @@ export async function getCustomPage(slug: string): Promise<CustomPage | null> {
       .select("*")
       .eq("slug", slug)
       .eq("published", true)
+      .is("deleted_at", null)
       .abortSignal(AbortSignal.timeout(6000))
       .maybeSingle();
     if (error) throw error;
@@ -58,6 +59,7 @@ export async function listCustomPages(): Promise<CustomPage[]> {
     const { data, error } = await sb
       .from("custom_pages")
       .select("id,slug,title,intro,published,updated_at")
+      .is("deleted_at", null)
       .order("title", { ascending: true });
     if (error) throw error;
     return (data ?? []) as CustomPage[];

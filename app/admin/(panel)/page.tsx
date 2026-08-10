@@ -63,10 +63,15 @@ export default async function AdminDashboard() {
     try {
       const [wiadomosci, szkiceRes, artykuly] = await Promise.all([
         sb.from("contact_messages").select("*", { count: "exact", head: true }).eq("read", false),
-        sb.from("articles").select("*", { count: "exact", head: true }).eq("published", false),
+        sb
+          .from("articles")
+          .select("*", { count: "exact", head: true })
+          .eq("published", false)
+          .is("deleted_at", null),
         sb
           .from("articles")
           .select("id,title,published")
+          .is("deleted_at", null)
           .order("published_at", { ascending: false })
           .limit(5),
       ]);

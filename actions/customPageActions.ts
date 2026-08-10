@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { RESERVED_SLUGS } from "@/lib/customPages";
 import type { NewsBlock } from "@/lib/newsTypes";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { oproznijStaryKosz } from "@/lib/versions";
 import { requireUser } from "@/lib/supabase/server";
 
 export interface CustomPageInput {
@@ -126,8 +127,15 @@ export async function saveCustomPage(id: string, input: CustomPageInput) {
   return { ok: true as const };
 }
 
+/**
+ * Przenosi podstronę do kosza.
+ *
+ * Pozycja w menu znika od razu - inaczej odwiedzający klikaliby w odnośnik
+ * prowadzący do strony, której już nie ma. Przy przywróceniu trzeba ją
+ * zaznaczyć ponownie; to świadomy kompromis, bo mniej boli niż zepsute menu.
+ */
 export async function deleteCustomPage(id: string) {
-  await requireUser();
+  const { user } = await requireUser();
   const sb = getSupabaseAdmin();
   if (!sb) return { ok: false as const, error: "Brak konfiguracji Supabase." };
 
@@ -137,7 +145,10 @@ export async function deleteCustomPage(id: string) {
     .eq("id", id)
     .maybeSingle();
 
-  const { error } = await sb.from("custom_pages").delete().eq("id", id);
+  const { error } = await sb
+    .from("custom_pages")
+    .update({ deleted_at: new Date().toISOString(), updated_by: user.email ?? null })
+    .eq("id", id);
   if (error) return { ok: false as const, error: error.message };
 
   if (page?.slug) {
@@ -146,4 +157,45 @@ export async function deleteCustomPage(id: string) {
 
   revalidatePath("/", "layout");
   return { ok: true as const };
+}
+
+/** Przywraca podstronę z kosza (bez pozycji w menu - trzeba ją zaznaczyć). */
+export async function restoreCustomPage(id: string) {
+  await requireUser();
+  const sb = getSupabaseAdmin();
+  if (!sb) return { ok: false as const, error: "Brak konfiguracji Supabase." };
+  const { error } = await sb.from("custom_pages").update({ deleted_at: null }).eq("id", id);
+  if (error) return { ok: false as const, error: error.message };
+  revalidatePath("/", "layout");
+  return { ok: true as const };
+}
+
+/** Kasuje podstronę z kosza NA STAŁE. */
+export async function purgeCustomPage(id: string) {
+  await requireUser();
+  const sb = getSupabaseAdmin();
+  if (!sb) return { ok: false as const, error: "Brak konfiguracji Supabase." };
+  const { error } = await sb
+    .from("custom_pages")
+    .delete()
+    .eq("id", id)
+    .not("deleted_at", "is", null); // bezpiecznik: tylko z kosza
+  if (error) return { ok: false as const, error: error.message };
+  revalidatePath("/", "layout");
+  return { ok: true as const };
+}
+
+/** Zawartość kosza podstron. */
+export async function listTrashedCustomPages() {
+  await requireUser();
+  const sb = getSupabaseAdmin();
+  if (!sb) return { ok: false as const, error: "Brak konfiguracji Supabase." };
+  await oproznijStaryKosz("custom_pages");
+  const { data, error } = await sb
+    .from("custom_pages")
+    .select("id,title,slug,deleted_at,updated_by")
+    .not("deleted_at", "is", null)
+    .order("deleted_at", { ascending: false });
+  if (error) return { ok: false as const, error: error.message };
+  return { ok: true as const, pages: data ?? [] };
 }

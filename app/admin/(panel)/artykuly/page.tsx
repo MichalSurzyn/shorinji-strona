@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { clThumb } from "@/lib/cloudinary";
 import { createSupabaseServer } from "@/lib/supabase/server";
+import KoszAktualnosci from "./KoszAktualnosci";
 
 export default async function AdminArticlesList() {
   const supabase = await createSupabaseServer();
   const { data: articles } = await supabase
     .from("articles")
     .select("id,slug,title,excerpt,cover_image,published,published_at")
+    // Kosz ma wlasna sekcje nizej - lista glowna go pomija.
+    .is("deleted_at", null)
     .order("published_at", { ascending: false });
 
   return (
@@ -73,6 +76,8 @@ export default async function AdminArticlesList() {
           ))}
         </div>
       )}
+      <KoszAktualnosci />
+
     </div>
   );
 }
