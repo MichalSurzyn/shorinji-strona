@@ -1,6 +1,7 @@
 "use server";
 
 import { v2 as cloudinary } from 'cloudinary';
+import { naPoczatek, pobierzOkladki } from '@/lib/galeriaOkladki';
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -11,7 +12,10 @@ cloudinary.config({
 export interface GalleryFolder {
   name: string;
   path: string;
-  /** Do trzech zdjęć na okładkę albumu (nałożone na siebie). */
+  /**
+   * Do trzech zdjęć na okładkę albumu (nałożone na siebie).
+   * Pierwsze z nich leży na wierzchu stosu - to ono jest okładką albumu.
+   */
   covers: string[];
   count: number;
 }
@@ -37,8 +41,12 @@ export async function getGalleryFolders(): Promise<GalleryFolder[]> {
       wgFolderu.set(f, biezace);
     }
 
+    // Zdjęcia wyróżnione w panelu (Zdjęcia -> album -> „Ustaw jako okładkę").
+    // Bez wpisu album zachowuje układ domyślny: najnowsze zdjęcie na wierzchu.
+    const okladki = await pobierzOkladki();
+
     return lista.map((f) => {
-      const zdjecia = wgFolderu.get(f.path) ?? [];
+      const zdjecia = naPoczatek(wgFolderu.get(f.path) ?? [], okladki[f.path]);
       return { name: f.name, path: f.path, covers: zdjecia.slice(0, 3), count: zdjecia.length };
     });
   } catch (error) {
@@ -49,14 +57,8 @@ export async function getGalleryFolders(): Promise<GalleryFolder[]> {
 
 export async function getImagesFromFolder(folderPath: string) {
   try {
-    // MAGIA: Jeśli kliknęliśmy '*', ścieżka to 'all'. 
-    // Wtedy szukamy we wszystkich podfolderach Galerii (używając /*)
-    const searchQuery = folderPath === 'all' 
-      ? 'folder:Galeria/*' 
-      : `folder:"${folderPath}"`;
-
     const result = await cloudinary.search
-      .expression(searchQuery)
+      .expression(`folder:"${folderPath}"`)
       .sort_by('created_at', 'desc')
       .max_results(50) // Limit żeby nam nie spaliło transferu przy setkach zdjęć
       .execute();

@@ -8,6 +8,7 @@ import {
   getUploadSignature,
   listFolderPreviews,
   listImages,
+  setFolderCover,
   type CloudFolderPodglad,
   type CloudImage,
 } from "@/actions/imageActions";
@@ -140,7 +141,41 @@ export default function ImagesManager() {
       return;
     }
     setImages((prev) => prev.filter((i) => i.publicId !== publicId));
+    // Skasowane zdjęcie mogło być okładką - inaczej panel dalej twierdziłby,
+    // że album ma wskazaną okładkę, choć tego zdjęcia już nie ma.
+    if (otwarty?.okladkaWybrana && otwarty.okladka === publicId) {
+      setOtwarty({ ...otwarty, okladka: null, okladkaWybrana: false });
+    }
     setMsg({ ok: true, text: "Zdjęcie usunięte." });
+  }
+
+  /**
+   * Ustawia (albo zdejmuje) okładkę albumu - zdjęcie widoczne na wierzchu
+   * kafelka w galerii. Ponowne kliknięcie tego samego zdjęcia kasuje wybór,
+   * więc redaktor nie potrzebuje osobnego przycisku „przywróć domyślną".
+   */
+  async function handleSetCover(publicId: string) {
+    if (!otwarty) return;
+    const juzJest = otwarty.okladkaWybrana && otwarty.okladka === publicId;
+
+    const res = await setFolderCover(otwarty.path, juzJest ? null : publicId);
+    if (!res.ok) {
+      setMsg({ ok: false, text: opiszBlad(res.error, "ustawić okładki albumu") });
+      return;
+    }
+
+    setOtwarty({
+      ...otwarty,
+      okladka: juzJest ? (images[0]?.publicId ?? null) : publicId,
+      okladkaWybrana: !juzJest,
+    });
+    setMsg({
+      ok: true,
+      text: juzJest
+        ? "Zdjęcie przestało być okładką. Album pokazuje znów najnowsze zdjęcie."
+        : "Ustawiono okładkę albumu. To zdjęcie widać teraz na wierzchu w galerii.",
+    });
+    odswiezFoldery();
   }
 
   async function handleUpload(files: FileList | File[] | null) {
@@ -323,30 +358,65 @@ export default function ImagesManager() {
                 {images.length} {images.length === 1 ? "zdjęcie" : "zdjęć"} · przeciągnij
                 tu pliki, żeby dodać kolejne
               </p>
+              {otwarty.rodzaj === "galeria" && (
+                <p className="text-xs text-slate-500 mb-3">
+                  {otwarty.okladkaWybrana
+                    ? "Gwiazdka wskazuje okładkę - to zdjęcie leży na wierzchu kafelka w galerii. Kliknij ją ponownie, żeby wrócić do najnowszego zdjęcia."
+                    : "Kliknij gwiazdkę przy zdjęciu, żeby ustawić je jako okładkę albumu. Bez wyboru na wierzchu leży najnowsze zdjęcie."}
+                </p>
+              )}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {images.map((img) => (
-                  <div key={img.publicId} className="relative aspect-square">
-                    <a href={clUrl(img.publicId, 2000)} target="_blank" rel="noopener noreferrer">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={clThumb(img.publicId, 300)}
-                        alt=""
-                        className="w-full h-full object-cover rounded-xl border border-slate-200"
-                        loading="lazy"
-                      />
-                    </a>
-                    <button
-                      onClick={() => handleDelete(img.publicId)}
-                      /* Widoczny zawsze - ukrycie pod hover czyni go
-                         nieosiągalnym na tablecie i telefonie. */
-                      className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 hover:bg-red-600 text-white text-sm transition-colors"
-                      aria-label="Usuń to zdjęcie"
-                      title="Usuń to zdjęcie"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
+                {images.map((img) => {
+                  const jestOkladka =
+                    otwarty.okladkaWybrana && otwarty.okladka === img.publicId;
+                  return (
+                    <div key={img.publicId} className="relative aspect-square">
+                      <a href={clUrl(img.publicId, 2000)} target="_blank" rel="noopener noreferrer">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={clThumb(img.publicId, 300)}
+                          alt=""
+                          className={`w-full h-full object-cover rounded-xl border-2 ${
+                            jestOkladka ? "border-amber-400" : "border-slate-200"
+                          }`}
+                          loading="lazy"
+                        />
+                      </a>
+                      {otwarty.rodzaj === "galeria" && (
+                        <button
+                          onClick={() => handleSetCover(img.publicId)}
+                          className={`absolute top-2 left-2 w-8 h-8 rounded-full text-sm transition-colors ${
+                            jestOkladka
+                              ? "bg-amber-400 text-slate-900"
+                              : "bg-black/60 text-white hover:bg-amber-500 hover:text-slate-900"
+                          }`}
+                          aria-label={
+                            jestOkladka
+                              ? "To zdjęcie jest okładką albumu. Kliknij, żeby zdjąć."
+                              : "Ustaw to zdjęcie jako okładkę albumu"
+                          }
+                          title={
+                            jestOkladka
+                              ? "Okładka albumu - kliknij, żeby zdjąć"
+                              : "Ustaw jako okładkę albumu"
+                          }
+                        >
+                          {jestOkladka ? "★" : "☆"}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDelete(img.publicId)}
+                        /* Widoczny zawsze - ukrycie pod hover czyni go
+                           nieosiągalnym na tablecie i telefonie. */
+                        className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 hover:bg-red-600 text-white text-sm transition-colors"
+                        aria-label="Usuń to zdjęcie"
+                        title="Usuń to zdjęcie"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}

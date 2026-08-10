@@ -1,6 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { v2 as cloudinary } from "cloudinary";
+import { KLUCZ_OKLADEK, pobierzOkladki } from "@/lib/galeriaOkladki";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireUser } from "@/lib/supabase/server";
 
 cloudinary.config({
@@ -27,8 +30,10 @@ export interface CloudFolderPodglad extends CloudFolder {
   rodzaj: "galeria" | "strona";
   /** Nazwa bez przedrostka technicznego, np. „Pokazy". */
   nazwaKrotka: string;
-  /** publicId pierwszego zdjęcia albo null dla pustego folderu. */
+  /** publicId okładki albo null dla pustego folderu. */
   okladka: string | null;
+  /** Czy okładkę wskazał redaktor (false = automatycznie najnowsze zdjęcie). */
+  okladkaWybrana: boolean;
   liczba: number;
 }
 
@@ -121,7 +126,15 @@ export async function listFolderPreviews(): Promise<CloudFolderPodglad[]> {
   await requireUser();
   const foldery = await listImageFolders();
 
-  const licznik = new Map<string, { liczba: number; okladka: string | null }>();
+  const okladki = await pobierzOkladki();
+
+  // `pierwsza` to najnowsze zdjęcie folderu, `wybrana` to wskazanie redaktora.
+  // Trzymamy oba, bo wskazane zdjęcie mogło zostać w międzyczasie skasowane -
+  // wtedy wracamy do najnowszego zamiast pokazywać pustą ramkę.
+  const licznik = new Map<
+    string,
+    { liczba: number; pierwsza: string | null; wybrana: string | null }
+  >();
   try {
     const result = await cloudinary.api.resources({
       resource_type: "image",
@@ -134,9 +147,10 @@ export async function listFolderPreviews(): Promise<CloudFolderPodglad[]> {
     })[]) {
       const f = r.asset_folder;
       if (!f) continue;
-      const biezace = licznik.get(f) ?? { liczba: 0, okladka: null };
+      const biezace = licznik.get(f) ?? { liczba: 0, pierwsza: null, wybrana: null };
       biezace.liczba += 1;
-      if (!biezace.okladka) biezace.okladka = r.public_id;
+      if (!biezace.pierwsza) biezace.pierwsza = r.public_id;
+      if (okladki[f] === r.public_id) biezace.wybrana = r.public_id;
       licznik.set(f, biezace);
     }
   } catch (e) {
@@ -145,7 +159,7 @@ export async function listFolderPreviews(): Promise<CloudFolderPodglad[]> {
   }
 
   return foldery.map((f) => {
-    const dane = licznik.get(f.path) ?? { liczba: 0, okladka: null };
+    const dane = licznik.get(f.path) ?? { liczba: 0, pierwsza: null, wybrana: null };
     const galeria = f.path.startsWith("Galeria");
     // "Galeria / Pokazy" -> "Pokazy"; "Strona / buddyzm / podstawy" -> "buddyzm / podstawy"
     const nazwaKrotka = f.name.replace(/^(Galeria|Strona)\s*\/\s*/, "");
@@ -153,10 +167,51 @@ export async function listFolderPreviews(): Promise<CloudFolderPodglad[]> {
       ...f,
       rodzaj: galeria ? ("galeria" as const) : ("strona" as const),
       nazwaKrotka,
-      okladka: dane.okladka,
+      okladka: dane.wybrana ?? dane.pierwsza,
+      okladkaWybrana: dane.wybrana !== null,
       liczba: dane.liczba,
     };
   });
+}
+
+/**
+ * Wskazuje zdjęcie, które ma być okładką albumu w galerii.
+ *
+ * `publicId = null` kasuje wskazanie - album wraca do okładki domyślnej,
+ * czyli najnowszego zdjęcia.
+ *
+ * Zapis idzie do jednego wiersza `site_settings` z mapą wszystkich albumów,
+ * więc odczytujemy ją, podmieniamy jeden wpis i zapisujemy całość. Przy
+ * jednym redaktorze klikającym w panelu to bezpieczne, a oszczędza osobnej
+ * tabeli (której i tak nie dałoby się założyć bez ręcznego SQL-a).
+ */
+export async function setFolderCover(folderPath: string, publicId: string | null) {
+  await requireUser();
+
+  if (!folderPath.startsWith("Galeria/")) {
+    return {
+      ok: false as const,
+      error:
+        "Okładkę można ustawić tylko dla zakładki galerii. Zdjęcia podstron nie mają widoku albumu.",
+    };
+  }
+
+  const sb = getSupabaseAdmin();
+  if (!sb) return { ok: false as const, error: "Brak konfiguracji Supabase." };
+
+  const okladki = await pobierzOkladki();
+  if (publicId) okladki[folderPath] = publicId;
+  else delete okladki[folderPath];
+
+  const { error } = await sb.from("site_settings").upsert({
+    key: KLUCZ_OKLADEK,
+    value: okladki,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) return { ok: false as const, error: error.message };
+
+  revalidatePath("/galeria");
+  return { ok: true as const };
 }
 
 export async function createImageFolder(name: string) {
