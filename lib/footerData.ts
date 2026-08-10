@@ -1,7 +1,17 @@
 import { getSupabaseAdmin } from "./supabaseAdmin";
-import { DEFAULT_FOOTER, type FooterData } from "./footerTypes";
+import {
+  DEFAULT_FOOTER,
+  migrujStopke,
+  type FooterData,
+  type FooterKolumna,
+} from "./footerTypes";
 
-/** Dane stopki z site_settings (klucz "footer") z fallbackiem do kodu. */
+/**
+ * Dane stopki z site_settings (klucz „footer") z fallbackiem do kodu.
+ *
+ * Wpisy zapisane przed wprowadzeniem kolumn są przepisywane w locie
+ * (migrujStopke), więc stopka wygląda tak samo bez ruszania bazy.
+ */
 export async function getFooterData(): Promise<FooterData> {
   const sb = getSupabaseAdmin();
   if (!sb) return DEFAULT_FOOTER;
@@ -13,16 +23,26 @@ export async function getFooterData(): Promise<FooterData> {
       .abortSignal(AbortSignal.timeout(6000))
       .maybeSingle();
     if (error) throw error;
-    const v = data?.value as Partial<FooterData> | null;
+    const v = data?.value as Record<string, unknown> | null;
     if (!v || typeof v !== "object") return DEFAULT_FOOTER;
-    // Scal z domyślnymi - brakujące pola nie wywrócą stopki.
+
+    // Stary układ: brak pola „kolumny", za to links/downloads/documents.
+    if (!Array.isArray(v.kolumny)) return migrujStopke(v);
+
+    const kolumny = (v.kolumny as FooterKolumna[])
+      .filter((k) => k && typeof k.id === "string")
+      .map((k) => ({
+        id: k.id,
+        tytul: typeof k.tytul === "string" ? k.tytul : "",
+        rodzaj: k.rodzaj === "kontakt" ? ("kontakt" as const) : ("linki" as const),
+        widoczna: k.widoczna !== false,
+        pokazProfile: k.pokazProfile === true,
+        pozycje: Array.isArray(k.pozycje) ? k.pozycje : [],
+      }));
+
     return {
-      social: { ...DEFAULT_FOOTER.social, ...(v.social ?? {}) },
-      links: Array.isArray(v.links) ? v.links : DEFAULT_FOOTER.links,
-      downloads: Array.isArray(v.downloads) ? v.downloads : DEFAULT_FOOTER.downloads,
-      documents: Array.isArray(v.documents) ? v.documents : DEFAULT_FOOTER.documents,
-      contact: { ...DEFAULT_FOOTER.contact, ...(v.contact ?? {}) },
-      copyright: v.copyright ?? DEFAULT_FOOTER.copyright,
+      kolumny: kolumny.length ? kolumny : DEFAULT_FOOTER.kolumny,
+      copyright: typeof v.copyright === "string" ? v.copyright : DEFAULT_FOOTER.copyright,
     };
   } catch (e) {
     console.warn("[footer] getFooterData - fallback:", e);

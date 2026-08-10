@@ -5,63 +5,53 @@ import { useState } from "react";
 import { saveFooter } from "@/actions/footerActions";
 import { opiszBlad } from "@/lib/adminErrors";
 import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
-import type { FooterData, FooterLink } from "@/lib/footerTypes";
+import type { FooterData, FooterKolumna, FooterLink } from "@/lib/footerTypes";
 import PasekAkcji from "./PasekAkcji";
 
 const inputCls =
   "w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
 
-function LinkListEditor({
-  title,
-  hint,
-  links,
+/** Lista odnośników wewnątrz jednej kolumny. */
+function ListaOdnosnikow({
+  pozycje,
   onChange,
 }: {
-  title: string;
-  hint: string;
-  links: FooterLink[];
-  onChange: (links: FooterLink[]) => void;
+  pozycje: FooterLink[];
+  onChange: (l: FooterLink[]) => void;
 }) {
+  const ustaw = (i: number, patch: Partial<FooterLink>) =>
+    onChange(pozycje.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
+
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-      <div>
-        <h2 className="font-bold">{title}</h2>
-        <p className="text-xs text-slate-400 mt-0.5">{hint}</p>
-      </div>
-      {links.map((l, i) => (
-        <div key={i} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-center">
+    <div className="space-y-2">
+      {pozycje.map((l, i) => (
+        <div key={i} className="flex flex-wrap gap-2 items-center">
           <input
             value={l.label}
-            onChange={(e) =>
-              onChange(links.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))
-            }
-            placeholder="Nazwa"
-            className={inputCls}
+            onChange={(e) => ustaw(i, { label: e.target.value })}
+            placeholder="Nazwa widoczna na stronie"
+            className={`${inputCls} flex-1 min-w-[10rem]`}
           />
           <input
             value={l.href}
-            onChange={(e) =>
-              onChange(links.map((x, j) => (j === i ? { ...x, href: e.target.value } : x)))
-            }
-            placeholder="/downloads/plik.pdf lub https://..."
-            className={`${inputCls} font-mono`}
+            onChange={(e) => ustaw(i, { href: e.target.value })}
+            placeholder="/downloads/plik.pdf albo https://..."
+            className={`${inputCls} flex-1 min-w-[12rem] font-mono text-xs`}
           />
           <button
-            type="button"
-            onClick={() => onChange(links.filter((_, j) => j !== i))}
-            className="text-slate-400 hover:text-red-600 transition-colors justify-self-end p-1.5"
-            title="Usuń"
+            onClick={() => onChange(pozycje.filter((_, idx) => idx !== i))}
+            className="shrink-0 rounded-lg border border-red-300 text-red-600 px-3 py-2 text-sm hover:bg-red-50 transition-colors"
+            aria-label="Usuń odnośnik"
           >
             ✕
           </button>
         </div>
       ))}
       <button
-        type="button"
-        onClick={() => onChange([...links, { label: "", href: "" }])}
-        className="rounded-lg border border-dashed border-slate-300 px-3 py-1.5 text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
+        onClick={() => onChange([...pozycje, { label: "", href: "" }])}
+        className="w-full rounded-lg border border-dashed border-slate-300 py-2 text-sm text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
       >
-        + Dodaj link
+        + Dodaj odnośnik
       </button>
     </div>
   );
@@ -75,6 +65,53 @@ export default function FooterEditor({ initialData }: { initialData: FooterData 
 
   const zmieniono = czyZmieniono(data, zapisany);
   useUnsavedChanges(zmieniono, "Stopka strony");
+
+  const ustawKolumne = (i: number, patch: Partial<FooterKolumna>) =>
+    setData((p) => ({
+      ...p,
+      kolumny: p.kolumny.map((k, idx) => (idx === i ? { ...k, ...patch } : k)),
+    }));
+
+  function przesun(i: number, kierunek: -1 | 1) {
+    const cel = i + kierunek;
+    if (cel < 0 || cel >= data.kolumny.length) return;
+    setData((p) => {
+      const next = [...p.kolumny];
+      [next[i], next[cel]] = [next[cel], next[i]];
+      return { ...p, kolumny: next };
+    });
+  }
+
+  function dodajKolumne() {
+    setData((p) => ({
+      ...p,
+      kolumny: [
+        ...p.kolumny,
+        {
+          // Identyfikator z licznika, nie z czasu - musi być stabilny
+          // i przewidywalny, a kolumn są jednostki.
+          id: `kolumna-${p.kolumny.length + 1}`,
+          tytul: "NOWA KOLUMNA",
+          rodzaj: "linki",
+          widoczna: true,
+          pokazProfile: false,
+          pozycje: [],
+        },
+      ],
+    }));
+  }
+
+  function usunKolumne(i: number) {
+    const k = data.kolumny[i];
+    if (
+      !confirm(
+        `Usunąć kolumnę „${k.tytul}" razem z ${k.pozycje.length} odnośnikami?\n\n` +
+          "Jeśli chcesz ją tylko tymczasowo schować, wyłącz przełącznik Widoczna na stronie zamiast usuwać."
+      )
+    )
+      return;
+    setData((p) => ({ ...p, kolumny: p.kolumny.filter((_, idx) => idx !== i) }));
+  }
 
   async function handleSave() {
     setBusy(true);
@@ -94,11 +131,13 @@ export default function FooterEditor({ initialData }: { initialData: FooterData 
     }
   }
 
+  const widocznych = data.kolumny.filter((k) => k.widoczna).length;
+
   return (
     <div className="space-y-5">
       <PasekAkcji
         tytul="Stopka strony"
-        opis="Odnośniki, dokumenty i pliki do pobrania widoczne na dole każdej strony."
+        opis="Kolumny widoczne na dole każdej strony. Kolejność tutaj = kolejność na stronie."
         zmieniono={zmieniono}
         busy={busy}
         podglad="/"
@@ -107,6 +146,7 @@ export default function FooterEditor({ initialData }: { initialData: FooterData 
 
       {msg && (
         <div
+          role="status"
           className={`rounded-lg px-4 py-3 text-sm ${
             msg.ok
               ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
@@ -117,29 +157,105 @@ export default function FooterEditor({ initialData }: { initialData: FooterData 
         </div>
       )}
 
-      <LinkListEditor
-        title="Linki (pierwsza kolumna stopki)"
-        hint="Przydatne odnośniki - np. organizacje Shorinji Kempo, kanały YouTube."
-        links={data.links}
-        onChange={(links) => setData({ ...data, links })}
-      />
+      <p className="text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+        Na szerokim ekranie kolumny stoją obok siebie (teraz widocznych: {widocznych}), na tablecie
+        po dwie, a na telefonie jedna pod drugą. Nie trzeba nic ustawiać - układ dopasowuje się sam.
+      </p>
 
-      {/* Kontakt, profile spolecznosciowe i nazwa po znaku (c) przeniesione
-          do zakladki "Dane organizacji". Trzymanie ich w dwoch miejscach
-          znaczylo, ze redaktor mogl wpisac jeden numer tutaj, a inny widnial
-          na mapie i w danych dla Google - i nic tego nie pilnowalo. */}
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-        <h2 className="font-bold text-slate-900">Telefon, e-mail, adres i profile</h2>
-        <p className="text-sm text-slate-600 mt-1">
-          Te dane ustawia się w jednym miejscu, w zakładce{" "}
-          <Link href="/admin/dane-organizacji" className="text-indigo-600 underline underline-offset-2 hover:text-indigo-800">
-            Dane organizacji
-          </Link>
-          . Zmiana tam poprawia je od razu w stopce, na stronie Kontakt, na mapie
-          i w wizytówce Google.
-        </p>
-      </div>
+      {data.kolumny.map((k, i) => (
+        <div
+          key={k.id}
+          className={`rounded-2xl border p-5 space-y-4 ${
+            k.widoczna ? "bg-white border-slate-200" : "bg-slate-50 border-slate-200 opacity-75"
+          }`}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-xs font-semibold text-slate-400 shrink-0">{i + 1}.</span>
+              <input
+                value={k.tytul}
+                onChange={(e) => ustawKolumne(i, { tytul: e.target.value })}
+                placeholder="Nagłówek kolumny"
+                className="rounded-lg border border-slate-300 px-3 py-2 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => przesun(i, -1)}
+                disabled={i === 0}
+                className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm disabled:opacity-30 hover:bg-slate-50 transition-colors"
+                aria-label="Przesuń w lewo"
+                title="Przesuń w lewo"
+              >
+                ←
+              </button>
+              <button
+                onClick={() => przesun(i, 1)}
+                disabled={i === data.kolumny.length - 1}
+                className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm disabled:opacity-30 hover:bg-slate-50 transition-colors"
+                aria-label="Przesuń w prawo"
+                title="Przesuń w prawo"
+              >
+                →
+              </button>
+              <button
+                onClick={() => usunKolumne(i)}
+                className="rounded-lg border border-red-300 text-red-600 px-3 py-1.5 text-sm hover:bg-red-50 transition-colors"
+              >
+                Usuń kolumnę
+              </button>
+            </div>
+          </div>
 
+          <div className="flex flex-wrap gap-5">
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={k.widoczna}
+                onChange={(e) => ustawKolumne(i, { widoczna: e.target.checked })}
+                className="w-4 h-4 rounded border-slate-300"
+              />
+              Widoczna na stronie
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={k.pokazProfile}
+                onChange={(e) => ustawKolumne(i, { pokazProfile: e.target.checked })}
+                className="w-4 h-4 rounded border-slate-300"
+              />
+              Ikony Facebooka, Instagrama i YouTube pod spodem
+            </label>
+          </div>
+
+          {k.rodzaj === "kontakt" ? (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="text-sm text-slate-700">
+                Ta kolumna pokazuje adres sali, telefon i e-mail z zakładki{" "}
+                <Link
+                  href="/admin/dane-organizacji"
+                  className="text-indigo-600 underline underline-offset-2 hover:text-indigo-800"
+                >
+                  Dane organizacji
+                </Link>
+                . Nagłówek i położenie zmieniasz tutaj, samą treść tam.
+              </p>
+            </div>
+          ) : (
+            <ListaOdnosnikow
+              pozycje={k.pozycje}
+              onChange={(pozycje) => ustawKolumne(i, { pozycje })}
+            />
+          )}
+        </div>
+      ))}
+
+      <button
+        onClick={dodajKolumne}
+        className="w-full rounded-xl border border-dashed border-slate-300 py-3 text-sm font-medium text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
+      >
+        + Dodaj kolumnę
+      </button>
     </div>
   );
 }

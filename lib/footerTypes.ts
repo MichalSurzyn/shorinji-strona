@@ -1,49 +1,112 @@
-/** Dane stopki - pola w stylu ACF, edytowalne w panelu. */
+/** Dane stopki - edytowalne w panelu (Stopka strony). */
 
 export type FooterLink = { label: string; href: string };
 
+/** Rodzaj kolumny decyduje o tym, skąd bierze treść. */
+export type FooterKolumnaRodzaj =
+  /** Lista odnośników wpisanych ręcznie. */
+  | "linki"
+  /** Adres, telefon i e-mail z zakładki „Dane organizacji". */
+  | "kontakt";
+
+export interface FooterKolumna {
+  /** Stabilny identyfikator - nie zmieniać po zapisie. */
+  id: string;
+  /** Nagłówek kolumny widoczny na stronie. */
+  tytul: string;
+  rodzaj: FooterKolumnaRodzaj;
+  /** Wyłączona kolumna znika ze strony, ale zostaje w panelu. */
+  widoczna: boolean;
+  /** Ikony profili społecznościowych pod treścią tej kolumny. */
+  pokazProfile: boolean;
+  /** Tylko dla rodzaju „linki". */
+  pozycje: FooterLink[];
+}
+
 export interface FooterData {
-  social: { facebook: string; instagram: string; youtube: string };
-  /** Przydatne linki (dawna podstrona „Linki" ze starej strony). */
-  links: FooterLink[];
-  downloads: FooterLink[];
-  documents: FooterLink[];
-  contact: {
-    addressLine1: string;
-    addressLine2: string;
-    phone: string;
-    phoneDisplay: string;
-    email: string;
-  };
+  /**
+   * Kolumny stopki w kolejności wyświetlania.
+   *
+   * Wcześniej stopka miała cztery kolumny zakute w kodzie, z nagłówkami
+   * wpisanymi w JSX. Redaktor nie mógł ani zmienić ich kolejności, ani
+   * ukryć jednej, ani dodać własnej.
+   */
+  kolumny: FooterKolumna[];
+  /**
+   * Zapasowa nazwa po znaku ©. Pierwszeństwo ma pole z Danych organizacji -
+   * to pole zostaje wyłącznie na wypadek pustej wartości tam.
+   */
   copyright: string;
 }
 
 /** Stopka bazowa z kodu - fallback, gdy baza nie odpowiada. */
 export const DEFAULT_FOOTER: FooterData = {
-  social: {
-    facebook: "https://www.facebook.com/shorinjikempopolska",
-    instagram: "https://www.instagram.com/shorinjikempopolska/",
-    youtube: "https://www.youtube.com/@Dominik_Chowanski",
-  },
-  // Bazowo pusto - realną listę (zweryfikowane linki ze starej strony)
-  // seeduje scripts/seed-content.mjs; edycja w panelu → Stopka.
-  links: [],
-  downloads: [
-    { label: "Deklaracja członkowska – od 18 lat", href: "/downloads/deklaracja-dorosli.pdf" },
-    { label: "Deklaracja członkowska – do 18 lat", href: "/downloads/deklaracja-do-18.pdf" },
+  kolumny: [
+    {
+      id: "linki",
+      tytul: "LINKI",
+      rodzaj: "linki",
+      widoczna: true,
+      pokazProfile: true,
+      pozycje: [],
+    },
+    {
+      id: "do-pobrania",
+      tytul: "DO POBRANIA",
+      rodzaj: "linki",
+      widoczna: true,
+      pokazProfile: false,
+      pozycje: [
+        { label: "Deklaracja członkowska – od 18 lat", href: "/downloads/deklaracja-dorosli.pdf" },
+        { label: "Deklaracja członkowska – do 18 lat", href: "/downloads/deklaracja-do-18.pdf" },
+      ],
+    },
+    {
+      id: "dokumenty",
+      tytul: "DOKUMENTY",
+      rodzaj: "linki",
+      widoczna: true,
+      pokazProfile: false,
+      pozycje: [
+        { label: "Statut POSK", href: "/downloads/statut-posk.pdf" },
+        { label: "Statut WSKO (kiyaku)", href: "/downloads/wsko-statutes.pdf" },
+        { label: "Regulamin WSKO (bylaws)", href: "/downloads/wsko-bylaws.pdf" },
+        { label: "Przepisy WSKO (regulations)", href: "/downloads/wsko-regulations.pdf" },
+      ],
+    },
+    {
+      id: "kontakt",
+      tytul: "KONTAKT",
+      rodzaj: "kontakt",
+      widoczna: true,
+      pokazProfile: false,
+      pozycje: [],
+    },
   ],
-  documents: [
-    { label: "Statut POSK", href: "/downloads/statut-posk.pdf" },
-    { label: "WSKO – Statutes (kiyaku)", href: "/downloads/wsko-statutes.pdf" },
-    { label: "WSKO – Bylaws", href: "/downloads/wsko-bylaws.pdf" },
-    { label: "WSKO – Regulations", href: "/downloads/wsko-regulations.pdf" },
-  ],
-  contact: {
-    addressLine1: "ul. Łąkowa 31, Kraków",
-    addressLine2: "Szkoła Podstawowa nr 114",
-    phone: "+48792995510",
-    phoneDisplay: "+48 792 99 55 10",
-    email: "pl.shorinjikempo@gmail.com",
-  },
   copyright: "POLSKA ORGANIZACJA SHORINJI KEMPO.",
 };
+
+/** Kształt stopki sprzed wprowadzenia kolumn - do jednorazowej migracji. */
+interface StaraStopka {
+  links?: FooterLink[];
+  downloads?: FooterLink[];
+  documents?: FooterLink[];
+  copyright?: string;
+}
+
+/**
+ * Przepisuje stary układ na kolumny.
+ *
+ * Wywoływane przy odczycie, więc wpis zapisany przed tą zmianą nie wymaga
+ * migracji w bazie - stopka wygląda tak samo, dopóki redaktor niczego nie
+ * zapisze, a przy pierwszym zapisie utrwala się już w nowym kształcie.
+ */
+export function migrujStopke(stare: StaraStopka): FooterData {
+  const kolumny = DEFAULT_FOOTER.kolumny.map((k) => {
+    if (k.id === "linki") return { ...k, pozycje: stare.links ?? [] };
+    if (k.id === "do-pobrania") return { ...k, pozycje: stare.downloads ?? k.pozycje };
+    if (k.id === "dokumenty") return { ...k, pozycje: stare.documents ?? k.pozycje };
+    return { ...k };
+  });
+  return { kolumny, copyright: stare.copyright ?? DEFAULT_FOOTER.copyright };
+}
