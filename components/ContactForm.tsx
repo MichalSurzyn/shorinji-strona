@@ -123,6 +123,28 @@ export default function ContactForm({
           </p>
         )}
 
+        {/* Obowiazek informacyjny z art. 13 RODO: informacja musi trafic do
+            osoby W MOMENCIE zbierania danych, nie dopiero w polityce, do
+            ktorej nikt nie zaglada. Swiadomie nie ma tu checkboxa zgody -
+            podstawa przetwarzania jest odpowiedz na zapytanie, a nie zgoda,
+            wiec checkbox bylby prawnie mylacy. */}
+        {/* TODO: gdy polityka prywatnosci trafi na strone, dopisac tu zdanie
+            "Szczegoly w polityce prywatnosci" z odnosnikiem. Teraz odnosnika
+            nie ma, bo strona jeszcze nie istnieje, a link do 404 jest gorszy
+            niz jego brak. */}
+        <p className="text-xs text-neutral-500 leading-relaxed">
+          Twoje imię, adres e-mail i treść wiadomości trafią do nas, żebyśmy
+          mogli odpowiedzieć. Nie wykorzystamy ich do niczego innego i nie
+          przekażemy dalej. Wiadomość usuwamy najpóźniej po roku od zakończenia
+          korespondencji. W każdej chwili możesz poprosić o wcześniejsze
+          usunięcie - napisz na ten sam adres.
+        </p>
+
+        <p className="text-xs text-neutral-500">
+          Prosimy nie podawać tutaj numeru PESEL, adresu zamieszkania ani
+          informacji o zdrowiu. Jeśli będą potrzebne, poprosimy o nie osobno.
+        </p>
+
         <div className="flex justify-end">
           <button
             type="submit"

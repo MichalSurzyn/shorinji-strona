@@ -66,6 +66,40 @@ export async function sendContactMessage(input: {
   return { ok: true as const };
 }
 
+/**
+ * Ile miesięcy trzymamy wiadomości z formularza.
+ *
+ * Formularz obiecuje odwiedzającemu, że wiadomość zniknie najpóźniej po roku.
+ * Obietnica bez mechanizmu jest gorsza niż jej brak - przy kontroli to
+ * deklaracja, której nie da się dotrzymać. Sprzątanie odpala się przy wejściu
+ * do skrzynki w panelu; nie ma tu zadania cyklicznego, ale skrzynkę i tak
+ * ktoś musi otwierać, żeby czytać wiadomości.
+ */
+const MIESIECY_RETENCJI = 12;
+
+/** Kasuje wiadomości starsze niż okres retencji. Zwraca liczbę usuniętych. */
+async function posprzatajStare(): Promise<number> {
+  const sb = getSupabaseAdmin();
+  if (!sb) return 0;
+  const granica = new Date();
+  granica.setMonth(granica.getMonth() - MIESIECY_RETENCJI);
+  try {
+    const { data, error } = await sb
+      .from("contact_messages")
+      .delete()
+      .lt("created_at", granica.toISOString())
+      .select("id");
+    if (error) throw error;
+    const ile = (data ?? []).length;
+    if (ile) console.info(`[kontakt] retencja: usunieto ${ile} wiadomosci starszych niz ${MIESIECY_RETENCJI} mies.`);
+    return ile;
+  } catch (e) {
+    // Nieudane sprzątanie nie może zablokować dostępu do skrzynki.
+    console.warn("[kontakt] retencja:", e);
+    return 0;
+  }
+}
+
 /** Lista wiadomości do panelu (wymaga zalogowania). */
 export async function listContactMessages(): Promise<
   { ok: true; messages: ContactMessageRow[] } | { ok: false; error: string }
@@ -73,6 +107,7 @@ export async function listContactMessages(): Promise<
   await requireUser();
   const sb = getSupabaseAdmin();
   if (!sb) return { ok: false, error: "Brak konfiguracji Supabase." };
+  await posprzatajStare();
   const { data, error } = await sb
     .from("contact_messages")
     .select("*")

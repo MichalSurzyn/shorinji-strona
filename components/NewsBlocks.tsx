@@ -298,7 +298,12 @@ export function BlockRenderer({
           >
             <iframe
               className="absolute inset-0 w-full h-full"
-              src={`https://www.youtube.com/embed/${id}`}
+              /* youtube-nocookie.com zamiast youtube.com: tryb bez ciasteczek
+                 śledzących. Zwykły odtwarzacz zapisuje je w urządzeniu
+                 odwiedzającego OD RAZU, zanim ktokolwiek kliknie „play",
+                 co wymaga zgody. W tym trybie ciasteczka pojawiają się
+                 dopiero po odtworzeniu filmu. */
+              src={`https://www.youtube-nocookie.com/embed/${id}`}
               title={block.caption ?? "Film YouTube"}
               loading="lazy"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
