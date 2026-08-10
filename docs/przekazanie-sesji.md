@@ -191,13 +191,70 @@ działa — utworzenie podstrony samo dodaje pozycję. Asymetria myli.
 Nie da się też dodać podstrony pod istniejącą pozycją (np. pod „Program nauczania") bez
 ręcznego wpisania sluga. Potrzebne **trzy poziomy** (dziś dwa).
 
-**Kierunek uzgodniony z właścicielem:** drzewo stron **jest** menu. Jedna zakładka, jedna
-struktura. Węzeł może być stroną, odnośnikiem zewnętrznym albo grupą bez własnej treści.
-Trzeci poziom **nie** przez menu trzypoziomowe (problem diagonalnego ruchu myszy), tylko przez
-stronę-listing z kafelkami — jak dziś wygląda `/organizacja`.
+**Pełna propozycja architektury: `docs/menu-architektura.md`** — 36 zasad z researchu,
+model danych z DDL, ekran panelu, migracja, 8 etapów. Poniżej sedno.
 
-Pełna propozycja architektury z researchu: **`docs/menu-architektura.md`** (jeśli istnieje —
-patrz punkt 10).
+### Model: jedna tabela `pages` zamiast `nav_items` + `custom_pages`
+
+Adjacency list (`parent_id` + `position`), całe drzewo jednym `SELECT` i składane w pamięci.
+Przy ~28 węzłach ltree, nested sets i closure table dokładają maszynerię bez zysku.
+
+Ten sam wiersz jest **węzłem drzewa, źródłem adresu i pozycją menu**. To usuwa przyczynę
+martwego linku na poziomie modelu, nie walidacji.
+
+Dwie kolumny rozstrzygają, czym pozycja jest:
+- `kind`: `page` (ma treść) / `link` (odnośnik zewnętrzny) / `header` (nagłówek grupujący)
+- `source`: `db` (treść w tym wierszu) / `route` (renderuje ją istniejąca trasa w kodzie,
+  np. `/zajecia/cennik`) — **dzięki temu nie powstaje ani jedna strona-placeholder**
+
+`full_path` to denormalizacja liczona triggerem, nigdy źródło prawdy o strukturze.
+Adresy rozwiązuje jedna trasa catch-all `app/[...sciezka]/page.tsx`.
+
+### Trzeci poziom — pomysł właściciela zatwierdzony
+
+Menu rozwijane zostaje **dwupoziomowe**. Trzeci poziom istnieje w danych (`depth = 2`),
+a w interfejsie wychodzi na stronę-hub z kafelkami.
+
+Kluczowe uproszczenie z researchu: **nie ma osobnego typu „strona listingowa"**. Bycie
+listingiem wynika z posiadania dzieci (`layout = 'auto'`). Węzeł z opublikowanymi dziećmi
+renderuje nagłówek + wstęp + własne bloki + kafelki dzieci.
+
+```
+Program nauczania        depth 0, w menu, ma dropdown
+├─ Uczniowskie           depth 1, w menu, layout auto → kafelki
+│  ├─ 6 kyu              depth 2, in_menu = false → kafelek u rodzica
+│  └─ 5 kyu              depth 2, in_menu = false
+└─ Mistrzowskie          depth 1, w menu
+```
+
+Egzekwowanie w kodzie: ustawienie `in_menu` na węźle `depth = 2` jest **odrzucane
+komunikatem**, nie ignorowane po cichu — ciche ignorowanie odtwarzałoby dzisiejszą asymetrię.
+
+### Rzeczy, które łatwo przeoczyć
+
+- **`ON DELETE CASCADE` → `RESTRICT`.** Dziś kaskada jest na `nav_items` i dotyczy tylko
+  etykiet. Po scaleniu dotyczyłaby treści — jedno kliknięcie kasowałoby całe poddrzewo.
+- **Przekierowania w kodzie aplikacji, nie w `next.config.ts`.** Reguły tam są kompilowane
+  przy budowaniu, a instruktor nie wywoła wdrożenia — każda zmiana sluga dawałaby 404
+  z wyników Google. Tabela `redirects` + obsługa w trasie catch-all.
+- **Nie w middleware** — biegłoby dla każdego żądania; w trasie catch-all wykonuje się
+  wyłącznie dla nietrafionych adresów.
+- **Migracja nie zmienia ani jednego istniejącego adresu.** Porządkowanie ścieżek „przy
+  okazji" miesza dwa ryzyka w jednym wdrożeniu i psuje golden master jako narzędzie kontroli.
+- **`article_overrides` kasować dopiero po przeniesieniu treści** — siedzą tam realne zmiany
+  redaktora bez odpowiednika w `data/articles/*.ts`.
+- **`RESERVED_SLUGS` nadal potrzebne** na poziomie zerowym: indeks unikalny obroni przed
+  kolizją z trasami mającymi węzeł, ale nie przed `/admin`, `/api`, `/downloads`, `sitemap.xml`.
+
+### Etapy
+
+Wzorzec expand → migrate → contract, za flagą `DRZEWO_STRON`. Osiem etapów, ~11 dni.
+Etapy 0–2 niewidoczne dla użytkowników. **Pierwszy widoczny efekt po etapie 5** (~8 dni):
+trzy poziomy i dodawanie strony pod istniejącą pozycją. Etapy 6–7 (listingi, treść artykułów
+tematycznych) można odłożyć. Etap 8 (`contract`) ma mieć datę — przerwana migracja jest
+gorsza od punktu wyjścia, bo utrzymuje się dwie ścieżki kodu nad jedną treścią.
+
+Przed etapem 1: zrzut stanu do `docs/golden-master-przed.json` i porównanie po każdym etapie.
 
 ### Powiązana luka
 
