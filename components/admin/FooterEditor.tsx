@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { resetFooter, saveFooter } from "@/actions/footerActions";
 import { opiszBlad } from "@/lib/adminErrors";
@@ -139,115 +140,20 @@ export default function FooterEditor({ initialData }: { initialData: FooterData 
         onChange={(links) => setData({ ...data, links })}
       />
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
-        <h2 className="font-bold">Social media</h2>
-        <div className="grid sm:grid-cols-3 gap-3">
-          {(["facebook", "instagram", "youtube"] as const).map((key) => (
-            <div key={key}>
-              <label className="block text-xs uppercase tracking-wider text-slate-500 mb-1.5">
-                {key}
-              </label>
-              <input
-                value={data.social[key]}
-                onChange={(e) =>
-                  setData({ ...data, social: { ...data.social, [key]: e.target.value } })
-                }
-                placeholder="https://..."
-                className={`${inputCls} font-mono`}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <LinkListEditor
-        title="Do pobrania"
-        hint="Pliki PDF wgraj do folderu public/downloads w projekcie albo podaj pełny adres URL."
-        links={data.downloads}
-        onChange={(downloads) => setData({ ...data, downloads })}
-      />
-
-      <LinkListEditor
-        title="Dokumenty"
-        hint="Statuty i regulaminy - jak wyżej."
-        links={data.documents}
-        onChange={(documents) => setData({ ...data, documents })}
-      />
-
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-        <h2 className="font-bold">Kontakt</h2>
-        <div className="grid sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs uppercase tracking-wider text-slate-500 mb-1.5">
-              Adres - linia 1
-            </label>
-            <input
-              value={data.contact.addressLine1}
-              onChange={(e) =>
-                setData({ ...data, contact: { ...data.contact, addressLine1: e.target.value } })
-              }
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className="block text-xs uppercase tracking-wider text-slate-500 mb-1.5">
-              Adres - linia 2
-            </label>
-            <input
-              value={data.contact.addressLine2}
-              onChange={(e) =>
-                setData({ ...data, contact: { ...data.contact, addressLine2: e.target.value } })
-              }
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className="block text-xs uppercase tracking-wider text-slate-500 mb-1.5">
-              Telefon (wyświetlany)
-            </label>
-            <input
-              value={data.contact.phoneDisplay}
-              onChange={(e) =>
-                setData({ ...data, contact: { ...data.contact, phoneDisplay: e.target.value } })
-              }
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className="block text-xs uppercase tracking-wider text-slate-500 mb-1.5">
-              Telefon (do połączenia, format +48...)
-            </label>
-            <input
-              value={data.contact.phone}
-              onChange={(e) =>
-                setData({ ...data, contact: { ...data.contact, phone: e.target.value } })
-              }
-              className={`${inputCls} font-mono`}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="block text-xs uppercase tracking-wider text-slate-500 mb-1.5">
-              E-mail
-            </label>
-            <input
-              value={data.contact.email}
-              onChange={(e) =>
-                setData({ ...data, contact: { ...data.contact, email: e.target.value } })
-              }
-              className={`${inputCls} font-mono`}
-            />
-          </div>
-        </div>
-        <div>
-          <label className="block text-xs uppercase tracking-wider text-slate-500 mb-1.5">
-            Stopka praw autorskich (po znaku ©)
-          </label>
-          <input
-            value={data.copyright}
-            onChange={(e) => setData({ ...data, copyright: e.target.value })}
-            className={inputCls}
-          />
-        </div>
+      {/* Kontakt, profile spolecznosciowe i nazwa po znaku (c) przeniesione
+          do zakladki "Dane organizacji". Trzymanie ich w dwoch miejscach
+          znaczylo, ze redaktor mogl wpisac jeden numer tutaj, a inny widnial
+          na mapie i w danych dla Google - i nic tego nie pilnowalo. */}
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+        <h2 className="font-bold text-slate-900">Telefon, e-mail, adres i profile</h2>
+        <p className="text-sm text-slate-600 mt-1">
+          Te dane ustawia się w jednym miejscu, w zakładce{" "}
+          <Link href="/admin/dane-organizacji" className="text-indigo-600 underline underline-offset-2 hover:text-indigo-800">
+            Dane organizacji
+          </Link>
+          . Zmiana tam poprawia je od razu w stopce, na stronie Kontakt, na mapie
+          i w wizytówce Google.
+        </p>
       </div>
 
       <div className="flex flex-wrap justify-between gap-3">

@@ -1,12 +1,23 @@
 import Link from "next/link";
 import { getFooterData } from "@/lib/footerData";
+import { getOrganization } from "@/lib/organization";
+import { formatTelefon } from "@/lib/organizationTypes";
 
 /**
- * Stopka strony - dane z site_settings (klucz "footer", edytowalne
- * w panelu admina), z fallbackiem do wartości z kodu.
+ * Stopka strony.
+ *
+ * Podział źródeł jest celowy:
+ *  - listy odnośników, dokumentów i plików do pobrania to zawartość samej
+ *    stopki i mieszkają w site_settings pod kluczem "footer" (zakładka Stopka),
+ *  - telefon, e-mail, adres i profile społecznościowe to dane PODMIOTU
+ *    i pochodzą z klucza "organization" (zakładka Dane organizacji).
+ *
+ * Wcześniej stopka miała własną kopię kontaktu i profili społecznościowych.
+ * Redaktor mógł więc wpisać jeden numer w Stopce, inny widniał w danych dla
+ * Google i na mapie, i nic tego nie pilnowało.
  */
 export default async function Footer() {
-  const data = await getFooterData();
+  const [data, org] = await Promise.all([getFooterData(), getOrganization()]);
 
   return (
     <footer className="bg-neutral-900 text-neutral-300 py-12 border-t border-neutral-800 z-11">
@@ -33,9 +44,9 @@ export default async function Footer() {
               </ul>
             )}
             <div className="flex space-x-4">
-              {data.social.facebook && (
+              {org.social.facebook && (
                 <Link
-                  href={data.social.facebook}
+                  href={org.social.facebook}
                   aria-label="Facebook"
                   className="text-neutral-400 hover:text-yellow-500 transition-colors"
                 >
@@ -44,9 +55,9 @@ export default async function Footer() {
                   </svg>
                 </Link>
               )}
-              {data.social.instagram && (
+              {org.social.instagram && (
                 <Link
-                  href={data.social.instagram}
+                  href={org.social.instagram}
                   aria-label="Instagram"
                   className="text-neutral-400 hover:text-yellow-500 transition-colors"
                 >
@@ -55,9 +66,9 @@ export default async function Footer() {
                   </svg>
                 </Link>
               )}
-              {data.social.youtube && (
+              {org.social.youtube && (
                 <Link
-                  href={data.social.youtube}
+                  href={org.social.youtube}
                   aria-label="YouTube"
                   className="text-neutral-400 hover:text-yellow-500 transition-colors"
                 >
@@ -107,29 +118,36 @@ export default async function Footer() {
           <div>
             <h3 className="text-white text-lg font-semibold mb-4 tracking-wider">KONTAKT</h3>
             <ul className="space-y-2 text-sm text-neutral-400 leading-relaxed">
+              {/* Adres SALI TRENINGOWEJ - to jego szuka odwiedzający, nie
+                  adresu siedziby stowarzyszenia. */}
               <li>
-                {data.contact.addressLine1}
-                {data.contact.addressLine2 && (
+                {[org.miejsceZajec.adres.ulica, org.miejsceZajec.adres.miasto]
+                  .filter(Boolean)
+                  .join(", ")}
+                {org.miejsceZajec.nazwaPelna && (
                   <>
                     <br />
-                    <span className="text-neutral-500">{data.contact.addressLine2}</span>
+                    <span className="text-neutral-500">{org.miejsceZajec.nazwaPelna}</span>
                   </>
                 )}
               </li>
-              {data.contact.phoneDisplay && (
+              {org.kontakt.telefon && (
                 <li>
-                  <a href={`tel:${data.contact.phone}`} className="hover:text-yellow-500 transition-colors">
-                    {data.contact.phoneDisplay}
+                  <a
+                    href={`tel:${org.kontakt.telefon}`}
+                    className="hover:text-yellow-500 transition-colors"
+                  >
+                    {formatTelefon(org.kontakt.telefon)}
                   </a>
                 </li>
               )}
-              {data.contact.email && (
+              {org.kontakt.email && (
                 <li>
                   <a
-                    href={`mailto:${data.contact.email}`}
+                    href={`mailto:${org.kontakt.email}`}
                     className="hover:text-yellow-500 transition-colors break-all"
                   >
-                    {data.contact.email}
+                    {org.kontakt.email}
                   </a>
                 </li>
               )}
@@ -140,7 +158,9 @@ export default async function Footer() {
 
         {/* Pasek na samym dole */}
         <div className="mt-10 pt-6 border-t border-neutral-800 text-center text-xs text-neutral-500">
-          <p>&copy; {new Date().getFullYear()} {data.copyright}</p>
+          <p>
+            &copy; {new Date().getFullYear()} {org.nazwy.wStopce || data.copyright}
+          </p>
         </div>
       </div>
     </footer>

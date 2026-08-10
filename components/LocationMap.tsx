@@ -1,9 +1,5 @@
-import {
-  CONTACT,
-  FULL_ADDRESS,
-  MAPS_EMBED_URL,
-  MAPS_LINK_URL,
-} from "../lib/site";
+import { getOrganization } from "../lib/organization";
+import { formatTelefon, pelnyAdres } from "../lib/organizationTypes";
 
 type Props = {
   /** Nagłówek nad mapą. Gdy pominięty, sekcja nie ma tytułu. */
@@ -16,12 +12,22 @@ type Props = {
 /**
  * Sekcja z osadzoną mapą Google (bez klucza API) oraz adresem i linkiem
  * do nawigacji. Używana na podstronie kontakt i na stronach zajęć.
+ *
+ * Adres i kontakt pochodzą z danych organizacji (panel → Dane organizacji).
+ * Wcześniej komponent importował je z lib/site.ts, czyli z kodu - zmiana
+ * numeru w panelu poprawiała stopkę, a mapa i adres obok niej pokazywały
+ * dalej stary. Adresu sali nie dało się zmienić z panelu w ogóle.
  */
-export default function LocationMap({
+export default async function LocationMap({
   heading,
   showContact = true,
   className = "",
 }: Props) {
+  const org = await getOrganization();
+  const { nazwaPelna, adres } = org.miejsceZajec;
+  const adresJednymCiagiem = [nazwaPelna, pelnyAdres(adres)].filter(Boolean).join(", ");
+  const zapytanie = encodeURIComponent(adresJednymCiagiem);
+
   return (
     <section className={className}>
       {heading && (
@@ -34,8 +40,8 @@ export default function LocationMap({
         {/* Mapa */}
         <div className="relative aspect-[16/10] lg:aspect-auto lg:min-h-[320px] overflow-hidden rounded-xl border border-yellow-500/30">
           <iframe
-            title={`Mapa dojazdu – ${CONTACT.venue}`}
-            src={MAPS_EMBED_URL}
+            title={`Mapa dojazdu – ${nazwaPelna || adresJednymCiagiem}`}
+            src={`https://www.google.com/maps?q=${zapytanie}&output=embed`}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
             allowFullScreen
@@ -49,36 +55,45 @@ export default function LocationMap({
             Gdzie trenujemy
           </p>
           <address className="not-italic text-neutral-200 leading-relaxed">
-            <span className="block font-medium text-white">{CONTACT.venue}</span>
-            <span className="block">{CONTACT.street}</span>
-            <span className="block">
-              {CONTACT.postalCode} {CONTACT.city}
-            </span>
+            {nazwaPelna && (
+              <span className="block font-medium text-white">{nazwaPelna}</span>
+            )}
+            {adres.ulica && <span className="block">{adres.ulica}</span>}
+            {(adres.kodPocztowy || adres.miasto) && (
+              <span className="block">
+                {adres.kodPocztowy} {adres.miasto}
+              </span>
+            )}
           </address>
 
           {showContact && (
             <div className="mt-4 space-y-1 text-sm">
-              <a
-                href={`tel:${CONTACT.phone}`}
-                className="block text-neutral-300 hover:text-yellow-500 transition-colors"
-              >
-                {CONTACT.phoneDisplay}
-              </a>
-              <a
-                href={`mailto:${CONTACT.email}`}
-                className="block text-neutral-300 hover:text-yellow-500 transition-colors break-all"
-              >
-                {CONTACT.email}
-              </a>
+              {/* Puste pole w panelu = odnośnik się nie pokazuje. */}
+              {org.kontakt.telefon && (
+                <a
+                  href={`tel:${org.kontakt.telefon}`}
+                  className="block text-neutral-300 hover:text-yellow-500 transition-colors"
+                >
+                  {formatTelefon(org.kontakt.telefon)}
+                </a>
+              )}
+              {org.kontakt.email && (
+                <a
+                  href={`mailto:${org.kontakt.email}`}
+                  className="block text-neutral-300 hover:text-yellow-500 transition-colors break-all"
+                >
+                  {org.kontakt.email}
+                </a>
+              )}
             </div>
           )}
 
           <a
-            href={MAPS_LINK_URL}
+            href={`https://www.google.com/maps/dir/?api=1&destination=${zapytanie}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-auto pt-5 inline-flex items-center gap-2 text-sm font-semibold text-yellow-500 hover:text-yellow-400 transition-colors"
-            aria-label={`Wyznacz trasę do ${FULL_ADDRESS}`}
+            aria-label={`Wyznacz trasę do ${adresJednymCiagiem}`}
           >
             <svg
               className="w-4 h-4"

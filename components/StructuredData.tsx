@@ -1,13 +1,7 @@
-import {
-  CONTACT,
-  SITE_NAME,
-  SITE_URL,
-  SITE_DESCRIPTION,
-  SOCIAL_LINKS,
-} from "../lib/site";
+import { SITE_URL } from "../lib/site";
+import { getOrganization } from "../lib/organization";
+import { pelnyAdres } from "../lib/organizationTypes";
 import type { ScheduleSlot } from "../data/schedule";
-
-const LOGO_URL = `${SITE_URL}/SOEN.jpg`;
 
 const ISO_DAY_TO_SCHEMA: Record<number, string> = {
   1: "Monday",
@@ -51,41 +45,49 @@ function openingHours(slots: ScheduleSlot[]) {
  * Renderowane site-wide w layout, opisuje krakowskie dōjō jako
  * SportsActivityLocation (podtyp LocalBusiness).
  *
- * `slots` przekazuje layout z getSchedule(), czyli z harmonogramu
- * zapisanego w panelu. Wcześniej komponent importował SCHEDULE wprost
- * z kodu i godziny podawane wyszukiwarkom rozjeżdżały się z tymi,
- * które widział odwiedzający po edycji planu w panelu.
+ * Nazwa, opis, kontakt, adres sali i profile społecznościowe pochodzą
+ * z danych organizacji (panel). `slots` przekazuje layout z getSchedule().
+ *
+ * Adres strony (SITE_URL) zostaje zmienną środowiskową - musi być znany
+ * przy budowaniu, a błędna wartość wpisana w panelu przepisałaby adresy
+ * kanoniczne całego serwisu.
  */
-export default function StructuredData({ slots }: { slots: ScheduleSlot[] }) {
+export default async function StructuredData({ slots }: { slots: ScheduleSlot[] }) {
+  const org = await getOrganization();
+  const { adres } = org.miejsceZajec;
+  const logo = `${SITE_URL}/SOEN.jpg`;
+
+  // Puste pole w panelu znaczy „nie podano" - takie klucze pomijamy,
+  // zamiast wysyłać wyszukiwarkom pustą wartość.
+  const sameAs = [org.social.facebook, org.social.instagram, org.social.youtube].filter(Boolean);
+
   const data = {
     "@context": "https://schema.org",
     "@type": "SportsActivityLocation",
     "@id": `${SITE_URL}/#dojo`,
-    name: SITE_NAME,
-    alternateName: "Polska Organizacja Shorinji Kempo – filia Kraków",
-    description: SITE_DESCRIPTION,
+    name: org.nazwy.serwis,
+    ...(org.nazwy.prawna ? { legalName: org.nazwy.prawna } : {}),
+    ...(org.nazwy.opis ? { description: org.nazwy.opis } : {}),
     url: SITE_URL,
-    telephone: CONTACT.phone,
-    email: CONTACT.email,
-    logo: LOGO_URL,
-    image: LOGO_URL,
+    ...(org.kontakt.telefon ? { telephone: org.kontakt.telefon } : {}),
+    ...(org.kontakt.email ? { email: org.kontakt.email } : {}),
+    logo,
+    image: logo,
     sport: "Shorinji Kempo",
     priceRange: "$$",
     address: {
       "@type": "PostalAddress",
-      streetAddress: CONTACT.street,
-      addressLocality: CONTACT.city,
-      postalCode: CONTACT.postalCode,
-      addressRegion: CONTACT.region,
-      addressCountry: CONTACT.countryCode,
+      ...(org.miejsceZajec.nazwaPelna ? { name: org.miejsceZajec.nazwaPelna } : {}),
+      streetAddress: adres.ulica,
+      addressLocality: adres.miasto,
+      postalCode: adres.kodPocztowy,
+      addressRegion: adres.wojewodztwo,
+      addressCountry: adres.kodKraju,
     },
-    areaServed: { "@type": "City", name: "Kraków" },
-    sameAs: [
-      SOCIAL_LINKS.facebook,
-      SOCIAL_LINKS.instagram,
-      SOCIAL_LINKS.youtube,
-    ],
+    ...(adres.miasto ? { areaServed: { "@type": "City", name: adres.miasto } } : {}),
+    ...(sameAs.length ? { sameAs } : {}),
     openingHoursSpecification: openingHours(slots),
+    ...(pelnyAdres(adres) ? { hasMap: `https://www.google.com/maps?q=${encodeURIComponent(pelnyAdres(adres))}` } : {}),
   };
 
   return (
