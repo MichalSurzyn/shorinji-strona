@@ -23,10 +23,15 @@ const WSZYSTKIE = "all";
 /**
  * Okładka albumu: do trzech zdjęć nałożonych na siebie, jak stos odbitek.
  *
- * Obrót przypisujemy według GŁĘBOKOŚCI (0 = wierzch), nie według indeksu
- * w tablicy. Przy przypisaniu po indeksie liczba zdjęć decydowała o tym,
- * czy wierzchnie jest przekrzywione - album z dwoma zdjęciami wyglądał jak
- * stos, a z dwudziestoma jak pojedyncze zdjęcie.
+ * NA WIERZCHU LEŻY covers[0]. Wcześniej głębokość liczyliśmy od końca tablicy,
+ * więc na wierzchu lądowało trzecie zdjęcie od końca - a redaktor nie miał jak
+ * wskazać, które ma być widoczne. Odwrócenie tej kolejności daje jedną regułę:
+ * pierwsze zdjęcie listy jest okładką albumu, także wtedy, gdy zostało
+ * wyróżnione ręcznie w panelu.
+ *
+ * Obrót nadal przypisujemy według GŁĘBOKOŚCI, nie według liczby zdjęć.
+ * Przy liczeniu od końca album z dwoma zdjęciami wyglądał jak stos,
+ * a z dwudziestoma jak pojedyncze zdjęcie.
  *
  * Warstwy pod spodem zostają w skali 1. Pomniejszone o 8% chowały się
  * całkowicie: kwadrat obrócony o 6° wystaje poza swój obrys o około 5%,
@@ -51,7 +56,7 @@ function Stos({ covers, alt }: { covers: string[]; alt: string }) {
   return (
     <div className="relative aspect-square">
       {widoczne.map((publicId, i) => {
-        const glebokosc = widoczne.length - 1 - i; // 0 = wierzch
+        const glebokosc = i; // 0 = wierzch, czyli covers[0]
         const naWierzchu = glebokosc === 0;
         return (
           <div
@@ -59,7 +64,7 @@ function Stos({ covers, alt }: { covers: string[]; alt: string }) {
             className={`absolute inset-0 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900 transition-transform duration-500 ${
               obrotDlaGlebokosci[glebokosc]
             } ${naWierzchu ? "shadow-2xl shadow-black/60" : "shadow-lg"} group-hover:rotate-0`}
-            style={{ zIndex: i }}
+            style={{ zIndex: widoczne.length - 1 - i }}
           >
             <CldImage
               width="600"
