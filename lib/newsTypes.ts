@@ -60,7 +60,16 @@ export type NewsBlock =
       facts: { label: string; value: string }[];
       /** Dodatkowa notka na dole karty (obsługuje formatowanie inline). */
       note?: string | null;
-    };
+    }
+  /**
+   * Numer konta do wpłat. Blok NIE przechowuje danych - bierze je
+   * z zakładki „Dane organizacji".
+   *
+   * Wcześniej numer rachunku siedział w zwykłym bloku „callout" jako tekst
+   * ze znacznikami wyróżnienia. Był więc edytowany jak proza, bez żadnej
+   * kontroli - a to najdroższy w skutkach ciąg znaków na stronie.
+   */
+  | { type: "bank" };
 
 /**
  * Pełna treść edytowalnej strony (site_settings, klucz "page:<slug>").

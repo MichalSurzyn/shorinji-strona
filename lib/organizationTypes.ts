@@ -193,11 +193,25 @@ export function czyPoprawnyIban(wejscie: string): boolean {
   return reszta === 1;
 }
 
-/** IBAN do wyświetlenia: bez kodu kraju, grupowany po cztery znaki. */
+/**
+ * Numer konta do wyświetlenia.
+ *
+ * Dla rachunku polskiego zdejmujemy przedrostek „PL" i grupujemy w układzie
+ * 2-4-4-4-4-4-4, czyli tak, jak numer widnieje na przelewach i jak go
+ * rozpoznaje wpłacający. Uniwersalne grupowanie po cztery dałoby
+ * 4-4-4-4-4-4-2 - te same cyfry, ale obcy kształt, przy którym łatwiej
+ * o pomyłkę przy przepisywaniu.
+ *
+ * Rachunki zagraniczne zostają w zapisie międzynarodowym: kod kraju
+ * i grupy po cztery znaki.
+ */
 export function formatIban(iban: string): string {
   const czysty = normalizujIban(iban);
-  const bezKraju = /^PL/.test(czysty) ? czysty.slice(2) : czysty;
-  return bezKraju.replace(/(.{4})/g, "$1 ").trim();
+  if (/^PL\d{26}$/.test(czysty)) {
+    const cyfry = czysty.slice(2);
+    return `${cyfry.slice(0, 2)} ${cyfry.slice(2).replace(/(.{4})/g, "$1 ")}`.trim();
+  }
+  return czysty.replace(/(.{4})/g, "$1 ").trim();
 }
 
 /** Telefon do wyświetlenia: „+48 792 99 55 10". */

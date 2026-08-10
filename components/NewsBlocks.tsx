@@ -1,4 +1,6 @@
 import { clThumb, clUrl } from "@/lib/cloudinary";
+import { formatIban } from "@/lib/organizationTypes";
+import type { OrgBank } from "@/lib/organizationTypes";
 import type { NewsBlock } from "@/lib/newsTypes";
 
 /**
@@ -65,7 +67,14 @@ export function slugifyAnchor(s: string): string {
 }
 
 /** Renderuje pojedynczy blok treści. */
-export function BlockRenderer({ block }: { block: NewsBlock }) {
+export function BlockRenderer({
+  block,
+  bank,
+}: {
+  block: NewsBlock;
+  /** Dane konta z zakladki "Dane organizacji" - potrzebne blokowi "bank". */
+  bank?: OrgBank;
+}) {
   switch (block.type) {
     case "heading":
       return (
@@ -90,6 +99,32 @@ export function BlockRenderer({ block }: { block: NewsBlock }) {
           <InlineText text={block.text} />
         </p>
       );
+    case "bank": {
+      // Blok nie przechowuje danych - bierze je z zakładki „Dane organizacji",
+      // gdzie numer przechodzi kontrolę sumy IBAN. Bez danych nie renderujemy
+      // pustej ramki.
+      if (!bank || !bank.iban) return null;
+      return (
+        <div className="rounded-xl border border-yellow-500/40 bg-yellow-500/5 px-6 py-5 text-neutral-200 backdrop-blur-sm">
+          {bank.odbiorca && (
+            <p className="font-semibold text-white">{bank.odbiorca}</p>
+          )}
+          <p className="mt-2 text-sm text-neutral-400">
+            {bank.nazwaBanku ? `${bank.nazwaBanku} · numer konta` : "Numer konta"}
+          </p>
+          {/* tabular-nums wyrównuje cyfry, żeby numer dało się przepisać
+              bez gubienia miejsca w rzędzie. */}
+          <p className="mt-1 text-lg md:text-xl font-mono tabular-nums tracking-wide text-yellow-500 break-all">
+            {formatIban(bank.iban)}
+          </p>
+          {bank.wzorTytulu && (
+            <p className="mt-4 text-sm text-neutral-300">
+              <InlineText text={bank.wzorTytulu} />
+            </p>
+          )}
+        </div>
+      );
+    }
     case "callout":
       return (
         <div className="rounded-xl border border-yellow-500/40 bg-yellow-500/5 px-6 py-5 text-neutral-200 backdrop-blur-sm">
@@ -422,7 +457,13 @@ function PersonCard({
   );
 }
 
-export default function NewsBlocks({ blocks }: { blocks: NewsBlock[] }) {
+export default function NewsBlocks({
+  blocks,
+  bank,
+}: {
+  blocks: NewsBlock[];
+  bank?: OrgBank;
+}) {
   // Kolejne bloki "person" grupujemy w siatkę - karty stają obok siebie.
   const groups: (NewsBlock | NewsBlock[])[] = [];
   for (const block of blocks) {
@@ -438,7 +479,7 @@ export default function NewsBlocks({ blocks }: { blocks: NewsBlock[] }) {
   return (
     <div className="space-y-6 text-neutral-300 text-lg leading-relaxed">
       {groups.map((g, i) => {
-        if (!Array.isArray(g)) return <BlockRenderer key={i} block={g} />;
+        if (!Array.isArray(g)) return <BlockRenderer key={i} block={g} bank={bank} />;
         // Jedna osoba: pozioma karta na pełną szerokość. Kilka: kafelki obok siebie.
         if (g.length === 1) {
           const person = g[0] as Extract<NewsBlock, { type: "person" }>;

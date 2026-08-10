@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 import type { NewsBlock } from "@/lib/newsTypes";
 import { clThumb } from "@/lib/cloudinary";
@@ -44,6 +45,7 @@ const BLOCK_LABELS: Record<NewsBlock["type"], string> = {
   video: "Film z YouTube",
   download: "Dokument do pobrania",
   person: "Karta osoby",
+  bank: "Numer konta do wpłat",
 };
 
 /** Podpowiedź pod nazwą w menu dodawania - co ten element robi. */
@@ -57,6 +59,7 @@ const BLOCK_HINTS: Partial<Record<NewsBlock["type"], string>> = {
   download: "Nazwa dokumentu i przycisk pobierania",
   person: "Zdjęcie, imię i opis - na przykład instruktor",
   gallery: "Siatka zdjęć",
+  bank: "Numer konta pobierany z zakładki Dane organizacji",
 };
 
 const ALL_ADD_OPTIONS: { type: NewsBlock["type"]; label: string; icon: string }[] = [
@@ -74,11 +77,12 @@ const ALL_ADD_OPTIONS: { type: NewsBlock["type"]; label: string; icon: string }[
   { type: "video", label: "Film z YouTube", icon: "🎬" },
   { type: "download", label: "Dokument do pobrania", icon: "⬇" },
   { type: "person", label: "Karta osoby", icon: "👤" },
+  { type: "bank", label: "Numer konta", icon: "🏦" },
 ];
 
 const MODE_BLOCKS: Record<EditorMode, NewsBlock["type"][]> = {
   news: ["paragraph", "heading", "subheading", "list", "ordered", "quote", "callout", "image", "gallery", "table", "links", "video", "download", "person"],
-  page: ["paragraph", "heading", "subheading", "list", "ordered", "quote", "callout", "image", "gallery", "table", "links", "video", "download", "person"],
+  page: ["paragraph", "heading", "subheading", "list", "ordered", "quote", "callout", "image", "gallery", "table", "links", "video", "download", "person", "bank"],
   article: ["paragraph", "heading", "subheading", "list", "ordered", "quote", "image", "video", "person"],
 };
 
@@ -510,6 +514,28 @@ function BlockBody({
           </div>
           <p className="text-xs text-slate-400">
             Film osadza się jako player na stronie. Wklej zwykły adres z YouTube.
+          </p>
+        </div>
+      );
+    case "bank":
+      // Blok celowo nie ma pól. Numer konta jest sprawdzany sumą kontrolną
+      // i musi mieć jedno miejsce edycji - inaczej wróciłby do stanu, w którym
+      // dało się go zmienić jak zwykły akapit.
+      return (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+          <p className="text-sm text-slate-700">
+            Ten element pokazuje numer konta wpisany w zakładce{" "}
+            <Link
+              href="/admin/dane-organizacji"
+              className="text-indigo-600 underline underline-offset-2 hover:text-indigo-800"
+            >
+              Dane organizacji
+            </Link>
+            , razem z nazwą odbiorcy i informacją o tytule przelewu.
+          </p>
+          <p className="text-xs text-slate-500 mt-1.5">
+            Nie da się go zmienić tutaj celowo: numer jest sprawdzany sumą
+            kontrolną i ma jedno miejsce edycji.
           </p>
         </div>
       );

@@ -1,5 +1,6 @@
 import NewsBlocks from "@/components/NewsBlocks";
 import { getPageContent } from "@/lib/pageOverrides";
+import { getOrganization } from "@/lib/organization";
 
 /**
  * Treść edytowalnej strony — W CAŁOŚCI z bazy (site_settings, klucz "page:<slug>").
@@ -40,5 +41,10 @@ export async function PageHeader({
 export async function PageBody({ slug }: { slug: string }) {
   const content = await getPageContent(slug);
   if (!content || content.blocks.length === 0) return null;
-  return <NewsBlocks blocks={content.blocks} />;
+  // Dane konta pobieramy tylko wtedy, gdy strona faktycznie ma blok „bank" -
+  // nie ma powodu odpytywać bazy na stronach, które go nie używają.
+  // getOrganization() jest cache'owane, więc powtórzenie nic nie kosztuje.
+  const maBank = content.blocks.some((b) => b.type === "bank");
+  const org = maBank ? await getOrganization() : null;
+  return <NewsBlocks blocks={content.blocks} bank={org?.bank} />;
 }
