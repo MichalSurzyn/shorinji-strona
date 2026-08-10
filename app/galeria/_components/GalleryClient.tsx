@@ -17,9 +17,6 @@ import { getImagesFromFolder, type GalleryFolder } from "../../../actions/galler
 
 const KOLUMNY = { default: 4, 1280: 3, 768: 2, 640: 1 };
 
-/** Album „Wszystkie zdjęcia" - wirtualny, zbiera zawartość pozostałych. */
-const WSZYSTKIE = "all";
-
 /**
  * Okładka albumu: do trzech zdjęć nałożonych na siebie, jak stos odbitek.
  *
@@ -117,8 +114,6 @@ export default function GalleryClient({ folders }: { folders: GalleryFolder[] })
     };
   }, [otwarty, cache]);
 
-  const wszystkieZdjec = folders.reduce((s, f) => s + f.count, 0);
-
   /* ---------------- Widok albumu ---------------- */
   if (otwarty) {
     return (
@@ -132,7 +127,7 @@ export default function GalleryClient({ folders }: { folders: GalleryFolder[] })
               ← Wszystkie albumy
             </button>
             <h2 className="text-2xl md:text-3xl font-bold text-white capitalize mt-1">
-              {otwarty.path === WSZYSTKIE ? "Wszystkie zdjęcia" : otwarty.name}
+              {otwarty.name}
             </h2>
           </div>
           {!isLoading && (images?.length ?? 0) > 0 && (
@@ -177,17 +172,10 @@ export default function GalleryClient({ folders }: { folders: GalleryFolder[] })
   }
 
   /* ---------------- Widok albumów ---------------- */
-  const albumWszystkie: GalleryFolder = {
-    name: "Wszystkie zdjęcia",
-    path: WSZYSTKIE,
-    covers: folders.flatMap((f) => f.covers).slice(0, 3),
-    count: wszystkieZdjec,
-  };
-
   return (
     <div className="w-full">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-        {[albumWszystkie, ...folders].map((f) => (
+        {folders.map((f) => (
           <button
             key={f.path}
             onClick={() => setOtwarty(f)}
