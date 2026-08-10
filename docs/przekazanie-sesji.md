@@ -178,6 +178,14 @@ i `/galeria` z bazy.
 **Fala 3 (część).** Usunięty martwy kod: `data/news.ts`, cztery nieużywane funkcje, dwa
 adresy map, pole `about` w stopce.
 
+**Galeria (11.08).** Zdjęcie wyróżniające album: gwiazdka przy zdjęciu w zakładce Zdjęcia
+ustawia okładkę widoczną na wierzchu kafelka. Wybór siedzi w `site_settings` pod kluczem
+`galeria:okladki` (mapa `ścieżka folderu → public_id`) — świadomie bez nowej tabeli, żeby
+nie wymagać ręcznego SQL-a. Skasowanie wyróżnionego zdjęcia nie wymaga sprzątania wpisu:
+album sam wraca do okładki domyślnej. Przy okazji odwrócona kolejność stosu (`covers[0]`
+jest teraz na wierzchu, wcześniej trzecie zdjęcie od końca) i usunięty wirtualny album
+„Wszystkie zdjęcia". Test: `scripts/test-okladki-galerii.mjs`.
+
 ---
 
 ## 8. Co zostało
