@@ -6,6 +6,7 @@ import { resetFooter, saveFooter } from "@/actions/footerActions";
 import { opiszBlad } from "@/lib/adminErrors";
 import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import type { FooterData, FooterLink } from "@/lib/footerTypes";
+import PasekAkcji from "./PasekAkcji";
 
 const inputCls =
   "w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
@@ -121,6 +122,24 @@ export default function FooterEditor({ initialData }: { initialData: FooterData 
 
   return (
     <div className="space-y-5">
+      <PasekAkcji
+        tytul="Stopka strony"
+        opis="Odnośniki, dokumenty i pliki do pobrania widoczne na dole każdej strony."
+        zmieniono={zmieniono}
+        busy={busy}
+        podglad="/"
+        onZapisz={handleSave}
+        dodatkowe={
+          <button
+            onClick={handleReset}
+            disabled={busy}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-60 transition-colors whitespace-nowrap"
+          >
+            Przywróć startową stopkę
+          </button>
+        }
+      />
+
       {msg && (
         <div
           className={`rounded-lg px-4 py-3 text-sm ${
@@ -156,22 +175,6 @@ export default function FooterEditor({ initialData }: { initialData: FooterData 
         </p>
       </div>
 
-      <div className="flex flex-wrap justify-between gap-3">
-        <button
-          onClick={handleReset}
-          disabled={busy}
-          className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-60 transition-colors"
-        >
-          Przywróć wersję bazową
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={busy}
-          className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white px-6 py-2.5 text-sm font-semibold transition-colors"
-        >
-          {busy ? "Zapisywanie..." : "Zapisz stopkę"}
-        </button>
-      </div>
     </div>
   );
 }

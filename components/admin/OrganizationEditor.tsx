@@ -12,6 +12,7 @@ import {
   normalizujIban,
   type OrganizationData,
 } from "@/lib/organizationTypes";
+import PasekAkcji from "./PasekAkcji";
 
 const inputCls =
   "w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
@@ -126,29 +127,13 @@ export default function OrganizationEditor({ initial }: { initial: OrganizationD
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Dane organizacji</h1>
-          <p className="text-slate-500 mt-1 max-w-2xl">
-            Wpisane tutaj raz, pojawiają się wszędzie: w stopce, na stronie
-            Kontakt, na mapie dojazdu, w cenniku i w wizytówce Google.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {zmieniono && !busy && (
-            <span role="status" className="rounded-full bg-amber-100 text-amber-800 px-3 py-1 text-xs font-medium">
-              Niezapisane zmiany
-            </span>
-          )}
-          <button
-            onClick={handleSave}
-            disabled={busy}
-            className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white px-5 py-2 text-sm font-semibold transition-colors"
-          >
-            {busy ? "Zapisywanie..." : "Zapisz zmiany"}
-          </button>
-        </div>
-      </div>
+      <PasekAkcji
+        tytul="Dane organizacji"
+        opis="Wpisane raz, pojawiają się w stopce, na Kontakcie, na mapie, w cenniku i w wizytówce Google."
+        zmieniono={zmieniono}
+        busy={busy}
+        onZapisz={handleSave}
+      />
 
       {msg && (
         <div
@@ -361,15 +346,6 @@ export default function OrganizationEditor({ initial }: { initial: OrganizationD
         />
       </Sekcja>
 
-      <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          disabled={busy}
-          className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white px-6 py-2.5 text-sm font-semibold transition-colors"
-        >
-          {busy ? "Zapisywanie..." : "Zapisz zmiany"}
-        </button>
-      </div>
     </div>
   );
 }

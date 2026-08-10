@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
@@ -15,6 +14,7 @@ import { clThumb } from "@/lib/cloudinary";
 import type { NewsArticle, NewsBlock } from "@/lib/newsTypes";
 import BlockEditor from "./BlockEditor";
 import ImagePicker from "./ImagePicker";
+import PasekAkcji from "./PasekAkcji";
 
 function slugify(text: string) {
   return text
@@ -156,46 +156,26 @@ export default function ArticleEditor({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <Link
-            href="/admin/artykuly"
-            className="text-sm text-slate-400 hover:text-indigo-600 transition-colors"
-          >
-            ← Aktualności
-          </Link>
-          <h1 className="text-2xl font-bold mt-1">
-            {isNew ? "Nowy artykuł" : "Edycja artykułu"}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          {!isNew && (
-            <>
-              <a
-                href={`/aktualnosci/${slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 transition-colors"
-              >
-                Zobacz zapisaną wersję ↗
-              </a>
-              <button
-                onClick={handleDelete}
-                className="rounded-lg border border-red-300 text-red-600 px-4 py-2 text-sm font-medium hover:bg-red-50 transition-colors"
-              >
-                Usuń
-              </button>
-            </>
-          )}
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white px-5 py-2 text-sm font-semibold transition-colors"
-          >
-            {saving ? "Zapisywanie..." : isNew ? "Utwórz artykuł" : "Zapisz zmiany"}
-          </button>
-        </div>
-      </div>
+      <PasekAkcji
+        powrotHref="/admin/artykuly"
+        powrotEtykieta="← Aktualności"
+        tytul={isNew ? "Nowy artykuł" : title || "Edycja artykułu"}
+        zmieniono={zmieniono}
+        busy={saving}
+        podglad={isNew ? undefined : `/aktualnosci/${slug}`}
+        onZapisz={handleSave}
+        etykietaZapisu={isNew ? "Utwórz artykuł" : "Zapisz zmiany"}
+        dodatkowe={
+          isNew ? undefined : (
+            <button
+              onClick={handleDelete}
+              className="rounded-lg border border-red-300 bg-white text-red-600 px-4 py-2 text-sm font-medium hover:bg-red-50 transition-colors whitespace-nowrap"
+            >
+              Usuń
+            </button>
+          )
+        }
+      />
 
       {msg && (
         <div

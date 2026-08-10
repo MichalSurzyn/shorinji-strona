@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { savePageContent } from "@/actions/pageActions";
 import { opiszBlad } from "@/lib/adminErrors";
 import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import type { NewsBlock, PageContent } from "@/lib/newsTypes";
 import BlockEditor from "./BlockEditor";
+import PasekAkcji from "./PasekAkcji";
 
 const inputCls =
   "w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
@@ -73,43 +73,15 @@ export default function PageBlocksEditor({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Link
-            href="/admin/strony"
-            className="text-sm text-slate-400 hover:text-indigo-600 transition-colors"
-          >
-            ← Wszystkie podstrony
-          </Link>
-          <h1 className="text-2xl font-bold mt-1">{label}</h1>
-          <p className="text-sm text-slate-500 mt-1 max-w-2xl">{scope}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {zmieniono && !busy && (
-            <span
-              role="status"
-              className="rounded-full bg-amber-100 text-amber-800 px-3 py-1 text-xs font-medium"
-            >
-              Niezapisane zmiany
-            </span>
-          )}
-          <a
-            href={route}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 transition-colors"
-          >
-            Zobacz zapisaną wersję ↗
-          </a>
-          <button
-            onClick={handleSave}
-            disabled={busy}
-            className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white px-5 py-2 text-sm font-semibold transition-colors"
-          >
-            {busy ? "Zapisywanie..." : "Zapisz zmiany"}
-          </button>
-        </div>
-      </div>
+      <PasekAkcji
+        powrotHref="/admin/strony"
+        tytul={label}
+        opis={scope}
+        zmieniono={zmieniono}
+        busy={busy}
+        podglad={route}
+        onZapisz={handleSave}
+      />
 
       {msg && (
         <div
@@ -165,15 +137,6 @@ export default function PageBlocksEditor({
 
       <BlockEditor value={blocks} onChange={setBlocks} mode="page" />
 
-      <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          disabled={busy}
-          className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white px-6 py-2.5 text-sm font-semibold transition-colors"
-        >
-          {busy ? "Zapisywanie..." : "Zapisz zmiany"}
-        </button>
-      </div>
     </div>
   );
 }

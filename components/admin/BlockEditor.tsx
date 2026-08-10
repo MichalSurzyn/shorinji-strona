@@ -201,19 +201,23 @@ export default function BlockEditor({
 
   return (
     <div className="space-y-3">
-      {/* Pasek cofania - pojawia się dopiero, gdy jest co cofnąć */}
+      {/* Cofanie jako plywajace powiadomienie w prawym dolnym rogu.
+          W przeplywie strony ladowalo nad trescia i przy dluzszej stronie
+          bylo poza ekranem dokladnie wtedy, gdy bylo potrzebne - zaraz po
+          usunieciu elementu, ktory redaktor wlasnie oglada. */}
       {glebokosc > 0 && (
         <div
           role="status"
-          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5"
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-3 rounded-xl border border-slate-300
+                     bg-white px-4 py-3 shadow-xl max-w-[calc(100vw-3rem)]"
         >
-          <span className="text-sm text-slate-600">
+          <span className="text-sm text-slate-700 truncate">
             {ostatniaAkcja ?? "Ostatnia zmiana w treści"}
           </span>
           <button
             type="button"
             onClick={cofnij}
-            className="rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-700 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
+            className="shrink-0 rounded-lg border border-slate-300 px-3.5 py-1.5 text-sm font-medium text-slate-700 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
           >
             ↶ Cofnij
           </button>

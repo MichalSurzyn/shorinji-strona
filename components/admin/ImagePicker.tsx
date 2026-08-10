@@ -9,6 +9,7 @@ import {
   type CloudImage,
 } from "@/actions/imageActions";
 import { clThumb } from "@/lib/cloudinary";
+import { zmniejszZdjecie } from "@/lib/obrazy";
 
 interface Props {
   open: boolean;
@@ -92,7 +93,10 @@ export default function ImagePicker({
         setUploadInfo(`Wysyłanie ${i + 1} z ${files.length}...`);
         const sig = await getUploadSignature(targetFolder);
         const fd = new FormData();
-        fd.append("file", files[i]);
+        // Zmniejszamy tak samo jak w zakladce Zdjecia - inaczej ta droga
+        // omijala by zmniejszanie i usuwanie wspolrzednych GPS.
+        const plikDoWyslania = await zmniejszZdjecie(files[i]);
+        fd.append("file", plikDoWyslania);
         fd.append("api_key", sig.apiKey);
         fd.append("timestamp", String(sig.timestamp));
         fd.append("signature", sig.signature);

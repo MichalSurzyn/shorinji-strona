@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
@@ -14,6 +13,7 @@ import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import type { CustomPage } from "@/lib/customPages";
 import type { NewsBlock } from "@/lib/newsTypes";
 import BlockEditor from "./BlockEditor";
+import PasekAkcji from "./PasekAkcji";
 
 function slugify(text: string) {
   return text
@@ -127,46 +127,25 @@ export default function CustomPageEditor({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <Link
-            href="/admin/strony"
-            className="text-sm text-slate-400 hover:text-indigo-600 transition-colors"
-          >
-            ← Wszystkie podstrony
-          </Link>
-          <h1 className="text-2xl font-bold mt-1">
-            {isNew ? "Nowa podstrona" : "Edycja podstrony"}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          {!isNew && (
-            <>
-              <a
-                href={`/${slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 transition-colors"
-              >
-                Zobacz zapisaną wersję ↗
-              </a>
-              <button
-                onClick={handleDelete}
-                className="rounded-lg border border-red-300 text-red-600 px-4 py-2 text-sm font-medium hover:bg-red-50 transition-colors"
-              >
-                Usuń
-              </button>
-            </>
-          )}
-          <button
-            onClick={handleSave}
-            disabled={busy}
-            className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white px-5 py-2 text-sm font-semibold transition-colors"
-          >
-            {busy ? "Zapisywanie..." : isNew ? "Utwórz podstronę" : "Zapisz zmiany"}
-          </button>
-        </div>
-      </div>
+      <PasekAkcji
+        powrotHref="/admin/strony"
+        tytul={isNew ? "Nowa podstrona" : title || "Edycja podstrony"}
+        zmieniono={zmieniono}
+        busy={busy}
+        podglad={isNew ? undefined : `/${slug}`}
+        onZapisz={handleSave}
+        etykietaZapisu={isNew ? "Utwórz podstronę" : "Zapisz zmiany"}
+        dodatkowe={
+          isNew ? undefined : (
+            <button
+              onClick={handleDelete}
+              className="rounded-lg border border-red-300 bg-white text-red-600 px-4 py-2 text-sm font-medium hover:bg-red-50 transition-colors whitespace-nowrap"
+            >
+              Usuń
+            </button>
+          )
+        }
+      />
 
       {msg && (
         <div

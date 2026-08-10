@@ -1,12 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { saveTopicArticle } from "@/app/admin/actions";
 import { opiszBlad } from "@/lib/adminErrors";
 import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import type { NewsBlock } from "@/lib/newsTypes";
 import BlockEditor from "@/components/admin/BlockEditor";
+import PasekAkcji from "@/components/admin/PasekAkcji";
 
 type Props = {
   topic: string;
@@ -60,39 +60,15 @@ export default function EditorForm({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Link
-            href="/admin/strony"
-            className="text-sm text-slate-400 hover:text-indigo-600 transition-colors"
-          >
-            ← Wszystkie podstrony
-          </Link>
-          <h1 className="mt-2 text-2xl md:text-3xl font-bold text-slate-900">
-            {initialTitle}
-          </h1>
-          <p className="text-sm text-slate-500">
-            {topicTitle} · /{topic}/{slug}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <a
-            href={`/${topic}/${slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 transition-colors"
-          >
-            Zobacz zapisaną wersję ↗
-          </a>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white px-5 py-2 text-sm font-semibold transition-colors"
-          >
-            {saving ? "Zapisywanie..." : "Zapisz zmiany"}
-          </button>
-        </div>
-      </div>
+      <PasekAkcji
+        powrotHref="/admin/strony"
+        tytul={initialTitle}
+        opis={`${topicTitle} · /${topic}/${slug}`}
+        zmieniono={zmieniono}
+        busy={saving}
+        podglad={`/${topic}/${slug}`}
+        onZapisz={handleSave}
+      />
 
       {msg && (
         <div
@@ -144,15 +120,6 @@ export default function EditorForm({
         />
       </div>
 
-      <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white px-6 py-3 font-semibold transition-colors"
-        >
-          {saving ? "Zapisywanie..." : "Zapisz zmiany"}
-        </button>
-      </div>
     </div>
   );
 }

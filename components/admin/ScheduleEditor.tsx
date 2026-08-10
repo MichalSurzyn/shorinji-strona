@@ -5,6 +5,7 @@ import { resetSchedule, saveSchedule } from "@/actions/scheduleActions";
 import { DAY_NAMES, type ScheduleSlot } from "@/data/schedule";
 import { opiszBlad } from "@/lib/adminErrors";
 import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
+import PasekAkcji from "./PasekAkcji";
 
 const DAYS: { value: ScheduleSlot["day"]; label: string }[] = (
   [1, 2, 3, 4, 5, 6, 7] as const
@@ -121,6 +122,26 @@ export default function ScheduleEditor({
 
   return (
     <div className="space-y-4">
+      <PasekAkcji
+        tytul="Grafik zajęć"
+        opis="Zmiany trafią na strony zajęć, do kalendarza w telefonie i do wizytówki Google."
+        zmieniono={zmieniono}
+        busy={busy}
+        podglad="/zajecia/dorosli"
+        onZapisz={handleSave}
+        etykietaZapisu="Zapisz grafik"
+        dodatkowe={
+          <button
+            onClick={handleReset}
+            disabled={busy}
+            type="button"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-60 transition-colors whitespace-nowrap"
+          >
+            Przywróć grafik startowy
+          </button>
+        }
+      />
+
       {msg && (
         <div
           role="status"
@@ -134,29 +155,27 @@ export default function ScheduleEditor({
         </div>
       )}
 
+      {/* Ten sam plywajacy uklad co w edytorze tresci - jedno miejsce
+          na ekranie, w ktorym redaktor szuka cofniecia. */}
       {cofnij && (
         <div
           role="status"
-          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5"
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-3 rounded-xl border border-slate-300
+                     bg-white px-4 py-3 shadow-xl max-w-[calc(100vw-3rem)]"
         >
-          <span className="text-sm text-slate-600">
+          <span className="text-sm text-slate-700 truncate">
             Usunięto zajęcia: {DAY_NAMES[cofnij.slot.day].long}, {cofnij.slot.start}
           </span>
           <button
             type="button"
             onClick={przywroc}
-            className="rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-700 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
+            className="shrink-0 rounded-lg border border-slate-300 px-3.5 py-1.5 text-sm font-medium text-slate-700 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
           >
             ↶ Cofnij
           </button>
         </div>
       )}
 
-      {zmieniono && (
-        <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5">
-          Masz niezapisane zmiany. Kliknij „Zapisz&rdquo; na dole, żeby trafiły na stronę.
-        </p>
-      )}
 
       {/* Wiersze w stałej kolejności wpisywania.
           Wcześniej lista była sortowana do wyświetlenia, a indeks pola
@@ -276,24 +295,6 @@ export default function ScheduleEditor({
         </div>
       )}
 
-      <div className="flex flex-wrap justify-between gap-3 pt-2">
-        <button
-          onClick={handleReset}
-          disabled={busy}
-          type="button"
-          className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-60 transition-colors"
-        >
-          Przywróć grafik startowy
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={busy}
-          type="button"
-          className="rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white px-6 py-2.5 text-sm font-semibold transition-colors"
-        >
-          {busy ? "Zapisywanie..." : "Zapisz grafik"}
-        </button>
-      </div>
     </div>
   );
 }
