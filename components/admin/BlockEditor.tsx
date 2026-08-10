@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import type { NewsBlock } from "@/lib/newsTypes";
 import { clThumb } from "@/lib/cloudinary";
 import ImagePicker from "./ImagePicker";
+import FilePicker from "./FilePicker";
 
 /**
  * Tryby edytora:
@@ -369,6 +370,10 @@ function BlockBody({
   onChange: (b: NewsBlock) => void;
   openPicker: (multi: boolean) => void;
 }) {
+  // Okno wyboru pliku dla bloku „Dokument do pobrania". Stan trzymamy tutaj,
+  // bo dotyczy jednego bloku, a nie całego edytora.
+  const [wyborPliku, setWyborPliku] = useState(false);
+
   switch (block.type) {
     case "heading":
     case "subheading":
@@ -567,11 +572,28 @@ function BlockBody({
               placeholder="Nazwa pliku, np. Deklaracja członkowska"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
-            <input
-              value={block.url}
-              onChange={(e) => onChange({ ...block, url: e.target.value })}
-              placeholder="/downloads/plik.pdf albo https://..."
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            <div className="flex flex-wrap gap-2">
+              <input
+                value={block.url}
+                onChange={(e) => onChange({ ...block, url: e.target.value })}
+                placeholder="/downloads/plik.pdf albo https://..."
+                className="flex-1 min-w-[12rem] rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <button
+                onClick={() => setWyborPliku(true)}
+                type="button"
+                className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50 transition-colors whitespace-nowrap"
+                title="Wybierz plik z listy zamiast wpisywać adres"
+              >
+                Wybierz plik
+              </button>
+            </div>
+            <FilePicker
+              open={wyborPliku}
+              onClose={() => setWyborPliku(false)}
+              onSelect={(adres, nazwa) =>
+                onChange({ ...block, url: adres, label: block.label || nazwa })
+              }
             />
             <div className="flex flex-wrap gap-2">
               <input

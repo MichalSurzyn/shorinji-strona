@@ -7,6 +7,7 @@ import { opiszBlad } from "@/lib/adminErrors";
 import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import type { FooterData, FooterKolumna, FooterLink } from "@/lib/footerTypes";
 import PasekAkcji from "./PasekAkcji";
+import FilePicker from "./FilePicker";
 
 const inputCls =
   "w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
@@ -19,6 +20,7 @@ function ListaOdnosnikow({
   pozycje: FooterLink[];
   onChange: (l: FooterLink[]) => void;
 }) {
+  const [wybor, setWybor] = useState<number | null>(null);
   const ustaw = (i: number, patch: Partial<FooterLink>) =>
     onChange(pozycje.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
 
@@ -39,6 +41,13 @@ function ListaOdnosnikow({
             className={`${inputCls} flex-1 min-w-[12rem] font-mono text-xs`}
           />
           <button
+            onClick={() => setWybor(i)}
+            className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50 transition-colors whitespace-nowrap"
+            title="Wybierz plik z listy zamiast wpisywać adres"
+          >
+            Wybierz plik
+          </button>
+          <button
             onClick={() => onChange(pozycje.filter((_, idx) => idx !== i))}
             className="shrink-0 rounded-lg border border-red-300 text-red-600 px-3 py-2 text-sm hover:bg-red-50 transition-colors"
             aria-label="Usuń odnośnik"
@@ -47,6 +56,17 @@ function ListaOdnosnikow({
           </button>
         </div>
       ))}
+      <FilePicker
+        open={wybor !== null}
+        onClose={() => setWybor(null)}
+        onSelect={(adres, nazwa) => {
+          if (wybor === null) return;
+          // Pusta etykieta dostaje nazwę pliku - redaktor i tak ją zwykle
+          // poprawia, ale nie zostaje z pustym wierszem.
+          const biezaca = pozycje[wybor];
+          ustaw(wybor, { href: adres, label: biezaca.label || nazwa });
+        }}
+      />
       <button
         onClick={() => onChange([...pozycje, { label: "", href: "" }])}
         className="w-full rounded-lg border border-dashed border-slate-300 py-2 text-sm text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors"

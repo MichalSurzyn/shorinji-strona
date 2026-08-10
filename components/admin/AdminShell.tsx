@@ -19,6 +19,7 @@ const NAV = [
   { href: "/admin/artykuly", label: "Aktualności", icon: "✎" },
   { href: "/admin/strony", label: "Strony", icon: "❏" },
   { href: "/admin/zdjecia", label: "Zdjęcia", icon: "▣" },
+  { href: "/admin/pliki", label: "Pliki do pobrania", icon: "⬇" },
   { href: "/admin/harmonogram", label: "Grafik zajęć", icon: "◷" },
   { href: "/admin/wiadomosci", label: "Wiadomości", icon: "✉" },
   { href: "/admin/nawigacja", label: "Menu na górze strony", icon: "☰" },
@@ -124,7 +125,7 @@ export default function AdminShell({
           <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold select-none">
             拳
           </div>
-          <span className="font-bold">Panel admina</span>
+          <span className="font-bold">Panel strony</span>
         </div>
         <button
           onClick={() => setMenuOpen(true)}
