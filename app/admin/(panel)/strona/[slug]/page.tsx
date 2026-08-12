@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import PageBlocksEditor from "@/components/admin/PageBlocksEditor";
-import { getEditablePage } from "@/lib/editablePages";
+import { basePageContentFor, getEditablePage } from "@/lib/editablePages";
 import { getPageContent } from "@/lib/pageOverrides";
 
 export default async function AdminStaticPageEdit({
@@ -12,8 +12,8 @@ export default async function AdminStaticPageEdit({
   const page = getEditablePage(slug);
   if (!page) notFound();
 
-  // Treść w całości z bazy; gdy wpisu jeszcze nie ma (świeży projekt),
-  // edytor startuje z prefillu z kodu (dane seedowe).
+  // Treść z bazy; gdy wpisu jeszcze nie ma (świeży projekt), edytor startuje
+  // z treści bazowej z kodu — tej samej, którą pokazuje wtedy publiczna strona.
   const content = await getPageContent(slug);
 
   return (
@@ -22,7 +22,7 @@ export default async function AdminStaticPageEdit({
       label={page.label}
       route={page.route}
       scope={page.scope}
-      initialContent={content ?? { title: null, lead: null, kicker: null, blocks: page.prefill }}
+      initialContent={content ?? basePageContentFor(page)}
     />
   );
 }

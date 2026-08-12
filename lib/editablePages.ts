@@ -1,11 +1,11 @@
 import { CONTACT, SOCIAL_LINKS } from "./site";
-import type { NewsBlock } from "./newsTypes";
+import type { NewsBlock, PageContent } from "./newsTypes";
 
 /**
  * Rejestr edytowalnych stron statycznych.
- * `prefill` to treść bazowa przepisana 1:1 z kodu strony - to od niej
- * zaczyna się edycję w panelu. Dopóki nic nie zapiszesz, strona pokazuje
- * oryginalny, zakodowany wygląd (fallback w EditableSection).
+ * `prefillHeader` + `prefill` to treść bazowa przepisana z kodu strony. Ma dwa
+ * zastosowania: od niej zaczyna się edycję w panelu ORAZ ona idzie na stronę,
+ * gdy baza nie odpowiada — patrz `basePageContent()` na końcu pliku.
  */
 
 export interface EditablePage {
@@ -14,6 +14,8 @@ export interface EditablePage {
   route: string;
   /** Co dokładnie obejmuje edycja (podpowiedź w panelu). */
   scope: string;
+  /** Nagłówek bazowy: żółta etykietka (kicker), H1 i akapit wprowadzający. */
+  prefillHeader?: { kicker?: string; title?: string; lead?: string };
   prefill: NewsBlock[];
 }
 
@@ -27,6 +29,7 @@ export const EDITABLE_PAGES: EditablePage[] = [
     label: "Strona główna – tekst powitalny",
     route: "/",
     scope: "Akapity pod nagłówkiem „Witamy w krakowskim dōjō” (wideo zostaje).",
+    prefillHeader: { title: "Witamy w naszym Dōjō Shorinji Kempo" },
     prefill: [
       P(
         "[Shorinji Kempo](/o-shorinji/wprowadzenie) to japońska sztuka walki, w której skuteczna samoobrona idzie w parze z pracą nad charakterem. Nie chodzi w niej o pokonanie drugiego człowieka, lecz o złagodzenie cierpienia i ochronę tego, co dobre."
@@ -48,6 +51,11 @@ export const EDITABLE_PAGES: EditablePage[] = [
     route: "/aktualnosci",
     scope:
       "Tekst nad listą aktualności. Same artykuły dodaje się w zakładce Aktualności.",
+    prefillHeader: {
+      kicker: "Co słychać w dōjō",
+      title: "Aktualności",
+      lead: "Ogłoszenia i wydarzenia z życia krakowskich filii: seminaria, pokazy, zmiany w harmonogramie, obozy i egzaminy. Bieżące informacje znajdziesz też na naszym Facebooku i Instagramie.",
+    },
     prefill: [],
   },
   {
@@ -55,6 +63,11 @@ export const EDITABLE_PAGES: EditablePage[] = [
     label: "Galeria – nagłówek",
     route: "/galeria",
     scope: "Tekst nad albumami. Same zdjęcia dodaje się w zakładce Zdjęcia.",
+    prefillHeader: {
+      kicker: "Shorinji Kempo Kraków",
+      title: "Galeria",
+      lead: "Zdjęcia z treningów, pokazów i seminariów. Wybierz album, żeby zobaczyć wszystkie zdjęcia.",
+    },
     prefill: [],
   },
   {
@@ -62,6 +75,11 @@ export const EDITABLE_PAGES: EditablePage[] = [
     label: "Cennik – tabele opłat i konto",
     route: "/zajecia/cennik",
     scope: "Wszystkie tabele opłat oraz sekcja konta bankowego.",
+    prefillHeader: {
+      kicker: "Zajęcia · Opłaty",
+      title: "Cennik",
+      lead: "Lista opłat obowiązująca do 31 marca 2030.",
+    },
     prefill: [
       H("Składki regularne"),
       P("Miesięczne opłaty za udział w treningach."),
@@ -152,6 +170,11 @@ export const EDITABLE_PAGES: EditablePage[] = [
     label: "Program nauczania – nagrania",
     route: "/program-nauczania",
     scope: "Sekcje z linkami do nagrań (nagłówek strony zostaje).",
+    prefillHeader: {
+      kicker: "Materiały szkoleniowe",
+      title: "Program nauczania",
+      lead: "Nagrania, z których korzystamy podczas treningów – od pierwszych technik i przewrotów, przez formy wykonywane pojedynczo, po pracę w parach. Filmy pomagają utrwalić materiał między zajęciami, nie zastępują jednak treningu z instruktorem.",
+    },
     prefill: [
       H("Podstawy / kihon"),
       P(
@@ -212,6 +235,11 @@ export const EDITABLE_PAGES: EditablePage[] = [
     label: "Kontakt – godziny i dane",
     route: "/kontakt",
     scope: "Sekcje „Godziny treningów” i „Dane kontaktowe” (mapa zostaje).",
+    prefillHeader: {
+      kicker: "Napisz, zadzwoń",
+      title: "Kontakt",
+      lead: "Treningi odbywają się w Szkole Podstawowej nr 114 przy ul. Łąkowej 31 w Krakowie. Aby uczestniczyć w treningu należy wcześniej napisać lub zadzwonić.",
+    },
     prefill: [
       H("Godziny treningów"),
       P(
@@ -235,6 +263,11 @@ export const EDITABLE_PAGES: EditablePage[] = [
     route: "/zajecia/dorosli",
     scope:
       "Sekcja „Zajęcia dla dorosłych” (karta instruktora, plan tygodnia i mapa zostają).",
+    prefillHeader: {
+      kicker: "Zajęcia · Filia Kraków",
+      title: "Grupa dorosła",
+      lead: "Zajęcia dla młodzieży i dorosłych. Pełny program techniczny – od podstaw kihon, przez pracę w parach, formy embu, aż po randori.",
+    },
     prefill: [
       H("Zajęcia dla dorosłych"),
       P(
@@ -255,6 +288,11 @@ export const EDITABLE_PAGES: EditablePage[] = [
     route: "/zajecia/dzieci",
     scope:
       "Sekcja „Zajęcia dla dzieci” (karta instruktora, plan tygodnia i mapa zostają).",
+    prefillHeader: {
+      kicker: "Zajęcia · Filia Wawel",
+      title: "Grupa dziecięca",
+      lead: "Zajęcia dla dzieci i młodzieży w wieku 5–13 lat. Bezpieczne, zabawne i wymagające – początek przygody, która może trwać całe życie.",
+    },
     prefill: [
       H("Zajęcia dla dzieci"),
       P(
@@ -277,4 +315,37 @@ export function getEditablePage(slug: string): EditablePage | undefined {
 
 export function routeForEditablePage(slug: string): string {
   return getEditablePage(slug)?.route ?? `/${slug}`;
+}
+
+/**
+ * Treść bazowa strony z kodu — dla trasy spoza rejestru `null`.
+ *
+ * Zapobiega awarii, w której trasa edytowalna oddaje 200 z pustym `<main>`:
+ * treść tych stron siedzi wyłącznie w bazie (`site_settings`, klucz
+ * `page:<slug>`), więc gdy Supabase nie odpowie — brak zmiennej w danym
+ * kontekście deployu, uśpiony projekt, timeout — `getPageContent()` zwracał
+ * `null`, a `PageHeader`/`PageBody` renderowały `null`. Zmierzone na buildzie
+ * bez konfiguracji: `/`, `/kontakt`, `/zajecia/cennik`, `/program-nauczania`,
+ * `/galeria`, `/zajecia/dorosli`, `/aktualnosci` — wszystkie 200 i ani jednego
+ * `<h1>`; w `<main>` zostawały same dekoracyjne kanji. Dla wyszukiwarki 200 z
+ * pustą stroną znaczy „ta strona teraz tak wygląda”, nie „awaria”, więc jest
+ * gorsze od 500: przy 500 indeks trzyma poprzednią wersję.
+ *
+ * Reszta serwisu miała fallback do kodu od początku (`DEFAULT_NAV`, `SCHEDULE`,
+ * `DEFAULT_FOOTER`, `DEFAULT_ORGANIZATION`, `content-fallback/articles.json`,
+ * `data/articles`) — te osiem tras było jedynym wyjątkiem.
+ */
+export function basePageContent(slug: string): PageContent | null {
+  const page = getEditablePage(slug);
+  return page ? basePageContentFor(page) : null;
+}
+
+/** Jak wyżej, ale dla znanego już wpisu — bez zgadywania po slugu. */
+export function basePageContentFor(page: EditablePage): PageContent {
+  return {
+    kicker: page.prefillHeader?.kicker ?? null,
+    title: page.prefillHeader?.title ?? null,
+    lead: page.prefillHeader?.lead ?? null,
+    blocks: page.prefill,
+  };
 }

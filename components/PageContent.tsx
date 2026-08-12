@@ -1,11 +1,19 @@
 import NewsBlocks from "@/components/NewsBlocks";
 import { getPageContent } from "@/lib/pageOverrides";
+import { basePageContent } from "@/lib/editablePages";
 import { getOrganization } from "@/lib/organization";
 
 /**
- * Treść edytowalnej strony — W CAŁOŚCI z bazy (site_settings, klucz "page:<slug>").
- * Nagłówek (kicker/H1/lead) i bloki edytuje się w panelu: Strony → dana podstrona.
- * Brak wpisu w bazie = pusta sekcja (treść seeduje skrypt scripts/seed-content.mjs).
+ * Treść edytowalnej strony: nadpisanie z bazy (site_settings, klucz
+ * "page:<slug>") nad treścią bazową z kodu — ten sam model, co menu, grafik
+ * i stopka. Nagłówek (kicker/H1/lead) i bloki edytuje się w panelu:
+ * Strony → dana podstrona.
+ *
+ * Gdy baza nie odpowie albo wpisu jeszcze nie ma, wchodzi `basePageContent()`
+ * (patrz komentarz przy tej funkcji — wcześniej strona oddawała wtedy 200
+ * z pustym `<main>`). Wiersz zapisany, ale opróżniony w panelu, zostaje pusty:
+ * `getPageContent()` zwraca wtedy obiekt, nie `null`, więc świadome
+ * wyczyszczenie treści nadal działa i nie wraca tekst z kodu.
  */
 
 /** Nagłówek strony: żółta etykietka, H1 i akapit wprowadzający. */
@@ -16,7 +24,7 @@ export async function PageHeader({
   slug: string;
   className?: string;
 }) {
-  const content = await getPageContent(slug);
+  const content = (await getPageContent(slug)) ?? basePageContent(slug);
   if (!content?.title && !content?.lead && !content?.kicker) return null;
   return (
     <header className={className}>
@@ -39,7 +47,7 @@ export async function PageHeader({
 
 /** Bloki treści strony (bez nagłówka). */
 export async function PageBody({ slug }: { slug: string }) {
-  const content = await getPageContent(slug);
+  const content = (await getPageContent(slug)) ?? basePageContent(slug);
   if (!content || content.blocks.length === 0) return null;
   // Dane konta pobieramy tylko wtedy, gdy strona faktycznie ma blok „bank" -
   // nie ma powodu odpytywać bazy na stronach, które go nie używają.
