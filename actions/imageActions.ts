@@ -220,6 +220,7 @@ export async function createImageFolder(name: string) {
   if (!clean) return { ok: false as const, error: "Nieprawidłowa nazwa folderu" };
   try {
     await cloudinary.api.create_folder(`Galeria/${clean}`);
+    revalidatePath("/galeria");
     return { ok: true as const, path: `Galeria/${clean}` };
   } catch (e) {
     console.warn("createImageFolder:", e);
@@ -273,6 +274,7 @@ export async function deleteImageFolder(
       await cloudinary.api.delete_resources(publicIds.slice(i, i + 100));
     }
     await cloudinary.api.delete_folder(path);
+    revalidatePath("/galeria");
     return { ok: true as const, usunieto: publicIds.length };
   } catch (e) {
     console.warn("deleteImageFolder:", e);
@@ -290,11 +292,26 @@ export async function deleteImage(publicId: string) {
     const res = await cloudinary.uploader.destroy(publicId);
     if (res.result !== "ok")
       return { ok: false as const, error: `Cloudinary: ${res.result}` };
+    revalidatePath("/galeria");
     return { ok: true as const };
   } catch (e) {
     console.warn("deleteImage:", e);
     return { ok: false as const, error: "Nie udało się usunąć zdjęcia" };
   }
+}
+
+/**
+ * Zrzuca cache /galeria po wgraniu zdjęć.
+ *
+ * Pliki idą z przeglądarki prosto do Cloudinary, z pominięciem serwera, więc
+ * po uploadzie nie wykonuje się żadna akcja, która mogłaby unieważnić stronę.
+ * Bez tego panel pisał „Wgrano 8 zdjęć. Są już widoczne na stronie", a strona
+ * dalej oddawała wersję z cache.
+ */
+export async function odswiezGalerie() {
+  await requireUser();
+  revalidatePath("/galeria");
+  return { ok: true as const };
 }
 
 /**

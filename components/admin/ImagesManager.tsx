@@ -8,6 +8,7 @@ import {
   getUploadSignature,
   listFolderPreviews,
   listImages,
+  odswiezGalerie,
   setFolderCover,
   type CloudFolderPodglad,
   type CloudImage,
@@ -245,6 +246,9 @@ export default function ImagesManager() {
       });
       odswiezZdjecia(otwarty.path);
       odswiezFoldery();
+      // Upload leci prosto do Cloudinary, więc publiczna /galeria nic o nim nie
+      // wie. Bez tego wywołania komunikat „Są już widoczne na stronie" kłamał.
+      if (udane > 0) void odswiezGalerie();
     }
   }
 
