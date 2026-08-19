@@ -10,6 +10,7 @@ import {
   listImages,
   odswiezGalerie,
   setFolderCover,
+  sprawdzUzyciaZdjecia,
   type CloudFolderPodglad,
   type CloudImage,
 } from "@/actions/imageActions";
@@ -129,16 +130,39 @@ export default function ImagesManager() {
     }
   }
 
+  /**
+   * Kasowanie zdjęcia. Najpierw pytamy serwer, gdzie ono siedzi w treści -
+   * poprzednia wersja obiecywała „zniknie wszędzie, gdzie było użyte", a
+   * zostawiała rozbity kadr, o którym redaktor dowiadywał się przypadkiem.
+   */
   async function handleDelete(publicId: string) {
-    if (
-      !confirm(
-        "Usunąć to zdjęcie na stałe?\n\nZniknie ze strony wszędzie, gdzie było użyte. Tej operacji nie da się cofnąć."
-      )
-    )
+    setMsg(null);
+
+    let strony: string[] = [];
+    try {
+      strony = (await sprawdzUzyciaZdjecia(publicId)).strony;
+    } catch (e) {
+      setMsg({ ok: false, text: opiszBlad(e, "sprawdzić użycia zdjęcia") });
       return;
-    const res = await deleteImage(publicId);
+    }
+
+    const pytanie = strony.length
+      ? "To zdjęcie jest wstawione w treść stron:\n\n" +
+        strony.map((nazwa) => `  • ${nazwa}`).join("\n") +
+        "\n\nPo usunięciu zostanie tam puste miejsce - trzeba wejść w każdą " +
+        "z tych stron i usunąć obrazek z treści.\n\nUsunąć mimo to? " +
+        "Tej operacji nie da się cofnąć."
+      : "Usunąć to zdjęcie na stałe?\n\nNie jest wstawione w treść żadnej strony. " +
+        "Tej operacji nie da się cofnąć.";
+
+    if (!confirm(pytanie)) return;
+
+    const res = await deleteImage(publicId, true);
     if (!res.ok) {
-      setMsg({ ok: false, text: opiszBlad(res.error, "usunąć zdjęcia") });
+      setMsg({
+        ok: false,
+        text: opiszBlad("error" in res ? res.error : "", "usunąć zdjęcia"),
+      });
       return;
     }
     setImages((prev) => prev.filter((i) => i.publicId !== publicId));

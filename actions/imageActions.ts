@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { v2 as cloudinary } from "cloudinary";
 import { KLUCZ_OKLADEK, pobierzOkladki } from "@/lib/galeriaOkladki";
+import { getEditablePage } from "@/lib/editablePages";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireUser } from "@/lib/supabase/server";
 
@@ -288,8 +289,77 @@ export async function deleteImageFolder(
   }
 }
 
-export async function deleteImage(publicId: string) {
+/** Czy gdziekolwiek w tej strukturze siedzi dokładnie ten identyfikator. */
+function zawieraId(wartosc: unknown, publicId: string): boolean {
+  if (typeof wartosc === "string") return wartosc === publicId;
+  if (Array.isArray(wartosc)) return wartosc.some((v) => zawieraId(v, publicId));
+  if (wartosc && typeof wartosc === "object")
+    return Object.values(wartosc).some((v) => zawieraId(v, publicId));
+  return false;
+}
+
+/**
+ * Nazwy stron, na których to zdjęcie jest wstawione w treść.
+ *
+ * Bez tego kasowanie było ślepe: panel obiecywał „Zniknie ze strony wszędzie,
+ * gdzie było użyte", a w rzeczywistości zostawał rozbity kadr i nie było jak
+ * ustalić, której strony to dotyczy — identyfikator zostaje w blokach treści,
+ * a Cloudinary oddaje 404. Przechodzimy cztery miejsca, w których bloki mogą
+ * siedzieć. Przy awarii bazy zwracamy pustą listę: lepiej nie zablokować
+ * kasowania niż zablokować je bez powodu.
+ */
+async function znajdzUzycia(publicId: string): Promise<string[]> {
+  const sb = getSupabaseAdmin();
+  if (!sb) return [];
+  const strony: string[] = [];
+  try {
+    const [ustawienia, podstrony, artykuly, wlasne] = await Promise.all([
+      sb.from("site_settings").select("key,value").like("key", "page:%"),
+      sb.from("article_overrides").select("topic,slug,title,blocks"),
+      sb.from("articles").select("title,content,cover_image").is("deleted_at", null),
+      sb.from("custom_pages").select("title,blocks").is("deleted_at", null),
+    ]);
+
+    for (const r of ustawienia.data ?? []) {
+      if (!zawieraId(r.value, publicId)) continue;
+      const slug = String(r.key).slice(5);
+      strony.push(getEditablePage(slug)?.label ?? slug);
+    }
+    for (const r of podstrony.data ?? [])
+      if (zawieraId(r.blocks, publicId)) strony.push(String(r.title ?? `${r.topic}/${r.slug}`));
+    for (const r of artykuly.data ?? [])
+      if (r.cover_image === publicId || zawieraId(r.content, publicId))
+        strony.push(`Aktualność: ${r.title}`);
+    for (const r of wlasne.data ?? [])
+      if (zawieraId(r.blocks, publicId)) strony.push(String(r.title));
+  } catch (e) {
+    console.warn("znajdzUzycia:", e);
+    return [];
+  }
+  return strony;
+}
+
+/**
+ * Lista stron, na których zdjęcie jest wstawione w treść - do pytania w panelu.
+ *
+ * Osobno od `deleteImage`, żeby panel mógł zadać JEDNO pytanie z konkretami
+ * zamiast dwóch pod rząd. `potwierdzone` w `deleteImage` zostaje mimo to jako
+ * bezpiecznik na wypadek innego wołającego.
+ */
+export async function sprawdzUzyciaZdjecia(publicId: string) {
   await requireUser();
+  return { ok: true as const, strony: await znajdzUzycia(publicId) };
+}
+
+export async function deleteImage(publicId: string, potwierdzone = false) {
+  await requireUser();
+
+  if (!potwierdzone) {
+    const strony = await znajdzUzycia(publicId);
+    if (strony.length)
+      return { ok: false as const, wymagaPotwierdzenia: true as const, strony };
+  }
+
   try {
     const res = await cloudinary.uploader.destroy(publicId);
     if (res.result !== "ok")
@@ -306,11 +376,10 @@ export async function deleteImage(publicId: string) {
 /**
  * Trasy publiczne pokazujące zdjęcia z danego folderu Cloudinary.
  *
- * Zakładka „Zdjęcia" obsługuje dwa rodzaje folderów, a każdy trafia gdzie
- * indziej: `Galeria/<album>` na /galeria, a `Strona/<temat>/<slug>` do
- * automatycznej galerii pod treścią podstrony tematycznej (ArticleGallery).
- * Puste wyjście znaczy „nie wiem", nie „nigdzie" — wołający ma wtedy
- * unieważnić całe drzewo.
+ * Zakładka „Zdjęcia" obsługuje dwa rodzaje folderów: `Galeria/<album>` zasila
+ * /galeria, a `Strona/<temat>/<slug>` gromadzi zdjęcia wstawione w treść danej
+ * podstrony. Puste wyjście znaczy „nie wiem", nie „nigdzie" — wołający ma
+ * wtedy unieważnić całe drzewo.
  */
 function trasyDlaFolderu(folderPath: string): string[] {
   if (/^Galeria\/[^/]+$/.test(folderPath)) return ["/galeria"];
