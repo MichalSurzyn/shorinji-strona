@@ -44,10 +44,8 @@ export default async function Page({ params }: Params) {
   const next = idx < group.articles.length - 1 ? group.articles[idx + 1] : undefined;
   return (
     <ArticlePage
-      topic="buddyzm"
       topicTitle={buddyzm.topicTitle}
       topicHref="/buddyzm"
-      slug={slug}
       title={article.title}
       intro={article.intro}
       blocks={article.blocks}

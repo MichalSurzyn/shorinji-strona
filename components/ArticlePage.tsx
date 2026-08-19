@@ -1,15 +1,10 @@
 import Link from "next/link";
-import { getArticleImages } from "../actions/articleActions";
-import ArticleGallery from "./ArticleGallery";
 import NewsBlocks, { slugifyAnchor } from "./NewsBlocks";
 import type { NewsBlock } from "../lib/newsTypes";
-import type { ArticleTopic } from "../data/articles/types";
 
 type Props = {
-  topic: ArticleTopic;
   topicTitle: string;
   topicHref: string; // np. /buddyzm
-  slug: string;
   title: string;
   intro: string;
   /** Treść podstrony jako wspólne bloki (te same co aktualności i strony serwisu). */
@@ -21,23 +16,18 @@ type Props = {
 
 /**
  * Wspólny szablon podstrony tematycznej: breadcrumb, nagłówek, treść
- * z bloków (jeden renderer dla całej strony), spis treści z nagłówków,
- * automatyczna galeria z Cloudinary i nawigacja poprzednia/następna.
+ * z bloków (jeden renderer dla całej strony), spis treści z nagłówków
+ * i nawigacja poprzednia/następna.
  */
 export default async function ArticlePage({
-  topic,
   topicTitle,
   topicHref,
-  slug,
   title,
   intro,
   blocks,
   prev,
   next,
 }: Props) {
-  // Zdjęcia z Cloudinary z folderu Strona/<topic>/<slug>
-  const images = await getArticleImages(topic, slug);
-
   // Spis treści budowany z bloków-nagłówków
   const tocItems = blocks
     .filter((b): b is Extract<NewsBlock, { type: "heading" }> => b.type === "heading")
@@ -75,9 +65,6 @@ export default async function ArticlePage({
             {/* Wspólny renderer z grupowaniem: kolejne bloki "person"
                 stają obok siebie (np. egzaminatorzy). */}
             <NewsBlocks blocks={blocks} />
-
-            {/* Galeria zdjęć z Cloudinary (jeśli są) */}
-            <ArticleGallery publicIds={images} alt={title} />
 
             {/* Prev / Next */}
             {(prev || next) && (

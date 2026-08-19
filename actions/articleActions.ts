@@ -8,33 +8,3 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-/**
- * Pobiera publiczne ID wszystkich zdjęć z folderu Cloudinary
- * `Strona/<topic>/<slug>` (np. `Strona/buddyzm/podstawy`).
- *
- * Jeśli folder nie istnieje albo nie zawiera zdjęć – zwraca pustą tablicę.
- * Strona renderuje galerię tylko gdy tablica nie jest pusta.
- */
-export async function getArticleImages(
-  topic: string,
-  slug: string,
-): Promise<string[]> {
-  try {
-    const folder = `Strona/${topic}/${slug}`;
-    // Admin API, nie Search API. Search indeksuje z opóźnieniem, więc strona
-    // regenerowana zaraz po wgraniu zdjęć zapisywała niepełną listę i trzymała
-    // ją do końca okna ISR (godzina). `listImages` w imageActions.ts unika tego
-    // interfejsu z tego samego powodu.
-    const result = await cloudinary.api.resources_by_asset_folder(folder, {
-      max_results: 20,
-    });
-
-    return ((result.resources ?? []) as { public_id: string; created_at: string }[])
-      .sort((x, y) => (x.created_at < y.created_at ? 1 : -1))
-      .map((r) => r.public_id);
-  } catch (error) {
-    // Brak folderu / brak uprawnień – po prostu pusta galeria.
-    console.warn(`[getArticleImages] no images for ${topic}/${slug}:`, error);
-    return [];
-  }
-}
