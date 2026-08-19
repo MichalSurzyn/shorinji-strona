@@ -237,18 +237,33 @@ export default function ImagesManager() {
       setWyniki(rezultaty);
       const udane = rezultaty.filter((r) => r.ok).length;
       const nieudane = rezultaty.length - udane;
+
+      // Upload leci prosto do Cloudinary, więc strona publiczna nic o nim nie
+      // wie, dopóki nie zrzucimy jej cache. Zdanie „Są już widoczne na stronie"
+      // wolno napisać dopiero, gdy to się uda - inaczej panel wysyła redaktora
+      // w diagnozowanie awarii, której nie ma.
+      let odswiezone = false;
+      if (udane > 0) {
+        try {
+          const res = await odswiezGalerie(otwarty.path);
+          odswiezone = res.ok;
+        } catch {
+          odswiezone = false;
+        }
+      }
+
       setMsg({
         ok: nieudane === 0,
         text:
           nieudane === 0
-            ? `Wgrano ${udane} ${udane === 1 ? "zdjęcie" : "zdjęć"}. Są już widoczne na stronie.`
+            ? `Wgrano ${udane} ${udane === 1 ? "zdjęcie" : "zdjęć"}. ` +
+              (odswiezone
+                ? "Są już widoczne na stronie."
+                : "Na stronie pojawią się w ciągu godziny.")
             : `Wgrano ${udane} z ${rezultaty.length}. ${nieudane} ${nieudane === 1 ? "zdjęcie się nie wgrało" : "zdjęć się nie wgrało"} - szczegóły poniżej.`,
       });
       odswiezZdjecia(otwarty.path);
       odswiezFoldery();
-      // Upload leci prosto do Cloudinary, więc publiczna /galeria nic o nim nie
-      // wie. Bez tego wywołania komunikat „Są już widoczne na stronie" kłamał.
-      if (udane > 0) void odswiezGalerie();
     }
   }
 

@@ -274,7 +274,9 @@ export async function deleteImageFolder(
       await cloudinary.api.delete_resources(publicIds.slice(i, i + 100));
     }
     await cloudinary.api.delete_folder(path);
-    revalidatePath("/galeria");
+    // Identyfikatory skasowanych zdjęć mogą siedzieć w blokach treści dowolnej
+    // strony, a stąd nie da się ustalić których - unieważniamy całe drzewo.
+    revalidatePath("/", "layout");
     return { ok: true as const, usunieto: publicIds.length };
   } catch (e) {
     console.warn("deleteImageFolder:", e);
@@ -292,7 +294,8 @@ export async function deleteImage(publicId: string) {
     const res = await cloudinary.uploader.destroy(publicId);
     if (res.result !== "ok")
       return { ok: false as const, error: `Cloudinary: ${res.result}` };
-    revalidatePath("/galeria");
+    // Jak wyżej: to zdjęcie mogło być wstawione w treść dowolnej podstrony.
+    revalidatePath("/", "layout");
     return { ok: true as const };
   } catch (e) {
     console.warn("deleteImage:", e);
@@ -301,17 +304,46 @@ export async function deleteImage(publicId: string) {
 }
 
 /**
- * Zrzuca cache /galeria po wgraniu zdjęć.
+ * Trasy publiczne pokazujące zdjęcia z danego folderu Cloudinary.
+ *
+ * Zakładka „Zdjęcia" obsługuje dwa rodzaje folderów, a każdy trafia gdzie
+ * indziej: `Galeria/<album>` na /galeria, a `Strona/<temat>/<slug>` do
+ * automatycznej galerii pod treścią podstrony tematycznej (ArticleGallery).
+ * Puste wyjście znaczy „nie wiem", nie „nigdzie" — wołający ma wtedy
+ * unieważnić całe drzewo.
+ */
+function trasyDlaFolderu(folderPath: string): string[] {
+  if (/^Galeria\/[^/]+$/.test(folderPath)) return ["/galeria"];
+  const m = /^Strona\/([a-z0-9-]+)(?:\/([a-z0-9-]+))?$/.exec(folderPath);
+  if (!m) return [];
+  const [, temat, slug] = m;
+  return slug ? [`/${temat}/${slug}`, `/${temat}`] : [`/${temat}`];
+}
+
+/**
+ * Zrzuca cache tras, na których widać zdjęcia z danego folderu.
  *
  * Pliki idą z przeglądarki prosto do Cloudinary, z pominięciem serwera, więc
  * po uploadzie nie wykonuje się żadna akcja, która mogłaby unieważnić stronę.
  * Bez tego panel pisał „Wgrano 8 zdjęć. Są już widoczne na stronie", a strona
  * dalej oddawała wersję z cache.
+ *
+ * Ścieżkę mapujemy tutaj, a nie w panelu: pierwsza wersja tej funkcji
+ * unieważniała /galeria niezależnie od folderu, więc redaktor wgrywający
+ * zdjęcia do podstrony tematycznej dostawał zapewnienie o widoczności,
+ * a odświeżała się trasa, na której tych zdjęć w ogóle nie ma.
  */
-export async function odswiezGalerie() {
+export async function odswiezGalerie(folderPath: string) {
   await requireUser();
-  revalidatePath("/galeria");
-  return { ok: true as const };
+
+  const trasy = trasyDlaFolderu(folderPath);
+  if (!trasy.length) {
+    // Nieznany kształt ścieżki - taniej unieważnić za dużo niż skłamać.
+    revalidatePath("/", "layout");
+    return { ok: true as const, trasy: ["/"] };
+  }
+  for (const trasa of trasy) revalidatePath(trasa);
+  return { ok: true as const, trasy };
 }
 
 /**

@@ -5,6 +5,7 @@ import {
   getUploadSignature,
   listFolderPreviews,
   listImages,
+  odswiezGalerie,
   type CloudFolderPodglad,
   type CloudImage,
 } from "@/actions/imageActions";
@@ -130,6 +131,11 @@ export default function ImagePicker({
     }
 
     if (uploaded.length) {
+      // Druga droga uploadu, obok zakładki „Zdjęcia". Dla folderów podstron
+      // tematycznych galeria pod treścią listuje Cloudinary wprost, więc te
+      // zdjęcia pojawiają się bez zapisu strony - i bez tego wywołania czekały
+      // na wygaśnięcie okna ISR.
+      void odswiezGalerie(targetFolder);
       await loadImages(targetFolder, true);
       if (multi) setSelected((prev) => [...prev, ...uploaded]);
       else {
