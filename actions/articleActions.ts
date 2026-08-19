@@ -21,13 +21,17 @@ export async function getArticleImages(
 ): Promise<string[]> {
   try {
     const folder = `Strona/${topic}/${slug}`;
-    const result = await cloudinary.search
-      .expression(`folder:"${folder}"`)
-      .sort_by("created_at", "desc")
-      .max_results(20)
-      .execute();
+    // Admin API, nie Search API. Search indeksuje z opóźnieniem, więc strona
+    // regenerowana zaraz po wgraniu zdjęć zapisywała niepełną listę i trzymała
+    // ją do końca okna ISR (godzina). `listImages` w imageActions.ts unika tego
+    // interfejsu z tego samego powodu.
+    const result = await cloudinary.api.resources_by_asset_folder(folder, {
+      max_results: 20,
+    });
 
-    return (result.resources ?? []).map((r: { public_id: string }) => r.public_id);
+    return ((result.resources ?? []) as { public_id: string; created_at: string }[])
+      .sort((x, y) => (x.created_at < y.created_at ? 1 : -1))
+      .map((r) => r.public_id);
   } catch (error) {
     // Brak folderu / brak uprawnień – po prostu pusta galeria.
     console.warn(`[getArticleImages] no images for ${topic}/${slug}:`, error);
