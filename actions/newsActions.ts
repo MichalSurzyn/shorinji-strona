@@ -20,6 +20,10 @@ function revalidateNews(slug?: string) {
   revalidatePath("/");
   revalidatePath("/aktualnosci");
   if (slug) revalidatePath(`/aktualnosci/${slug}`);
+  // Mapa witryny ma własny wpis w cache i żaden z powyższych jej nie dotyka
+  // (jej tagi to _N_T_/layout i _N_T_/sitemap.xml, nie _N_T_/aktualnosci).
+  // Bez tego nowy artykuł nie trafiał do mapy, a skasowany w niej zostawał.
+  revalidatePath("/sitemap.xml");
 }
 
 export async function createNewsArticle(input: NewsInput) {

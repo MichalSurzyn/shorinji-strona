@@ -6,6 +6,15 @@ import { buddyzm } from "../data/articles/buddyzm";
 import { getNews } from "../lib/news";
 import { listCustomPages } from "../lib/customPages";
 
+/**
+ * Bez tego mapa witryny jest prerenderowana raz, na buildzie: zmierzone na
+ * produkcji `"Netlify Durable"; ttl=31498516`, czyli 365 dni. Lista artykułów
+ * i stron własnych idzie z bazy (getNews, listCustomPages), więc nowy wpis
+ * nie trafiał do mapy, a skasowany w niej zostawał i robot chodził po adresie
+ * zwracającym 404. Godzina wystarczy - mapy nikt nie ogląda na żywo.
+ */
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
