@@ -1,0 +1,1585 @@
+{
+  "_o_pliku": {
+    "co_to_jest": "Golden master serwisu shorinji-strona — punkt odniesienia dla przebudowy menu i stron (docs/menu-architektura.md §5.2). Różnica między tym plikiem a kolejnym zrzutem musi być pusta albo świadomie wyjaśniona.",
+    "wygenerowano": "2026-08-18T09:49:32.105Z",
+    "baza_pomiaru": "http://localhost:3000",
+    "tryb_serwera": "produkcyjny",
+    "origin_w_metadanych": "https://shorinji-kempo.netlify.app zastąpiony tokenem {ORIGIN}",
+    "dlaczego_normalizacja_origin": "NEXT_PUBLIC_SITE_URL nie jest ustawiony w .env.local, więc lib/site.ts:9-11 spada na literał produkcyjny. Bez normalizacji zrzut z innej maszyny różniłby się w KAŻDYM wpisie.",
+    "lastModified": "POMINIĘTE świadomie — app/sitemap.ts:10,35 wstawia new Date(), więc różnica nigdy nie byłaby pusta. To samo dotyczy roku w stopce (components/Footer.tsx:147).",
+    "znane_roznice_wobec_stanu_z_audytu": [
+      "custom_pages: trzy wiersze z kosza (/test, /ee, /eee, zero bloków) usunięte trwale 2026-08-18 decyzją właściciela, PRZED tym zrzutem. Zrzut całej bazy sprzed usunięcia: shorinji-notes/db-backup-2026-08-18/. Publicznie zero zmian — te adresy dawały 404 i dają 404.",
+      "Kosz podstron NIE opróżnia się sam: oproznijStaryKosz(\"custom_pages\") nigdy się nie wykonuje, bo listTrashedCustomPages/restoreCustomPage/purgeCustomPage nie mają w repo ani jednego wywołania. Dlatego usunięcie było ręczne."
+    ],
+    "uwagi_o_pomiarze": [
+      "/admin/login i /admin/nowe-haslo renderują formularz PO STRONIE KLIENTA — serwerowy <main class=\"flex-grow\"> jest pusty (0 znaków, zero <form>). „0 znaków\" na tych dwóch trasach to stan dzisiejszy, nie regresja.",
+      "Trasy 404 mają dziś 33 znaki i jeden <h1> — to wbudowana strona Next. Etap 4 dokłada app/not-found.tsx, więc ta liczba zmieni się ŚWIADOMIE na wszystkich adresach 404 naraz.",
+      "Długość treści liczona po usunięciu 8 kanji z VerticalKanji i po zwinięciu białych znaków — liczby są porównywalne wyłącznie między zrzutami z tego samego skryptu, nie z pomiarami z innych sesji.",
+      "Trzy listingi tematyczne (/o-shorinji, /organizacja, /buddyzm) nie mają canonical — to potwierdzony brak do naprawy w etapie 6, nie błąd pomiaru."
+    ],
+    "zasada": "W trakcie etapów 0–4 nie edytować treści ani slugów w panelu. Zmiana sluga nie rewaliduje STAREGO adresu (actions/customPageActions.ts:125-126), więc zrzut zrobiony w ciągu 300 s po edycji pokaże dwa żywe adresy dla jednej strony."
+  },
+  "_podsumowanie": {
+    "adresow_zbadanych": 81,
+    "z_listy_odniesienia": 81,
+    "wykrytych_poza_lista": 0,
+    "rozjazdow_wobec_oczekiwan": 0,
+    "wpisow_w_sitemapie": 22,
+    "wierszy_nav_items": 20,
+    "hrefow_w_nav_items": 19,
+    "par_editable_pages": 8,
+    "rozjazdow_slug_route": 4,
+    "reserved_slugs": 14
+  },
+  "menuSurowe": [
+    {
+      "label": "AKTUALNOŚCI",
+      "href": "/aktualnosci",
+      "visible": true,
+      "dzieci": []
+    },
+    {
+      "label": "O SHORINJI KEMPO",
+      "href": "/o-shorinji",
+      "visible": true,
+      "dzieci": [
+        {
+          "label": "WPROWADZENIE",
+          "href": "/o-shorinji/wprowadzenie",
+          "visible": true
+        },
+        {
+          "label": "CELE I WARTOŚCI",
+          "href": "/o-shorinji/cele-i-wartosci",
+          "visible": true
+        },
+        {
+          "label": "SYMBOLIKA I MEDYTACJA",
+          "href": "/o-shorinji/symbolika-i-medytacja",
+          "visible": true
+        },
+        {
+          "label": "HISTORIA",
+          "href": "/o-shorinji/historia",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "label": "ZAJĘCIA",
+      "href": null,
+      "visible": true,
+      "dzieci": [
+        {
+          "label": "GRUPA DOROSŁA",
+          "href": "/zajecia/dorosli",
+          "visible": true
+        },
+        {
+          "label": "GRUPA DZIECIĘCA",
+          "href": "/zajecia/dzieci",
+          "visible": true
+        },
+        {
+          "label": "CENNIK",
+          "href": "/zajecia/cennik",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "label": "PROGRAM NAUCZANIA",
+      "href": "/program-nauczania",
+      "visible": true,
+      "dzieci": []
+    },
+    {
+      "label": "ORGANIZACJA",
+      "href": "/organizacja",
+      "visible": true,
+      "dzieci": [
+        {
+          "label": "ZAŁOŻYCIEL",
+          "href": "/organizacja/zalozyciel",
+          "visible": true
+        },
+        {
+          "label": "EGZAMINATORZY",
+          "href": "/organizacja/egzaminatorzy",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "label": "BUDDYZM",
+      "href": "/buddyzm",
+      "visible": true,
+      "dzieci": [
+        {
+          "label": "PODSTAWY",
+          "href": "/buddyzm/podstawy",
+          "visible": true
+        },
+        {
+          "label": "NAUKI",
+          "href": "/buddyzm/nauki",
+          "visible": true
+        },
+        {
+          "label": "MEDYTACJA",
+          "href": "/buddyzm/medytacja",
+          "visible": true
+        },
+        {
+          "label": "ETYKA I ŚWIĘTA",
+          "href": "/buddyzm/etyka-i-swieta",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "label": "GALERIA",
+      "href": "/galeria",
+      "visible": true,
+      "dzieci": []
+    }
+  ],
+  "paryEditable": [
+    {
+      "slug": "home",
+      "route": "/",
+      "rozjazd": true
+    },
+    {
+      "slug": "aktualnosci",
+      "route": "/aktualnosci",
+      "rozjazd": false
+    },
+    {
+      "slug": "galeria",
+      "route": "/galeria",
+      "rozjazd": false
+    },
+    {
+      "slug": "cennik",
+      "route": "/zajecia/cennik",
+      "rozjazd": true
+    },
+    {
+      "slug": "program-nauczania",
+      "route": "/program-nauczania",
+      "rozjazd": false
+    },
+    {
+      "slug": "kontakt",
+      "route": "/kontakt",
+      "rozjazd": false
+    },
+    {
+      "slug": "zajecia-dorosli",
+      "route": "/zajecia/dorosli",
+      "rozjazd": true
+    },
+    {
+      "slug": "zajecia-dzieci",
+      "route": "/zajecia/dzieci",
+      "rozjazd": true
+    }
+  ],
+  "przekierowaniaConfig": [
+    {
+      "source": "/organizacja/zalozyciel-i-wsko",
+      "destination": "/organizacja/zalozyciel",
+      "permanent": true,
+      "status": 308
+    },
+    {
+      "source": "/cennik",
+      "destination": "/zajecia/cennik",
+      "permanent": false,
+      "status": 307
+    }
+  ],
+  "reserved": [
+    "admin",
+    "api",
+    "aktualnosci",
+    "buddyzm",
+    "cennik",
+    "galeria",
+    "kontakt",
+    "o-shorinji",
+    "organizacja",
+    "program-nauczania",
+    "zajecia",
+    "downloads",
+    "sitemap.xml",
+    "robots.txt"
+  ],
+  "stopka": {
+    "adresyZKluczaFooter": [
+      "/downloads/statut-posk.pdf",
+      "/downloads/wsko-statutes.pdf",
+      "/downloads/wsko-bylaws.pdf",
+      "/downloads/wsko-regulations.pdf",
+      "/downloads/deklaracja-dorosli.pdf",
+      "/downloads/deklaracja-do-18.pdf"
+    ],
+    "profileZKluczaOrganization": {
+      "youtube": "https://www.youtube.com/@Dominik_Chowanski",
+      "facebook": "https://www.facebook.com/shorinjikempopolska",
+      "instagram": "https://www.instagram.com/shorinjikempopolska/"
+    }
+  },
+  "sitemap": [
+    {
+      "url": "{ORIGIN}",
+      "changeFrequency": "monthly",
+      "priority": "1"
+    },
+    {
+      "url": "{ORIGIN}/aktualnosci",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/aktualnosci/pokaz-gala-35-lat-hapkido-w-polsce",
+      "changeFrequency": "yearly",
+      "priority": "0.6"
+    },
+    {
+      "url": "{ORIGIN}/buddyzm",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/buddyzm/etyka-i-swieta",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/buddyzm/medytacja",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/buddyzm/nauki",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/buddyzm/podstawy",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/galeria",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/kontakt",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/o-shorinji",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/o-shorinji/cele-i-wartosci",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/o-shorinji/historia",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/o-shorinji/symbolika-i-medytacja",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/o-shorinji/wprowadzenie",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/organizacja",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/organizacja/egzaminatorzy",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/organizacja/zalozyciel",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/program-nauczania",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/zajecia/cennik",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/zajecia/dorosli",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/zajecia/dzieci",
+      "changeFrequency": "monthly",
+      "priority": "0.7"
+    }
+  ],
+  "adresy": {
+    "/": {
+      "zrodlo": 1,
+      "uwaga": "priority 1 w sitemapie",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": "{ORIGIN}",
+      "h1": 1,
+      "main": {
+        "znakow": 1160,
+        "znakowZKanji": 1176,
+        "naglowkow": 2,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 10,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/aktualnosci": {
+      "zrodlo": 1,
+      "uwaga": "listing z canonical",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Aktualności | Shorinji Kempo Kraków",
+      "description": "Ogłoszenia i wydarzenia krakowskich filii Shorinji Kempo: seminaria, pokazy, zmiany w harmonogramie, obozy i egzaminy.",
+      "canonical": "{ORIGIN}/aktualnosci",
+      "h1": 1,
+      "main": {
+        "znakow": 470,
+        "znakowZKanji": 486,
+        "naglowkow": 1,
+        "obrazkowCloudinary": 1,
+        "odnosnikowWewnetrznych": 1,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/zajecia/cennik": {
+      "zrodlo": 1,
+      "uwaga": "cel przekierowania z /cennik",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Cennik | Shorinji Kempo Kraków",
+      "description": "Lista opłat obowiązująca do 31 marca 2030 – składki, egzaminy na stopnie Kyu i Dan, opłaty organizacyjne.",
+      "canonical": "{ORIGIN}/zajecia/cennik",
+      "h1": 1,
+      "main": {
+        "znakow": 1738,
+        "znakowZKanji": 1754,
+        "naglowkow": 6,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 0,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/program-nauczania": {
+      "zrodlo": 1,
+      "uwaga": "cała treść z bazy",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Program nauczania | Shorinji Kempo Kraków",
+      "description": "Materiały wideo Shorinji Kempo: kihon, kata, embu, randori. Tan&#x27;en Kihon Hokei – jednoosobowe i parami.",
+      "canonical": "{ORIGIN}/program-nauczania",
+      "h1": 1,
+      "main": {
+        "znakow": 922,
+        "znakowZKanji": 938,
+        "naglowkow": 3,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 0,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/galeria": {
+      "zrodlo": 1,
+      "uwaga": "albumy z Cloudinary NA BUILDZIE",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Galeria | Shorinji Kempo Kraków",
+      "description": "Zdjęcia z treningów, pokazów i seminariów krakowskiego dōjō Shorinji Kempo.",
+      "canonical": "{ORIGIN}/galeria",
+      "h1": 1,
+      "main": {
+        "znakow": 172,
+        "znakowZKanji": 188,
+        "naglowkow": 0,
+        "obrazkowCloudinary": 88,
+        "odnosnikowWewnetrznych": 0,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/kontakt": {
+      "zrodlo": 1,
+      "uwaga": "NIE MA wiersza w nav_items — węzeł powstanie tylko z EDITABLE_PAGES",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Kontakt | Shorinji Kempo Kraków",
+      "description": "Skontaktuj się z krakowskim dōjō Shorinji Kempo. Adres treningów (ul. Łąkowa 31, Kraków), telefon, e-mail i mapa dojazdu.",
+      "canonical": "{ORIGIN}/kontakt",
+      "h1": 1,
+      "main": {
+        "znakow": 1197,
+        "znakowZKanji": 1213,
+        "naglowkow": 4,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 2,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": true,
+        "mapa": true,
+        "grafik": false
+      }
+    },
+    "/zajecia/dorosli": {
+      "zrodlo": 1,
+      "uwaga": "trigger nie wyprodukuje tego adresu z łańcucha slugów",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Grupa dorosła (Filia Kraków) | Shorinji Kempo Kraków",
+      "description": "Zajęcia dla młodzieży i dorosłych w krakowskiej filii Shorinji Kempo prowadzone przez Shibucho Dominika Chowańskiego.",
+      "canonical": "{ORIGIN}/zajecia/dorosli",
+      "h1": 1,
+      "main": {
+        "znakow": 2859,
+        "znakowZKanji": 2875,
+        "naglowkow": 6,
+        "obrazkowCloudinary": 1,
+        "odnosnikowWewnetrznych": 3,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": true,
+        "mapa": true,
+        "grafik": true
+      }
+    },
+    "/zajecia/dzieci": {
+      "zrodlo": 1,
+      "uwaga": "jak wyżej",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Grupa dziecięca (Filia Wawel) | Shorinji Kempo Kraków",
+      "description": "Zajęcia dla dzieci i młodzieży (5–13 lat) w krakowskiej filii Wawel Shorinji Kempo prowadzone przez Shibucho Krzysztofa Kmiecika.",
+      "canonical": "{ORIGIN}/zajecia/dzieci",
+      "h1": 1,
+      "main": {
+        "znakow": 2678,
+        "znakowZKanji": 2694,
+        "naglowkow": 6,
+        "obrazkowCloudinary": 1,
+        "odnosnikowWewnetrznych": 3,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": true,
+        "mapa": true,
+        "grafik": true
+      }
+    },
+    "/o-shorinji": {
+      "zrodlo": 1,
+      "uwaga": "BRAK canonical — etap 6",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "O Shorinji Kempo | Shorinji Kempo Kraków",
+      "description": "Filozofia, cele i istota japońskiej sztuki walki, którą trenujemy w krakowskim dōjō. Krótkie wprowadzenie w trzech częściach – od esencji, przez powody utworzenia szkoły, po symbolikę i medytację.",
+      "canonical": null,
+      "h1": 1,
+      "main": {
+        "znakow": 714,
+        "znakowZKanji": 730,
+        "naglowkow": 4,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 4,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/organizacja": {
+      "zrodlo": 1,
+      "uwaga": "BRAK canonical — etap 6",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Organizacja | Shorinji Kempo Kraków",
+      "description": "Polska Organizacja Shorinji Kempo (POSK) jest oficjalnym przedstawicielem World Shorinji Kempo Organization (WSKO) w Polsce. Poniżej znajdziesz sylwetkę założyciela szkoły oraz listę egzaminatorów uprawnionych do nadawania stopni.",
+      "canonical": null,
+      "h1": 1,
+      "main": {
+        "znakow": 463,
+        "znakowZKanji": 479,
+        "naglowkow": 2,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 2,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/buddyzm": {
+      "zrodlo": 1,
+      "uwaga": "BRAK canonical — etap 6",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Buddyzm | Shorinji Kempo Kraków",
+      "description": "Shorinji Kempo opiera swoją filozofię na buddyjskich naukach Kongō Zen. Sekcja prezentuje podstawowe pojęcia buddyzmu, kluczowe nauki, system medytacji oraz buddyjską etykę i kalendarz.",
+      "canonical": null,
+      "h1": 1,
+      "main": {
+        "znakow": 723,
+        "znakowZKanji": 739,
+        "naglowkow": 4,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 4,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/o-shorinji/wprowadzenie": {
+      "zrodlo": 2,
+      "uwaga": "nadpisanie w bazie",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Wprowadzenie | Shorinji Kempo Kraków",
+      "description": "Co stanowi istotę Shorinji Kempo – teksty wprowadzające",
+      "canonical": "{ORIGIN}/o-shorinji/wprowadzenie",
+      "h1": 1,
+      "main": {
+        "znakow": 6585,
+        "znakowZKanji": 6602,
+        "naglowkow": 3,
+        "obrazkowCloudinary": 11,
+        "odnosnikowWewnetrznych": 2,
+        "spisTresci": true,
+        "okruszek": true,
+        "poprzedniaNastepna": true,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/o-shorinji/cele-i-wartosci": {
+      "zrodlo": 2,
+      "uwaga": "nadpisanie: 32 bloki",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Cele, wartości i sens Budō | Shorinji Kempo Kraków",
+      "description": "Dlaczego Kaiso założył Shorinji Kempo i do jakich cech powinien dążyć kenshi",
+      "canonical": "{ORIGIN}/o-shorinji/cele-i-wartosci",
+      "h1": 1,
+      "main": {
+        "znakow": 10597,
+        "znakowZKanji": 10613,
+        "naglowkow": 9,
+        "obrazkowCloudinary": 11,
+        "odnosnikowWewnetrznych": 3,
+        "spisTresci": true,
+        "okruszek": true,
+        "poprzedniaNastepna": true,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/o-shorinji/symbolika-i-medytacja": {
+      "zrodlo": 2,
+      "uwaga": "bez nadpisania — treść z kodu",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Symbolika i medytacja | Shorinji Kempo Kraków",
+      "description": "Znaczenie symboli Shorinji Kempo oraz rola medytacji (zazen, chinkon gyo) w codziennej praktyce.",
+      "canonical": "{ORIGIN}/o-shorinji/symbolika-i-medytacja",
+      "h1": 1,
+      "main": {
+        "znakow": 9944,
+        "znakowZKanji": 9962,
+        "naglowkow": 13,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 3,
+        "spisTresci": true,
+        "okruszek": true,
+        "poprzedniaNastepna": true,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/o-shorinji/historia": {
+      "zrodlo": 2,
+      "uwaga": "cel odnośnika z treści organizacja.ts:26",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Historia Shorinji Kempo | Shorinji Kempo Kraków",
+      "description": "Od doświadczeń wojennych So Doshina, przez pierwsze dōjō w Tadotsu, po światową organizację – dzieje szkoły od 1947 roku.",
+      "canonical": "{ORIGIN}/o-shorinji/historia",
+      "h1": 1,
+      "main": {
+        "znakow": 34590,
+        "znakowZKanji": 34606,
+        "naglowkow": 24,
+        "obrazkowCloudinary": 17,
+        "odnosnikowWewnetrznych": 2,
+        "spisTresci": true,
+        "okruszek": true,
+        "poprzedniaNastepna": true,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/organizacja/zalozyciel": {
+      "zrodlo": 2,
+      "uwaga": "cel 308 z /organizacja/zalozyciel-i-wsko",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Założyciel Shorinji Kempo | Shorinji Kempo Kraków",
+      "description": "So Doshin (Kaiso) – twórca Shorinji Kempo i pierwszy Shike szkoły.",
+      "canonical": "{ORIGIN}/organizacja/zalozyciel",
+      "h1": 1,
+      "main": {
+        "znakow": 1936,
+        "znakowZKanji": 1952,
+        "naglowkow": 2,
+        "obrazkowCloudinary": 2,
+        "odnosnikowWewnetrznych": 3,
+        "spisTresci": false,
+        "okruszek": true,
+        "poprzedniaNastepna": true,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/organizacja/egzaminatorzy": {
+      "zrodlo": 2,
+      "uwaga": "dwa bloki person, bez spisu treści",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Egzaminatorzy w Polsce | Shorinji Kempo Kraków",
+      "description": "Instruktorzy upoważnieni przez WSKO do nadawania stopni Kyū i Dan",
+      "canonical": "{ORIGIN}/organizacja/egzaminatorzy",
+      "h1": 1,
+      "main": {
+        "znakow": 503,
+        "znakowZKanji": 519,
+        "naglowkow": 2,
+        "obrazkowCloudinary": 2,
+        "odnosnikowWewnetrznych": 2,
+        "spisTresci": false,
+        "okruszek": true,
+        "poprzedniaNastepna": true,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/buddyzm/podstawy": {
+      "zrodlo": 2,
+      "uwaga": "nadpisanie: 21 bloków",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Podstawy buddyzmu | Shorinji Kempo Kraków",
+      "description": "Czym jest buddyzm, kim był Budda i czego naucza – kluczowe informacje dla każdego, kto wchodzi w świat tej tradycji.",
+      "canonical": "{ORIGIN}/buddyzm/podstawy",
+      "h1": 1,
+      "main": {
+        "znakow": 7372,
+        "znakowZKanji": 7388,
+        "naglowkow": 8,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 2,
+        "spisTresci": true,
+        "okruszek": true,
+        "poprzedniaNastepna": true,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/buddyzm/nauki": {
+      "zrodlo": 2,
+      "uwaga": "bez nadpisania",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Cztery Prawdy, Ośmioraka Ścieżka, Trzy Klejnoty | Shorinji Kempo Kraków",
+      "description": "Cztery Szlachetne Prawdy, Szlachetna Ośmioraka Ścieżka, Potrójna droga i Trzy Klejnoty – fundamenty praktyki buddyjskiej.",
+      "canonical": "{ORIGIN}/buddyzm/nauki",
+      "h1": 1,
+      "main": {
+        "znakow": 12100,
+        "znakowZKanji": 12116,
+        "naglowkow": 13,
+        "obrazkowCloudinary": 11,
+        "odnosnikowWewnetrznych": 4,
+        "spisTresci": true,
+        "okruszek": true,
+        "poprzedniaNastepna": true,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/buddyzm/medytacja": {
+      "zrodlo": 2,
+      "uwaga": "NAJWAŻNIEJSZA asercja: body_md 13 131 znaków, blocks NULL",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Medytacja | Shorinji Kempo Kraków",
+      "description": "Czym jest medytacja i jaka jest jej rola w Kongo Zen.",
+      "canonical": "{ORIGIN}/buddyzm/medytacja",
+      "h1": 1,
+      "main": {
+        "znakow": 13261,
+        "znakowZKanji": 13277,
+        "naglowkow": 9,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 3,
+        "spisTresci": true,
+        "okruszek": true,
+        "poprzedniaNastepna": true,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/buddyzm/etyka-i-swieta": {
+      "zrodlo": 2,
+      "uwaga": "ostatni w sekcji — brak „następna\"",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Etyka i święta buddyjskie | Shorinji Kempo Kraków",
+      "description": "Czym jest etyka buddyjska i jakie święta wyznaczają kalendarz tradycji.",
+      "canonical": "{ORIGIN}/buddyzm/etyka-i-swieta",
+      "h1": 1,
+      "main": {
+        "znakow": 10005,
+        "znakowZKanji": 10021,
+        "naglowkow": 9,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 2,
+        "spisTresci": true,
+        "okruszek": true,
+        "poprzedniaNastepna": true,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/aktualnosci/pokaz-gala-35-lat-hapkido-w-polsce": {
+      "zrodlo": 3,
+      "uwaga": "jedyna aktualność w bazie",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Wystąpiliśmy na Gali Jubileuszowej 35-lecia Hapkido w Polsce | Shorinji Kempo Kraków",
+      "description": "Nasze Dōjō miało zaszczyt zaprezentować pokaz Shorinji Kempo podczas uroczystej gali z okazji 35-lecia Hapkido w Polsce. Zobacz fotorelację z tego wyjątkowego wieczoru.",
+      "canonical": "{ORIGIN}/aktualnosci/pokaz-gala-35-lat-hapkido-w-polsce",
+      "h1": 1,
+      "main": {
+        "znakow": 1297,
+        "znakowZKanji": 1313,
+        "naglowkow": 1,
+        "obrazkowCloudinary": 14,
+        "odnosnikowWewnetrznych": 1,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/aktualnosci/nieistniejacy-wpis": {
+      "zrodlo": 3,
+      "uwaga": "kontrola negatywna; przekierowania tu NIE zadziałają",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/organizacja/zalozyciel-i-wsko": {
+      "zrodlo": 7,
+      "uwaga": "permanent:true; ZOSTAJE w next.config.ts (§5.6)",
+      "oczekiwany": 308,
+      "status": 308,
+      "typ": null,
+      "location": "/organizacja/zalozyciel",
+      "dlugosc": 23
+    },
+    "/cennik": {
+      "zrodlo": 7,
+      "uwaga": "permanent:false; JEDYNA reguła przenoszona do redirects",
+      "oczekiwany": 307,
+      "status": 307,
+      "typ": null,
+      "location": "/zajecia/cennik",
+      "dlugosc": 15
+    },
+    "/kontakt/": {
+      "zrodlo": 17,
+      "uwaga": "reguła /:path+/ z priority:true",
+      "oczekiwany": 308,
+      "status": 308,
+      "typ": null,
+      "location": "/kontakt",
+      "dlugosc": 8
+    },
+    "/zajecia/cennik/": {
+      "zrodlo": 17,
+      "uwaga": "druga próbka, adres dwusegmentowy",
+      "oczekiwany": 308,
+      "status": 308,
+      "typ": null,
+      "location": "/zajecia/cennik",
+      "dlugosc": 15
+    },
+    "/Kontakt": {
+      "zrodlo": 17,
+      "uwaga": "wielkość liter ma znaczenie i tak ma zostać",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/zajecia": {
+      "zrodlo": 8,
+      "uwaga": "app/zajecia/ nie ma page.tsx; „zajecia\" w RESERVED_SLUGS",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/test": {
+      "zrodlo": 8,
+      "uwaga": "usunięty z kosza 2026-08-18",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/ee": {
+      "zrodlo": 8,
+      "uwaga": "jak wyżej",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/eee": {
+      "zrodlo": 8,
+      "uwaga": "jak wyżej",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/admin/typo": {
+      "zrodlo": 8,
+      "uwaga": "po etapie 4 bez guarda dałoby 200 z catch-alla",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 1,
+      "main": {
+        "znakow": 33,
+        "znakowZKanji": 49,
+        "naglowkow": 1,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 0,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/api/foo": {
+      "zrodlo": 8,
+      "uwaga": "jak wyżej",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 1,
+      "main": {
+        "znakow": 33,
+        "znakowZKanji": 49,
+        "naglowkow": 1,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 0,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/wp-login.php": {
+      "zrodlo": 8,
+      "uwaga": "ruch skanerów — po etapie 4 nie może odpalać zapytań do bazy",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/.env": {
+      "zrodlo": 8,
+      "uwaga": "segment nie pasuje do ^[a-z0-9-]+$",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/o-shorinji/nie-ma-takiej-podstrony": {
+      "zrodlo": 15,
+      "uwaga": "notFound() w app/o-shorinji/[slug]/page.tsx:41",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/organizacja/nie-ma-takiej-podstrony": {
+      "zrodlo": 15,
+      "uwaga": "jak wyżej",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/buddyzm/nie-ma-takiej-podstrony": {
+      "zrodlo": 15,
+      "uwaga": "jak wyżej",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/zajecia/cokolwiek": {
+      "zrodlo": 15,
+      "uwaga": "drugi segment pod istniejącym prefiksem bez trasy",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 1,
+      "main": {
+        "znakow": 33,
+        "znakowZKanji": 49,
+        "naglowkow": 1,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 0,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/program-nauczania/uczniowskie/6-kyu": {
+      "zrodlo": 15,
+      "uwaga": "trzy segmenty — po etapie 4 ma dawać 200 z drzewa",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 1,
+      "main": {
+        "znakow": 33,
+        "znakowZKanji": 49,
+        "naglowkow": 1,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 0,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/sitemap.xml": {
+      "zrodlo": 10,
+      "uwaga": "22 wpisy dziś",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "application/xml",
+      "dlugosc": 4044
+    },
+    "/robots.txt": {
+      "zrodlo": 10,
+      "uwaga": "nie wyklucza NICZEGO — etap 4 dokłada disallow /admin",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/plain",
+      "dlugosc": 121
+    },
+    "/icon.jpg": {
+      "zrodlo": 10,
+      "uwaga": "realna trasa ikony (konwencja plikowa app/icon.jpg)",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "image/jpeg",
+      "dlugosc": 48302
+    },
+    "/icon": {
+      "zrodlo": 10,
+      "uwaga": "BRAKUJE w RESERVED_SLUGS — da się dziś utworzyć kolidującą podstronę",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/favicon.ico": {
+      "zrodlo": 10,
+      "uwaga": "brak pliku; Next nie generuje go z app/icon.jpg",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/og.png": {
+      "zrodlo": 13,
+      "uwaga": "og:image i twitter:image (app/layout.tsx:42,53)",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "image/png",
+      "dlugosc": 33924
+    },
+    "/SOEN.jpg": {
+      "zrodlo": 13,
+      "uwaga": "logo w Navbarze i JSON-LD",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "image/jpeg",
+      "dlugosc": 39785
+    },
+    "/file.svg": {
+      "zrodlo": 13,
+      "uwaga": "resztka po create-next-app",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "image/svg+xml",
+      "dlugosc": 391
+    },
+    "/globe.svg": {
+      "zrodlo": 13,
+      "uwaga": "resztka po create-next-app",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "image/svg+xml",
+      "dlugosc": 1035
+    },
+    "/next.svg": {
+      "zrodlo": 13,
+      "uwaga": "resztka po create-next-app",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "image/svg+xml",
+      "dlugosc": 1375
+    },
+    "/vercel.svg": {
+      "zrodlo": 13,
+      "uwaga": "resztka po create-next-app",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "image/svg+xml",
+      "dlugosc": 128
+    },
+    "/window.svg": {
+      "zrodlo": 13,
+      "uwaga": "resztka po create-next-app",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "image/svg+xml",
+      "dlugosc": 385
+    },
+    "/downloads/deklaracja-dorosli.pdf": {
+      "zrodlo": 9,
+      "uwaga": "w stopce i w CTA na /zajecia/dorosli",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "application/pdf",
+      "dlugosc": 1047454
+    },
+    "/downloads/deklaracja-do-18.pdf": {
+      "zrodlo": 9,
+      "uwaga": "w stopce i w CTA na /zajecia/dzieci",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "application/pdf",
+      "dlugosc": 1082279
+    },
+    "/downloads/statut-posk.pdf": {
+      "zrodlo": 9,
+      "uwaga": "kolumna DOKUMENTY w stopce",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "application/pdf",
+      "dlugosc": 2371290
+    },
+    "/downloads/wsko-statutes.pdf": {
+      "zrodlo": 9,
+      "uwaga": "kolumna DOKUMENTY",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "application/pdf",
+      "dlugosc": 299023
+    },
+    "/downloads/wsko-bylaws.pdf": {
+      "zrodlo": 9,
+      "uwaga": "kolumna DOKUMENTY",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "application/pdf",
+      "dlugosc": 480381
+    },
+    "/downloads/wsko-regulations.pdf": {
+      "zrodlo": 9,
+      "uwaga": "kolumna DOKUMENTY",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "application/pdf",
+      "dlugosc": 739593
+    },
+    "/downloads/nie-ma-takiego-pliku.pdf": {
+      "zrodlo": 9,
+      "uwaga": "kontrola negatywna route.ts:38-40",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/plain",
+      "dlugosc": 20
+    },
+    "/downloads": {
+      "zrodlo": 14,
+      "uwaga": "zarezerwowany slug bez trasy",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/api": {
+      "zrodlo": 14,
+      "uwaga": "zarezerwowany slug bez trasy",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/api/schedule/dorosli/calendar.ics": {
+      "zrodlo": 9,
+      "uwaga": "grafik z site_settings klucz schedule",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/calendar",
+      "dlugosc": 1683
+    },
+    "/api/schedule/dzieci/calendar.ics": {
+      "zrodlo": 9,
+      "uwaga": "jak wyżej",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/calendar",
+      "dlugosc": 1314
+    },
+    "/api/schedule/nieznana/calendar.ics": {
+      "zrodlo": 9,
+      "uwaga": "kontrola negatywna route.ts:112-114",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/plain",
+      "dlugosc": 13
+    },
+    "/admin": {
+      "zrodlo": 11,
+      "uwaga": "strażnik layoutu",
+      "oczekiwany": 307,
+      "status": 307,
+      "typ": "text/html",
+      "location": "/admin/login?powod=wygaslo",
+      "title": "Panel strony | Shorinji Kempo Kraków | Shorinji Kempo Kraków",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/admin/admini": {
+      "zrodlo": 11,
+      "oczekiwany": 307,
+      "status": 307,
+      "typ": "text/html",
+      "location": "/admin/login?powod=wygaslo",
+      "title": "Panel strony | Shorinji Kempo Kraków | Shorinji Kempo Kraków",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/admin/artykuly": {
+      "zrodlo": 11,
+      "uwaga": "UWAGA: z sesją ten adres KASUJE stary kosz aktualności",
+      "oczekiwany": 307,
+      "status": 307,
+      "typ": "text/html",
+      "location": "/admin/login?powod=wygaslo",
+      "title": "Panel strony | Shorinji Kempo Kraków | Shorinji Kempo Kraków",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/admin/artykuly/nowy": {
+      "zrodlo": 11,
+      "oczekiwany": 307,
+      "status": 307,
+      "typ": "text/html",
+      "location": "/admin/login?powod=wygaslo",
+      "title": "Panel strony | Shorinji Kempo Kraków | Shorinji Kempo Kraków",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/admin/dane-organizacji": {
+      "zrodlo": 11,
+      "uwaga": "źródło danych kontaktowych i profili w stopce",
+      "oczekiwany": 307,
+      "status": 307,
+      "typ": "text/html",
+      "location": "/admin/login?powod=wygaslo",
+      "title": "Panel strony | Shorinji Kempo Kraków | Shorinji Kempo Kraków",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/admin/harmonogram": {
+      "zrodlo": 11,
+      "oczekiwany": 307,
+      "status": 307,
+      "typ": "text/html",
+      "location": "/admin/login?powod=wygaslo",
+      "title": "Panel strony | Shorinji Kempo Kraków | Shorinji Kempo Kraków",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/admin/nawigacja": {
+      "zrodlo": 11,
+      "uwaga": "zakładka do zniknięcia w etapie 8",
+      "oczekiwany": 307,
+      "status": 307,
+      "typ": "text/html",
+      "location": "/admin/login?powod=wygaslo",
+      "title": "Panel strony | Shorinji Kempo Kraków | Shorinji Kempo Kraków",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/admin/pliki": {
+      "zrodlo": 11,
+      "oczekiwany": 307,
+      "status": 307,
+      "typ": "text/html",
+      "location": "/admin/login?powod=wygaslo",
+      "title": "Panel strony | Shorinji Kempo Kraków | Shorinji Kempo Kraków",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/admin/stopka": {
+      "zrodlo": 11,
+      "uwaga": "drugie miejsce, gdzie redaktor wpisuje adresy z palca",
+      "oczekiwany": 307,
+      "status": 307,
+      "typ": "text/html",
+      "location": "/admin/login?powod=wygaslo",
+      "title": "Panel strony | Shorinji Kempo Kraków | Shorinji Kempo Kraków",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/admin/strony": {
+      "zrodlo": 11,
+      "uwaga": "lista pokazuje tytuły artykułów Z KODU, nie z nadpisań",
+      "oczekiwany": 307,
+      "status": 307,
+      "typ": "text/html",
+      "location": "/admin/login?powod=wygaslo",
+      "title": "Panel strony | Shorinji Kempo Kraków | Shorinji Kempo Kraków",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/admin/wiadomosci": {
+      "zrodlo": 11,
+      "oczekiwany": 307,
+      "status": 307,
+      "typ": "text/html",
+      "location": "/admin/login?powod=wygaslo",
+      "title": "Panel strony | Shorinji Kempo Kraków | Shorinji Kempo Kraków",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/admin/wlasne/nowy": {
+      "zrodlo": 11,
+      "uwaga": "tu startuje initialInMenu=true — mechanizm martwego linku",
+      "oczekiwany": 307,
+      "status": 307,
+      "typ": "text/html",
+      "location": "/admin/login?powod=wygaslo",
+      "title": "Panel strony | Shorinji Kempo Kraków | Shorinji Kempo Kraków",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/admin/zdjecia": {
+      "zrodlo": 11,
+      "oczekiwany": 307,
+      "status": 307,
+      "typ": "text/html",
+      "location": "/admin/login?powod=wygaslo",
+      "title": "Panel strony | Shorinji Kempo Kraków | Shorinji Kempo Kraków",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/admin/login": {
+      "zrodlo": 11,
+      "uwaga": "POZA grupą (panel) — dostępne bez sesji",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": {
+        "znakow": 0,
+        "znakowZKanji": 15,
+        "naglowkow": 0,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 0,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/admin/nowe-haslo": {
+      "zrodlo": 11,
+      "uwaga": "POZA grupą (panel) celowo",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 1,
+      "main": {
+        "znakow": 204,
+        "znakowZKanji": 222,
+        "naglowkow": 0,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 0,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": true,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/admin/strona/nie-ma-takiej": {
+      "zrodlo": 11,
+      "uwaga": "strażnik layoutu wyprzedza notFound() ze strony",
+      "oczekiwany": 307,
+      "status": 307,
+      "typ": "text/html",
+      "location": "/admin/login?powod=wygaslo",
+      "title": "Panel strony | Shorinji Kempo Kraków | Shorinji Kempo Kraków",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    }
+  },
+  "testyRegresji": {
+    "szkic_z_menu_nie_trafia_do_menu": {
+      "stan": "CZERWONY (oczekiwany dziś)",
+      "dlaczego": "syncNavItem nie zna kolumny published (actions/customPageActions.ts:33-38), a nowa podstrona startuje z initialInMenu=true — szkic z zaznaczonym „Pokaż w menu górnym\" pojawia się w menu i prowadzi do 404",
+      "jak_sprawdzic_po_etapie_5": "utworzyć niepublikowaną podstronę z zaznaczonym „Pokaż w menu górnym\" i sprawdzić, że jej href NIE pojawia się w menuSurowe",
+      "dzisiejszy_dowod": "brak żywych wierszy w custom_pages, więc dziś nie da się tego odtworzyć bez utworzenia podstrony — mechanizm potwierdzony w kodzie, nie w danych"
+    },
+    "href_menu_bez_trasy_nie_da_sie_zapisac": {
+      "stan": "CZERWONY (walidacji nie ma, ale dziś zero martwych hrefów)",
+      "dlaczego": "href w NavEditorze to wolne pole tekstowe bez walidacji — jedna literówka i pozycja menu prowadzi w 404",
+      "martwe_hrefy_dzis": []
+    }
+  }
+}
