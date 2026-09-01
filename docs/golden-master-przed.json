@@ -1,15 +1,17 @@
 {
   "_o_pliku": {
     "co_to_jest": "Golden master serwisu shorinji-strona — punkt odniesienia dla przebudowy menu i stron (docs/menu-architektura.md §5.2). Różnica między tym plikiem a kolejnym zrzutem musi być pusta albo świadomie wyjaśniona.",
-    "wygenerowano": "2026-08-18T09:49:32.105Z",
-    "baza_pomiaru": "http://localhost:3000",
+    "wygenerowano": "2026-09-01T09:46:13.053Z",
+    "baza_pomiaru": "http://127.0.0.1:3000",
     "tryb_serwera": "produkcyjny",
     "origin_w_metadanych": "https://shorinji-kempo.netlify.app zastąpiony tokenem {ORIGIN}",
     "dlaczego_normalizacja_origin": "NEXT_PUBLIC_SITE_URL nie jest ustawiony w .env.local, więc lib/site.ts:9-11 spada na literał produkcyjny. Bez normalizacji zrzut z innej maszyny różniłby się w KAŻDYM wpisie.",
     "lastModified": "POMINIĘTE świadomie — app/sitemap.ts:10,35 wstawia new Date(), więc różnica nigdy nie byłaby pusta. To samo dotyczy roku w stopce (components/Footer.tsx:147).",
     "znane_roznice_wobec_stanu_z_audytu": [
       "custom_pages: trzy wiersze z kosza (/test, /ee, /eee, zero bloków) usunięte trwale 2026-08-18 decyzją właściciela, PRZED tym zrzutem. Zrzut całej bazy sprzed usunięcia: shorinji-notes/db-backup-2026-08-18/. Publicznie zero zmian — te adresy dawały 404 i dają 404.",
-      "Kosz podstron NIE opróżnia się sam: oproznijStaryKosz(\"custom_pages\") nigdy się nie wykonuje, bo listTrashedCustomPages/restoreCustomPage/purgeCustomPage nie mają w repo ani jednego wywołania. Dlatego usunięcie było ręczne."
+      "Kosz podstron NIE opróżnia się sam: oproznijStaryKosz(\"custom_pages\") nigdy się nie wykonuje, bo listTrashedCustomPages/restoreCustomPage/purgeCustomPage nie mają w repo ani jednego wywołania. Dlatego usunięcie było ręczne.",
+      "ZRZUT ODŚWIEŻONY 2026-09-01, bo poprzedni (18.08) przestał być punktem odniesienia: redaktor pracował 19–31.08 i dodał TRZY żywe podstrony własne (/symbole-shorinji-kempo, /faq, /istota-budo) plus czwartą do kosza (/sens-budo), nav_items urosło z 20 do 23 wierszy, article_overrides z 5 do 8, a dwie pozycje menu zmieniły etykiety (SYMBOLIKA I MEDYTACJA → MEDYTACJA / ZAZEN, HISTORIA → HISTORIA SZKOŁY). Poprzedni zrzut zarchiwizowany: shorinji-notes/golden-master-2026-08-18.json. Zrzut całej bazy z dnia odświeżenia: shorinji-notes/db-backup-2026-09-01/.",
+      "Odświeżenie zrobione z kodu gałęzi master (ten stoi na produkcji), NIE z gałęzi drzewo-stron. Na drzewo-stron menu czyta tabelę pages, której na produkcji nie ma — zrzut z tamtego kodu pokazałby menu zapasowe z repo zamiast produkcyjnego."
     ],
     "uwagi_o_pomiarze": [
       "/admin/login i /admin/nowe-haslo renderują formularz PO STRONIE KLIENTA — serwerowy <main class=\"flex-grow\"> jest pusty (0 znaków, zero <form>). „0 znaków\" na tych dwóch trasach to stan dzisiejszy, nie regresja.",
@@ -20,13 +22,13 @@
     "zasada": "W trakcie etapów 0–4 nie edytować treści ani slugów w panelu. Zmiana sluga nie rewaliduje STAREGO adresu (actions/customPageActions.ts:125-126), więc zrzut zrobiony w ciągu 300 s po edycji pokaże dwa żywe adresy dla jednej strony."
   },
   "_podsumowanie": {
-    "adresow_zbadanych": 81,
-    "z_listy_odniesienia": 81,
+    "adresow_zbadanych": 85,
+    "z_listy_odniesienia": 85,
     "wykrytych_poza_lista": 0,
     "rozjazdow_wobec_oczekiwan": 0,
-    "wpisow_w_sitemapie": 22,
-    "wierszy_nav_items": 20,
-    "hrefow_w_nav_items": 19,
+    "wpisow_w_sitemapie": 25,
+    "wierszy_nav_items": 23,
+    "hrefow_w_nav_items": 22,
     "par_editable_pages": 8,
     "rozjazdow_slug_route": 4,
     "reserved_slugs": 14
@@ -54,12 +56,22 @@
           "visible": true
         },
         {
-          "label": "SYMBOLIKA I MEDYTACJA",
+          "label": "SENS BUDO",
+          "href": "/istota-budo",
+          "visible": true
+        },
+        {
+          "label": "MEDYTACJA / ZAZEN",
           "href": "/o-shorinji/symbolika-i-medytacja",
           "visible": true
         },
         {
-          "label": "HISTORIA",
+          "label": "SYMBOLE",
+          "href": "/symbole-shorinji-kempo",
+          "visible": true
+        },
+        {
+          "label": "HISTORIA SZKOŁY",
           "href": "/o-shorinji/historia",
           "visible": true
         }
@@ -83,6 +95,11 @@
         {
           "label": "CENNIK",
           "href": "/zajecia/cennik",
+          "visible": true
+        },
+        {
+          "label": "FAQ",
+          "href": "/faq",
           "visible": true
         }
       ]
@@ -218,12 +235,12 @@
   ],
   "stopka": {
     "adresyZKluczaFooter": [
+      "/downloads/deklaracja-dorosli.pdf",
+      "/downloads/deklaracja-do-18.pdf",
       "/downloads/statut-posk.pdf",
       "/downloads/wsko-statutes.pdf",
       "/downloads/wsko-bylaws.pdf",
-      "/downloads/wsko-regulations.pdf",
-      "/downloads/deklaracja-dorosli.pdf",
-      "/downloads/deklaracja-do-18.pdf"
+      "/downloads/wsko-regulations.pdf"
     ],
     "profileZKluczaOrganization": {
       "youtube": "https://www.youtube.com/@Dominik_Chowanski",
@@ -273,9 +290,19 @@
       "priority": "0.7"
     },
     {
+      "url": "{ORIGIN}/faq",
+      "changeFrequency": "monthly",
+      "priority": "0.6"
+    },
+    {
       "url": "{ORIGIN}/galeria",
       "changeFrequency": "monthly",
       "priority": "0.7"
+    },
+    {
+      "url": "{ORIGIN}/istota-budo",
+      "changeFrequency": "monthly",
+      "priority": "0.6"
     },
     {
       "url": "{ORIGIN}/kontakt",
@@ -328,6 +355,11 @@
       "priority": "0.7"
     },
     {
+      "url": "{ORIGIN}/symbole-shorinji-kempo",
+      "changeFrequency": "monthly",
+      "priority": "0.6"
+    },
+    {
       "url": "{ORIGIN}/zajecia/cennik",
       "changeFrequency": "monthly",
       "priority": "0.7"
@@ -355,11 +387,11 @@
       "canonical": "{ORIGIN}",
       "h1": 1,
       "main": {
-        "znakow": 1160,
-        "znakowZKanji": 1176,
+        "znakow": 1115,
+        "znakowZKanji": 1131,
         "naglowkow": 2,
         "obrazkowCloudinary": 0,
-        "odnosnikowWewnetrznych": 10,
+        "odnosnikowWewnetrznych": 4,
         "spisTresci": false,
         "okruszek": false,
         "poprzedniaNastepna": false,
@@ -403,8 +435,8 @@
       "canonical": "{ORIGIN}/zajecia/cennik",
       "h1": 1,
       "main": {
-        "znakow": 1738,
-        "znakowZKanji": 1754,
+        "znakow": 1720,
+        "znakowZKanji": 1736,
         "naglowkow": 6,
         "obrazkowCloudinary": 0,
         "odnosnikowWewnetrznych": 0,
@@ -427,8 +459,8 @@
       "canonical": "{ORIGIN}/program-nauczania",
       "h1": 1,
       "main": {
-        "znakow": 922,
-        "znakowZKanji": 938,
+        "znakow": 947,
+        "znakowZKanji": 963,
         "naglowkow": 3,
         "obrazkowCloudinary": 0,
         "odnosnikowWewnetrznych": 0,
@@ -451,10 +483,10 @@
       "canonical": "{ORIGIN}/galeria",
       "h1": 1,
       "main": {
-        "znakow": 172,
-        "znakowZKanji": 188,
+        "znakow": 162,
+        "znakowZKanji": 178,
         "naglowkow": 0,
-        "obrazkowCloudinary": 88,
+        "obrazkowCloudinary": 33,
         "odnosnikowWewnetrznych": 0,
         "spisTresci": false,
         "okruszek": false,
@@ -475,8 +507,8 @@
       "canonical": "{ORIGIN}/kontakt",
       "h1": 1,
       "main": {
-        "znakow": 1197,
-        "znakowZKanji": 1213,
+        "znakow": 1015,
+        "znakowZKanji": 1031,
         "naglowkow": 4,
         "obrazkowCloudinary": 0,
         "odnosnikowWewnetrznych": 2,
@@ -499,8 +531,8 @@
       "canonical": "{ORIGIN}/zajecia/dorosli",
       "h1": 1,
       "main": {
-        "znakow": 2859,
-        "znakowZKanji": 2875,
+        "znakow": 2695,
+        "znakowZKanji": 2711,
         "naglowkow": 6,
         "obrazkowCloudinary": 1,
         "odnosnikowWewnetrznych": 3,
@@ -523,8 +555,8 @@
       "canonical": "{ORIGIN}/zajecia/dzieci",
       "h1": 1,
       "main": {
-        "znakow": 2678,
-        "znakowZKanji": 2694,
+        "znakow": 2593,
+        "znakowZKanji": 2609,
         "naglowkow": 6,
         "obrazkowCloudinary": 1,
         "odnosnikowWewnetrznych": 3,
@@ -547,8 +579,8 @@
       "canonical": null,
       "h1": 1,
       "main": {
-        "znakow": 714,
-        "znakowZKanji": 730,
+        "znakow": 623,
+        "znakowZKanji": 639,
         "naglowkow": 4,
         "obrazkowCloudinary": 0,
         "odnosnikowWewnetrznych": 4,
@@ -571,8 +603,8 @@
       "canonical": null,
       "h1": 1,
       "main": {
-        "znakow": 463,
-        "znakowZKanji": 479,
+        "znakow": 423,
+        "znakowZKanji": 439,
         "naglowkow": 2,
         "obrazkowCloudinary": 0,
         "odnosnikowWewnetrznych": 2,
@@ -615,12 +647,12 @@
       "status": 200,
       "typ": "text/html",
       "title": "Wprowadzenie | Shorinji Kempo Kraków",
-      "description": "Co stanowi istotę Shorinji Kempo – teksty wprowadzające",
+      "description": "Co stanowi istotę Shorinji Kempo",
       "canonical": "{ORIGIN}/o-shorinji/wprowadzenie",
       "h1": 1,
       "main": {
-        "znakow": 6585,
-        "znakowZKanji": 6602,
+        "znakow": 6600,
+        "znakowZKanji": 6617,
         "naglowkow": 3,
         "obrazkowCloudinary": 11,
         "odnosnikowWewnetrznych": 2,
@@ -638,14 +670,14 @@
       "oczekiwany": 200,
       "status": 200,
       "typ": "text/html",
-      "title": "Cele, wartości i sens Budō | Shorinji Kempo Kraków",
+      "title": "Cele i wartości Shorinji Kempo | Shorinji Kempo Kraków",
       "description": "Dlaczego Kaiso założył Shorinji Kempo i do jakich cech powinien dążyć kenshi",
       "canonical": "{ORIGIN}/o-shorinji/cele-i-wartosci",
       "h1": 1,
       "main": {
-        "znakow": 10597,
-        "znakowZKanji": 10613,
-        "naglowkow": 9,
+        "znakow": 5436,
+        "znakowZKanji": 5452,
+        "naglowkow": 3,
         "obrazkowCloudinary": 11,
         "odnosnikowWewnetrznych": 3,
         "spisTresci": true,
@@ -662,17 +694,17 @@
       "oczekiwany": 200,
       "status": 200,
       "typ": "text/html",
-      "title": "Symbolika i medytacja | Shorinji Kempo Kraków",
-      "description": "Znaczenie symboli Shorinji Kempo oraz rola medytacji (zazen, chinkon gyo) w codziennej praktyce.",
+      "title": "Medytacja w Shorinji Kempo | Shorinji Kempo Kraków",
+      "description": "Rola medytacji Zazen i rytuału Chinkon Gyo w codziennej praktyce",
       "canonical": "{ORIGIN}/o-shorinji/symbolika-i-medytacja",
       "h1": 1,
       "main": {
-        "znakow": 9944,
-        "znakowZKanji": 9962,
-        "naglowkow": 13,
+        "znakow": 4797,
+        "znakowZKanji": 4813,
+        "naglowkow": 6,
         "obrazkowCloudinary": 0,
         "odnosnikowWewnetrznych": 3,
-        "spisTresci": true,
+        "spisTresci": false,
         "okruszek": true,
         "poprzedniaNastepna": true,
         "formularz": false,
@@ -687,14 +719,14 @@
       "status": 200,
       "typ": "text/html",
       "title": "Historia Shorinji Kempo | Shorinji Kempo Kraków",
-      "description": "Od doświadczeń wojennych So Doshina, przez pierwsze dōjō w Tadotsu, po światową organizację – dzieje szkoły od 1947 roku.",
+      "description": "Od wojennych doświadczeń Kaiso, przez pierwsze Dojo, po światową organizację",
       "canonical": "{ORIGIN}/o-shorinji/historia",
       "h1": 1,
       "main": {
-        "znakow": 34590,
-        "znakowZKanji": 34606,
+        "znakow": 34242,
+        "znakowZKanji": 34258,
         "naglowkow": 24,
-        "obrazkowCloudinary": 17,
+        "obrazkowCloudinary": 11,
         "odnosnikowWewnetrznych": 2,
         "spisTresci": true,
         "okruszek": true,
@@ -710,17 +742,17 @@
       "oczekiwany": 200,
       "status": 200,
       "typ": "text/html",
-      "title": "Założyciel Shorinji Kempo | Shorinji Kempo Kraków",
-      "description": "So Doshin (Kaiso) – twórca Shorinji Kempo i pierwszy Shike szkoły.",
+      "title": "Kaiso i jego następcy | Shorinji Kempo Kraków",
+      "description": "So Doshin → So Yuki → So Kouma",
       "canonical": "{ORIGIN}/organizacja/zalozyciel",
       "h1": 1,
       "main": {
-        "znakow": 1936,
-        "znakowZKanji": 1952,
-        "naglowkow": 2,
-        "obrazkowCloudinary": 2,
+        "znakow": 1950,
+        "znakowZKanji": 1966,
+        "naglowkow": 7,
+        "obrazkowCloudinary": 58,
         "odnosnikowWewnetrznych": 3,
-        "spisTresci": false,
+        "spisTresci": true,
         "okruszek": true,
         "poprzedniaNastepna": true,
         "formularz": false,
@@ -739,10 +771,10 @@
       "canonical": "{ORIGIN}/organizacja/egzaminatorzy",
       "h1": 1,
       "main": {
-        "znakow": 503,
-        "znakowZKanji": 519,
-        "naglowkow": 2,
-        "obrazkowCloudinary": 2,
+        "znakow": 507,
+        "znakowZKanji": 523,
+        "naglowkow": 3,
+        "obrazkowCloudinary": 24,
         "odnosnikowWewnetrznych": 2,
         "spisTresci": false,
         "okruszek": true,
@@ -843,6 +875,78 @@
         "spisTresci": true,
         "okruszek": true,
         "poprzedniaNastepna": true,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/symbole-shorinji-kempo": {
+      "zrodlo": 4,
+      "uwaga": "17 bloków; w menu pod O SHORINJI, ale adres z korzenia",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Symbole Shorinji Kempo | Shorinji Kempo Kraków",
+      "description": "Historia i znaczenie symboli Shorinji Kempo",
+      "canonical": "{ORIGIN}/symbole-shorinji-kempo",
+      "h1": 1,
+      "main": {
+        "znakow": 5090,
+        "znakowZKanji": 5108,
+        "naglowkow": 5,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 0,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/faq": {
+      "zrodlo": 4,
+      "uwaga": "34 bloki; w menu pod nagłówkiem ZAJĘCIA — nagłówek nie ma adresu, więc adres zostaje jednosegmentowy",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Pytania i odpowiedzi | Shorinji Kempo Kraków",
+      "description": "Najczęściej zadawane pytania",
+      "canonical": "{ORIGIN}/faq",
+      "h1": 1,
+      "main": {
+        "znakow": 11498,
+        "znakowZKanji": 11515,
+        "naglowkow": 9,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 0,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
+        "formularz": false,
+        "mapa": false,
+        "grafik": false
+      }
+    },
+    "/istota-budo": {
+      "zrodlo": 4,
+      "uwaga": "16 bloków; w menu pod O SHORINJI, adres z korzenia",
+      "oczekiwany": 200,
+      "status": 200,
+      "typ": "text/html",
+      "title": "Sens Budo | Shorinji Kempo Kraków",
+      "description": "Znaczenie znaku &quot;Bu&quot; i istota Budo",
+      "canonical": "{ORIGIN}/istota-budo",
+      "h1": 1,
+      "main": {
+        "znakow": 5148,
+        "znakowZKanji": 5164,
+        "naglowkow": 5,
+        "obrazkowCloudinary": 0,
+        "odnosnikowWewnetrznych": 0,
+        "spisTresci": false,
+        "okruszek": false,
+        "poprzedniaNastepna": false,
         "formularz": false,
         "mapa": false,
         "grafik": false
@@ -971,6 +1075,18 @@
     "/eee": {
       "zrodlo": 8,
       "uwaga": "jak wyżej",
+      "oczekiwany": 404,
+      "status": 404,
+      "typ": "text/html",
+      "title": "Shorinji Kempo Kraków: japońska sztuka walki",
+      "description": "Krakowskie dōjō Shorinji Kempo. Japońska sztuka walki łącząca skuteczną samoobronę, rozwój duchowy i zdrowie. Zajęcia dla dzieci i dorosłych na Prądniku Czerwonym.",
+      "canonical": null,
+      "h1": 0,
+      "main": null
+    },
+    "/sens-budo": {
+      "zrodlo": 8,
+      "uwaga": "w koszu od 2026-08-20 (deleted_at) — backfill przenosi go RAZEM z deleted_at, więc ma zostać martwy",
       "oczekiwany": 404,
       "status": 404,
       "typ": "text/html",
@@ -1142,7 +1258,7 @@
       "oczekiwany": 200,
       "status": 200,
       "typ": "application/xml",
-      "dlugosc": 4044
+      "dlugosc": 4566
     },
     "/robots.txt": {
       "zrodlo": 10,
