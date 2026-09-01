@@ -812,7 +812,14 @@ const PRZEKIEROWANIA_Z_KODU = [
   { old_path: "/cennik", new_path: "/zajecia/cennik", status: 307, source: "manual" },
   // Plus adresy podstron własnych, które zmieniły się przez zagnieżdżenie
   // w menu (decyzja właściciela z 2026-09-01).
-  ...przeniesioneAdresy.map(({ tytul, ...w }) => w),
+  // `tytul` jest tylko do raportu, do bazy nie idzie — stąd wybór pól, a nie
+  // odrzucanie przez destrukturyzację (linter słusznie zgłasza nieużywaną zmienną).
+  ...przeniesioneAdresy.map((p) => ({
+    old_path: p.old_path,
+    new_path: p.new_path,
+    status: p.status,
+    source: p.source,
+  })),
 ];
 
 const przekierowania = { wstawione: [], pominiete: [] };

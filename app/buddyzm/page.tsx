@@ -1,19 +1,23 @@
 import type { Metadata } from "next";
 import ArticleListing from "../../components/ArticleListing";
 import { buddyzm } from "../../data/articles/buddyzm";
-import { resolveArticleGroup } from "../../lib/articleContent";
+import { daneListingu, metadaneListingu } from "../../lib/listingi";
 
-// ISR - kafelki biorą tytuł i wstęp z nadpisań w panelu, więc strona
-// musi się odświeżać. Bez tego zbudowałaby się raz i edycja z panelu
-// nigdy by tu nie dotarła.
+// ISR - kafelki biorą tytuł i wstęp z drzewa stron, więc strona musi się
+// odświeżać. Bez tego zbudowałaby się raz i zmiana z panelu nigdy by tu
+// nie dotarła.
 export const revalidate = 3600;
 
-export const metadata: Metadata = {
-  title: buddyzm.topicTitle,
-  description: buddyzm.topicIntro,
-};
+// generateMetadata, a NIE statyczny `export const metadata`: statycznego nie da
+// się uzależnić od odczytu z bazy, więc zmiana tytułu w panelu nie trafiałaby
+// do <title> ani do opisu w wynikach wyszukiwania. Przy okazji dochodzi
+// brakujący canonical - pomiar w golden masterze pokazał, że nie ma go
+// na żadnym z trzech listingów.
+export async function generateMetadata(): Promise<Metadata> {
+  return metadaneListingu("/buddyzm", buddyzm);
+}
 
 export default async function BuddyzmPage() {
-  const group = await resolveArticleGroup(buddyzm);
-  return <ArticleListing group={group} baseHref="/buddyzm" />;
+  const dane = await daneListingu("/buddyzm", buddyzm);
+  return <ArticleListing {...dane} />;
 }
