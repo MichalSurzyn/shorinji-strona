@@ -84,6 +84,15 @@ const ADRESY_ODNIESIENIA = [
   ['/buddyzm/medytacja', 200, 2, 'NAJWAŻNIEJSZA asercja: body_md 13 131 znaków, blocks NULL'],
   ['/buddyzm/etyka-i-swieta', 200, 2, 'ostatni w sekcji — brak „następna"'],
 
+  // 4. Własne podstrony (custom_pages → app/[slug], sitemap.ts:53-62).
+  //    18.08 ten zbiór był PUSTY i dlatego nie było go na liście. Redaktor dodał
+  //    trzy podstrony 19–31.08, czyli po zrzucie — a to właśnie one przechodzą
+  //    w etapie 4 z app/[slug] do trasy catch-all, więc bez nich lista odniesienia
+  //    nie pilnowałaby najbardziej narażonych adresów w całej migracji.
+  ['/symbole-shorinji-kempo', 200, 4, '17 bloków; w menu pod O SHORINJI, ale adres z korzenia'],
+  ['/faq', 200, 4, '34 bloki; w menu pod nagłówkiem ZAJĘCIA — nagłówek nie ma adresu, więc adres zostaje jednosegmentowy'],
+  ['/istota-budo', 200, 4, '16 bloków; w menu pod O SHORINJI, adres z korzenia'],
+
   // 3. Aktualności — poza drzewem pages (§2.8)
   ['/aktualnosci/pokaz-gala-35-lat-hapkido-w-polsce', 200, 3, 'jedyna aktualność w bazie'],
   ['/aktualnosci/nieistniejacy-wpis', 404, 3, 'kontrola negatywna; przekierowania tu NIE zadziałają'],
@@ -102,6 +111,7 @@ const ADRESY_ODNIESIENIA = [
   ['/test', 404, 8, 'usunięty z kosza 2026-08-18'],
   ['/ee', 404, 8, 'jak wyżej'],
   ['/eee', 404, 8, 'jak wyżej'],
+  ['/sens-budo', 404, 8, 'w koszu od 2026-08-20 (deleted_at) — backfill przenosi go RAZEM z deleted_at, więc ma zostać martwy'],
   ['/admin/typo', 404, 8, 'po etapie 4 bez guarda dałoby 200 z catch-alla'],
   ['/api/foo', 404, 8, 'jak wyżej'],
   ['/wp-login.php', 404, 8, 'ruch skanerów — po etapie 4 nie może odpalać zapytań do bazy'],
@@ -415,6 +425,8 @@ const zrzut = {
     znane_roznice_wobec_stanu_z_audytu: [
       'custom_pages: trzy wiersze z kosza (/test, /ee, /eee, zero bloków) usunięte trwale 2026-08-18 decyzją właściciela, PRZED tym zrzutem. Zrzut całej bazy sprzed usunięcia: shorinji-notes/db-backup-2026-08-18/. Publicznie zero zmian — te adresy dawały 404 i dają 404.',
       'Kosz podstron NIE opróżnia się sam: oproznijStaryKosz("custom_pages") nigdy się nie wykonuje, bo listTrashedCustomPages/restoreCustomPage/purgeCustomPage nie mają w repo ani jednego wywołania. Dlatego usunięcie było ręczne.',
+      'ZRZUT ODŚWIEŻONY 2026-09-01, bo poprzedni (18.08) przestał być punktem odniesienia: redaktor pracował 19–31.08 i dodał TRZY żywe podstrony własne (/symbole-shorinji-kempo, /faq, /istota-budo) plus czwartą do kosza (/sens-budo), nav_items urosło z 20 do 23 wierszy, article_overrides z 5 do 8, a dwie pozycje menu zmieniły etykiety (SYMBOLIKA I MEDYTACJA → MEDYTACJA / ZAZEN, HISTORIA → HISTORIA SZKOŁY). Poprzedni zrzut zarchiwizowany: shorinji-notes/golden-master-2026-08-18.json. Zrzut całej bazy z dnia odświeżenia: shorinji-notes/db-backup-2026-09-01/.',
+      'Odświeżenie zrobione z kodu gałęzi master (ten stoi na produkcji), NIE z gałęzi drzewo-stron. Na drzewo-stron menu czyta tabelę pages, której na produkcji nie ma — zrzut z tamtego kodu pokazałby menu zapasowe z repo zamiast produkcyjnego.',
     ],
     uwagi_o_pomiarze: [
       '/admin/login i /admin/nowe-haslo renderują formularz PO STRONIE KLIENTA — serwerowy <main class="flex-grow"> jest pusty (0 znaków, zero <form>). „0 znaków" na tych dwóch trasach to stan dzisiejszy, nie regresja.',
