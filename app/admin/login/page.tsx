@@ -115,6 +115,13 @@ function LoginForm() {
             </div>
           </div>
 
+          {powod === "brak-uprawnien" && !trybResetu && (
+            <p className="mb-5 text-sm text-rose-800 bg-rose-50 border border-rose-200 rounded-lg px-3.5 py-2.5">
+              To konto istnieje, ale nie ma uprawnień do panelu. Poproś osobę,
+              która już ma dostęp, żeby dodała Cię w zakładce <strong>Admini</strong>.
+            </p>
+          )}
+
           {powod === "wygaslo" && !trybResetu && (
             <p className="mb-5 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3.5 py-2.5">
               Twoje logowanie wygasło, dlatego wróciliśmy tu z powrotem. Zaloguj

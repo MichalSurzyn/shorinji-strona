@@ -7,6 +7,7 @@ import {
   changeOwnPassword,
   listAdmins,
   removeAdmin,
+  setAdminRole,
   type AdminUser,
 } from "@/actions/userActions";
 
@@ -49,6 +50,35 @@ export default function AdminsManager({
       }
     } catch (e) {
       setMsg({ ok: false, text: opiszBlad(e, "dodać konta") });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Nadanie/odebranie uprawnien to NIE to samo co usuniecie konta obok:
+  // konto zostaje, traci tylko wejscie do panelu. Rozdzielone, bo konta
+  // zalozone przed wprowadzeniem allowlisty nie maja roli i bez tego
+  // przycisku dalo by sie je odblokowac wylacznie z linii polecen.
+  async function handleRole(admin: AdminUser) {
+    const pytanie = admin.uprawniony
+      ? `Odebrać dostęp do panelu koncie ${admin.email}?\n\nKonto zostanie, ale ta osoba nie wejdzie do panelu. Można to cofnąć.`
+      : `Nadać dostęp do panelu koncie ${admin.email}?\n\nTa osoba będzie mogła zmieniać treść całej strony.`;
+    if (!confirm(pytanie)) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await setAdminRole(admin.id, !admin.uprawniony);
+      if (res.ok) {
+        setMsg({
+          ok: true,
+          text: admin.uprawniony ? `Odebrano dostęp: ${admin.email}.` : `Nadano dostęp: ${admin.email}.`,
+        });
+        refresh();
+      } else {
+        setMsg({ ok: false, text: opiszBlad(res.error, "zmienić uprawnień") });
+      }
+    } catch (e) {
+      setMsg({ ok: false, text: opiszBlad(e, "zmienić uprawnień") });
     } finally {
       setBusy(false);
     }
@@ -136,6 +166,11 @@ export default function AdminsManager({
             <div className="min-w-0">
               <div className="font-semibold text-slate-900 truncate">
                 {a.name ?? a.email}
+                {!a.uprawniony && (
+                  <span className="ml-2 text-xs bg-rose-100 text-rose-700 rounded-full px-2 py-0.5">
+                    bez dostępu do panelu
+                  </span>
+                )}
                 {a.id === currentUserId && (
                   <span className="ml-2 text-xs bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5">
                     to Ty
@@ -149,12 +184,24 @@ export default function AdminsManager({
               </div>
             </div>
             {a.id !== currentUserId && (
-              <button
-                onClick={() => handleRemove(a)}
-                className="shrink-0 rounded-lg border border-red-300 text-red-600 px-3.5 py-1.5 text-sm font-medium hover:bg-red-50 transition-colors"
-              >
-                Usuń
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => handleRole(a)}
+                  className={
+                    a.uprawniony
+                      ? "rounded-lg border border-slate-300 text-slate-600 px-3.5 py-1.5 text-sm font-medium hover:bg-slate-50 transition-colors"
+                      : "rounded-lg border border-emerald-300 text-emerald-700 px-3.5 py-1.5 text-sm font-medium hover:bg-emerald-50 transition-colors"
+                  }
+                >
+                  {a.uprawniony ? "Odbierz dostęp" : "Nadaj dostęp"}
+                </button>
+                <button
+                  onClick={() => handleRemove(a)}
+                  className="rounded-lg border border-red-300 text-red-600 px-3.5 py-1.5 text-sm font-medium hover:bg-red-50 transition-colors"
+                >
+                  Usuń
+                </button>
+              </div>
             )}
           </div>
         ))}

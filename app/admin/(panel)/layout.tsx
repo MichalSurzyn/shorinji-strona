@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import AdminShell from "@/components/admin/AdminShell";
-import { getSessionUser } from "@/lib/supabase/server";
+import { getAdminUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Panel strony | Shorinji Kempo Kraków",
@@ -14,7 +14,14 @@ export default async function PanelLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getSessionUser();
+  const { user, uprawniony } = await getAdminUser();
+
+  // Zalogowany, ale spoza allowlisty. Osobna gałąź, bo odesłanie go tym samym
+  // komunikatem co przy wygasłej sesji dawałoby pętlę: loguje się poprawnie
+  // i natychmiast wraca na logowanie, nie wiedząc dlaczego.
+  if (user && !uprawniony) {
+    redirect("/admin/login?powod=brak-uprawnien");
+  }
 
   if (!user) {
     // Zabieramy ze sobą powód i miejsce, z którego użytkownik wypadł.
