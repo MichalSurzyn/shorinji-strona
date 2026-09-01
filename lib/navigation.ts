@@ -1,83 +1,82 @@
 import { getSupabaseAdmin } from "./supabaseAdmin";
-import { DEFAULT_NAV, type NavItemRow, type NavLink } from "./navTypes";
-
-const CENNIK_ROUTE = "/zajecia/cennik";
+import { buildNavTree, type PageNavRow } from "./navTree";
+import { MENU_FALLBACK } from "../data/menuFallback";
+import type { NavItemRow, NavLink } from "./navTypes";
 
 /**
- * Migracja starego adresu cennika w menu (cennik przeniesiony pod ZAJĘCIA
- * w 07.2026):
- *  - adres /cennik jest ujednolicany na /zajecia/cennik,
- *  - link, który został na najwyższym poziomie, wędruje do dropdownu ZAJĘĆ.
+ * Nawigacja strony — od etapu 3a czytana z drzewa `public.pages`, nie z `nav_items`.
  *
- * UWAGA: ta funkcja NICZEGO do menu nie dodaje. Wcześniej dokładała CENNIK
- * przy każdym renderze, gdy go nie znalazła - przez co usunięcie cennika
- * w panelu nie działało: kod cofał tę decyzję. Menu pochodzi z panelu
- * (nav_items) i to panel rozstrzyga, co jest widoczne.
+ * DLACZEGO ZAPASEM NIE JEST JUŻ `DEFAULT_NAV`
+ * -------------------------------------------
+ * Dopóki menu było listą etykiet nad adresami zakutymi w plikach tras, zapas
+ * z kodu mógł się co najwyżej rozjechać z nazwami. Teraz z bazy pochodzi CAŁE
+ * drzewo adresów, więc zapas, który jej nie odpowiada, podstawia w awarii linki
+ * do stron, których nie ma. `DEFAULT_NAV` zostaje w `navTypes.ts` na czas
+ * przejściowy, ale menu go już nie używa — zapasem jest `data/menuFallback.ts`,
+ * generowany z tej samej tabeli tą samą funkcją `buildNavTree`
+ * (`scripts/snapshot-menu.mjs`).
+ *
+ * CZTERY GAŁĘZIE ZAPASU — wszystkie cztery są potrzebne
+ * ------------------------------------------------------
+ * Trzy z nich łatwo zgubić przy przepisywaniu, bo z daleka wyglądają jak „to
+ * samo co błąd", a nie są:
+ *   1. brak konfiguracji Supabase   → `getSupabaseAdmin()` oddaje null i MEMOIZUJE
+ *      ten wynik; po dołożeniu zmiennych trzeba zrestartować proces,
+ *   2. błąd albo timeout 6 s        → zdarzyło się naprawdę: PGRST303 „JWT issued
+ *      at future" przy zimnym starcie 2026-08-12 zrzucił menu, grafik i newsy,
+ *   3. zero wierszy                 → tabela istnieje, ale backfill się nie wykonał,
+ *   4. puste drzewo po złożeniu     → wiersze są, ale żaden nie nadaje się na
+ *      pozycję menu (np. same nagłówki bez dzieci).
+ *
+ * Czego tu świadomie NIE MA: `normalizeNavTree`. Przenosiło ono stary adres
+ * `/cennik` pod `/zajecia/cennik` i wciągało cennik do rozwijanego menu ZAJĘĆ —
+ * naprawa danych w `nav_items`, robiona przy KAŻDYM renderze. W `pages` cennik
+ * ma już adres `/zajecia/cennik` i wisi pod nagłówkiem ZAJĘCIA, bo backfill
+ * ustawił to raz (etap 2). Transformacja, która potrafi przesunąć pozycję menu,
+ * a nie ma nad czym pracować, to wyłącznie ryzyko — dane naprawia się w danych.
  */
-function normalizeNavTree(tree: NavLink[]): NavLink[] {
-  const isCennik = (href?: string) => href === "/cennik" || href === CENNIK_ROUTE;
 
-  const nextTree = tree.map((item) => ({
-    ...item,
-    dropdown: item.dropdown
-      ? item.dropdown.map((c) => (isCennik(c.href) ? { ...c, href: CENNIK_ROUTE } : c))
-      : item.dropdown,
-  }));
+/** Kolumny `pages` potrzebne do menu. Trzymane obok typu, żeby nie rozjechały się z nim. */
+const KOLUMNY_MENU = "id,parent_id,kind,full_path,external_url,title,menu_label,depth,position";
 
-  // Bez cennika na najwyższym poziomie nie ma czego migrować.
-  const cennikIndex = nextTree.findIndex((item) => isCennik(item.href));
-  if (cennikIndex === -1) return nextTree;
-
-  // Bez pozycji ZAJĘCIA nie ma dokąd go przenieść - zostaje, gdzie jest.
-  const zajecia = nextTree.find((item) => item.label.trim().toUpperCase() === "ZAJĘCIA");
-  if (!zajecia) return nextTree;
-
-  if (!zajecia.dropdown) zajecia.dropdown = [];
-  if (!zajecia.dropdown.some((child) => isCennik(child.href))) {
-    zajecia.dropdown.push({ href: CENNIK_ROUTE, label: nextTree[cennikIndex].label });
-  }
-  nextTree.splice(cennikIndex, 1);
-
-  return nextTree;
-}
-
-/**
- * Nawigacja strony z tabeli nav_items (edytowalna w panelu).
- * Gdy baza nie odpowiada lub tabela jest pusta - menu bazowe z kodu.
- */
 export async function getNavTree(): Promise<NavLink[]> {
   const sb = getSupabaseAdmin();
-  if (!sb) return normalizeNavTree(DEFAULT_NAV);
+  if (!sb) return MENU_FALLBACK; // gałąź 1
+
   try {
     const { data, error } = await sb
-      .from("nav_items")
-      .select("id,parent_id,label,href,position,visible")
-      .eq("visible", true)
+      .from("pages")
+      .select(KOLUMNY_MENU)
+      .eq("in_menu", true)
+      .eq("published", true)
+      .is("deleted_at", null)
+      // Rozwijane menu renderuje DWA poziomy. Trzeci poziom istnieje w drzewie
+      // i wychodzi na stronę-hub z kafelkami (§3), więc do menu go nie bierzemy.
+      .lte("depth", 1)
       .order("position", { ascending: true })
       .abortSignal(AbortSignal.timeout(6000));
     if (error) throw error;
-    const rows = (data ?? []) as NavItemRow[];
-    if (!rows.length) return normalizeNavTree(DEFAULT_NAV);
 
-    const tops = rows.filter((r) => !r.parent_id);
-    const tree: NavLink[] = tops.map((t) => {
-      const children = rows
-        .filter((r) => r.parent_id === t.id && r.href)
-        .map((r) => ({ href: r.href as string, label: r.label }));
-      return {
-        label: t.label,
-        ...(t.href ? { href: t.href } : {}),
-        ...(children.length ? { dropdown: children } : {}),
-      };
-    });
-    return normalizeNavTree(tree.length ? tree : DEFAULT_NAV);
+    const rows = (data ?? []) as PageNavRow[];
+    if (!rows.length) return MENU_FALLBACK; // gałąź 3
+
+    const tree = buildNavTree(rows);
+    return tree.length ? tree : MENU_FALLBACK; // gałąź 4
   } catch (e) {
     console.warn("[navigation] getNavTree - fallback:", e);
-    return normalizeNavTree(DEFAULT_NAV);
+    return MENU_FALLBACK; // gałąź 2
   }
 }
 
-/** Surowe wiersze do edytora w panelu. */
+/**
+ * Surowe wiersze `nav_items` do starego edytora w panelu (`/admin/nawigacja`).
+ *
+ * Zostaje na `nav_items` świadomie: publiczne menu czyta już `pages`, ale
+ * zakładka „Nawigacja" nadal edytuje starą tabelę i zostanie zastąpiona
+ * ekranem „Strony i menu" w etapie 5. Do tego czasu zapis w tej zakładce
+ * NIE wpływa na menu na stronie — i tak ma być, bo cała gałąź idzie na
+ * produkcję jednym przełączeniem, razem z nowym panelem.
+ */
 export async function getNavRows(): Promise<NavItemRow[]> {
   const sb = getSupabaseAdmin();
   if (!sb) return [];

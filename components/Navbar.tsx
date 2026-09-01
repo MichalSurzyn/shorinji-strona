@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { DEFAULT_NAV, type NavLink } from '@/lib/navTypes';
+import { type NavLink } from '@/lib/navTypes';
+import { MENU_FALLBACK } from '@/data/menuFallback';
 
 export default function Navbar({ links }: { links?: NavLink[] }) {
   const [isVisible, setIsVisible] = useState(true);
@@ -13,8 +14,11 @@ export default function Navbar({ links }: { links?: NavLink[] }) {
 
   const pathname = usePathname();
 
-  // Menu z bazy (przekazane przez layout); fallback - struktura z kodu.
-  const navLinks: NavLink[] = links && links.length ? links : DEFAULT_NAV;
+  // Menu z bazy (przekazane przez layout); zapas - zrzut drzewa w repo.
+  // Piąta gałąź zapasu, obok czterech w getNavTree: layout mógł przekazać
+  // pustą listę. DEFAULT_NAV tu NIE wraca - po migracji nie odpowiada już
+  // drzewu adresów i podstawiałby linki do stron, których nie ma.
+  const navLinks: NavLink[] = links && links.length ? links : MENU_FALLBACK;
 
   // Chowanie navbara przy scrollu w dół (bez re-subskrypcji na każdy scroll).
   useEffect(() => {
