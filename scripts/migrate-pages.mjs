@@ -256,6 +256,20 @@ const artykulPoAdresie = new Map(
   GRUPY.flatMap((g) => g.articles.map((a) => [`/${g.topic}/${a.slug}`, { grupa: g, artykul: a }])),
 );
 const nadpisaniePoAdresie = new Map(nadpisania.map((n) => [`/${n.topic}/${n.slug}`, n]));
+/**
+ * Żywe podstrony własne, kluczowane adresem, pod którym stoją DZIŚ.
+ *
+ * `app/[slug]/page.tsx` serwuje je z korzenia, więc adres to zawsze `/<slug>` —
+ * niezależnie od tego, gdzie w menu wisi ich pozycja. To jest źródło, o którym
+ * §5.4 mówi „dziś 3 wiersze, wszystkie w koszu, żywych ZERO": zdanie prawdziwe
+ * 18.08 i nieprawdziwe od 19.08, kiedy redaktor dodał `/symbole-shorinji-kempo`
+ * i `/faq` razem z pozycjami w menu (pomiar 21.08). Bez tej mapy oba hrefy
+ * wpadają w gałąź „adres nieznany żadnemu źródłu" i strony nie dostają węzła.
+ */
+const wlasnaPoAdresie = new Map(
+  wlasne.filter((w) => !w.deleted_at).map((w) => [`/${w.slug}`, w]),
+);
+const uzyteWlasne = new Set();
 
 const ostrzezenia = [];
 const doDecyzji = [];
@@ -375,6 +389,27 @@ function wezelDlaTrasy(href) {
     };
   }
 
+  // Czwarty przypadek: żywa podstrona własna. `source='db'`, bo jej treść JEST
+  // treścią tego wiersza — `app/[slug]` tylko ją wyświetla, w odróżnieniu od
+  // ośmiu tras edytowalnych, których układ siedzi w pliku trasy.
+  // migrated_from bierze się z custom_pages.id, a nie z nav_items.id: ten
+  // pierwszy przeżywa zapis menu w panelu, drugi nie.
+  const wlasnaStrona = wlasnaPoAdresie.get(href);
+  if (wlasnaStrona) {
+    uzyteWlasne.add(wlasnaStrona.id);
+    return {
+      ...wezelPusty(),
+      source: "db",
+      slug: wlasnaStrona.slug,
+      title: wlasnaStrona.title,
+      intro: wlasnaStrona.intro,
+      blocks: wlasnaStrona.blocks ?? [],
+      published: wlasnaStrona.published,
+      migrated_from: `custom_pages:${wlasnaStrona.id}`,
+      _wlasna: true,
+    };
+  }
+
   return null;
 }
 
@@ -440,7 +475,9 @@ function zNawigacji(wiersz) {
     );
   }
   wezel.position = wiersz.position;
-  wezel.migrated_from = `nav_items:${wiersz.id}`;
+  // Podstrona własna przynosi własny, trwalszy klucz (custom_pages.id) — nie
+  // nadpisujemy go identyfikatorem z nav_items, który ginie przy zapisie menu.
+  wezel.migrated_from ??= `nav_items:${wiersz.id}`;
   return wezel;
 }
 
@@ -492,6 +529,10 @@ for (const strona of EDITABLE_PAGES) {
 // ożywiłoby /test, /ee, /eee — czyli DODAŁO adresy, wbrew §5.1.
 
 for (const strona of wlasne.sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))) {
+  // Podstrony, które mają pozycję w menu, weszły już wyżej razem z nią —
+  // z rodzicem, etykietą i kolejnością. Tu zostają wyłącznie te bez pozycji
+  // (w tym cały kosz) i one idą na górę, poza menu.
+  if (uzyteWlasne.has(strona.id)) continue;
   wezly.push({
     ...wezelPusty(),
     source: "db",
@@ -551,13 +592,44 @@ for (const w of wezly.filter((w) => w._poziom === 0)) {
 for (const w of wezly) {
   const adresRodzica = w._rodzicZrodloId ? adresGory.get(w._rodzicZrodloId) : null;
   w._adres = przewidzianyAdres(w, adresRodzica);
+
+  /**
+   * Podstrona własna stoi dziś pod `/<slug>` — z korzenia, bo serwuje ją
+   * `app/[slug]`. W menu jej pozycja bywa jednak zagnieżdżona, a wtedy trigger
+   * policzyłby adres z łańcucha slugów rodzica i URL by się ZMIENIŁ:
+   * `/symbole-shorinji-kempo` pod „O SHORINJI" wyszłoby jako
+   * `/o-shorinji/symbole-shorinji-kempo`. To łamie §5.1 („migracja nie zmienia
+   * ani jednego istniejącego adresu") na adresie, który Google już widział.
+   *
+   * Zagnieżdżenie pod NAGŁÓWKIEM problemu nie robi: nagłówek nie ma adresu,
+   * więc trigger schodzi do najbliższego przodka typu 'page', nie znajduje go
+   * i zostawia adres jednosegmentowy. Dlatego `/faq` pod „ZAJĘCIA" jest w
+   * porządku, a „SYMBOLE SK" pod „O SHORINJI" nie.
+   *
+   * Wybór: ratujemy ADRES, poświęcamy zagnieżdżenie w menu. Zmiana adresu jest
+   * nieodwracalna dla wyszukiwarki, przesunięcie pozycji w menu redaktor cofa
+   * jednym ruchem w etapie 5. Obie rzeczy trafiają do decyzji, bo to jest
+   * wybór produktowy, a nie techniczny — kod wyjścia 1.
+   */
+  if (w._wlasna && w._adres !== `/${w.slug}`) {
+    doDecyzji.push(
+      `Podstrona własna „${w.title}" stoi pod ${`/${w.slug}`}, a jej pozycja w menu ` +
+        `(pod „${adresRodzica}") dałaby adres ${w._adres}. Węzeł wstawiony na GÓRNYM poziomie, ` +
+        `żeby adres się nie zmienił — zagnieżdżenie w menu przywróć w etapie 5 albo zdecyduj ` +
+        `o świadomej zmianie adresu (wtedy trigger sam zapisze przekierowanie).`,
+    );
+    w._rodzicZrodloId = undefined;
+    w._poziom = 0;
+    w.position = kolejnaPozycja++;
+    w._adres = przewidzianyAdres(w, null);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Zapis — poziomami, bo trigger nie zobaczy rodzica z tej samej paczki
 // ─────────────────────────────────────────────────────────────────────────────
 
-const KOLUMNY_POMOCNICZE = ["_poziom", "_zrodloId", "_rodzicZrodloId", "_adres"];
+const KOLUMNY_POMOCNICZE = ["_poziom", "_zrodloId", "_rodzicZrodloId", "_adres", "_wlasna"];
 const doWyslania = (w) => Object.fromEntries(Object.entries(w).filter(([k]) => !KOLUMNY_POMOCNICZE.includes(k)));
 
 const raport = { wstawione: [], pominiete: [], rozjazdy: [] };
@@ -796,6 +868,24 @@ kontrole.push({
       ? []
       : [`odnośniki: nav_items ${odnosnikowWNav}, pages ${odnosnikowWPages}`]),
   ],
+});
+
+/**
+ * Szósta kontrola — kierunek odwrotny do kontroli 3.
+ *
+ * Kontrola 3 pyta „czy adres z golden mastera ma węzeł", a golden master jest
+ * zrzutem z konkretnego dnia i starzeje się z każdą podstroną dodaną w panelu.
+ * Zrzut z 18.08 nie znał `/symbole-shorinji-kempo`, `/faq` ani `/istota-budo`,
+ * bo powstały po nim — a to właśnie one były najbliżej cichej utraty, bo backfill
+ * czytał wtedy tylko nav_items i nie umiał ich rozwiązać. Ta kontrola nie ma
+ * daty ważności: bierze żywe wiersze wprost z `custom_pages`.
+ */
+kontrole.push({
+  nazwa: "6. Każda żywa podstrona własna ma węzeł pod swoim adresem",
+  winne: wlasne
+    .filter((w) => !w.deleted_at && w.published)
+    .filter((w) => !zywe.has(`/${w.slug}`))
+    .map((w) => `/${w.slug} („${w.title}") — brak węzła`),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
