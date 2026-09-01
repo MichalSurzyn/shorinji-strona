@@ -17,6 +17,7 @@ import { createSupabaseBrowser } from "@/lib/supabase/client";
 const NAV = [
   { href: "/admin", label: "Pulpit", icon: "▦" },
   { href: "/admin/artykuly", label: "Aktualności", icon: "✎" },
+  { href: "/admin/drzewo", label: "Strony i menu", icon: "⌗" },
   { href: "/admin/strony", label: "Strony", icon: "❏" },
   { href: "/admin/zdjecia", label: "Zdjęcia", icon: "▣" },
   { href: "/admin/pliki", label: "Pliki do pobrania", icon: "⬇" },
