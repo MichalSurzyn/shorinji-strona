@@ -31,8 +31,16 @@ export const MENU_FALLBACK: NavLink[] = [
         "label": "CELE I WARTOŚCI"
       },
       {
+        "href": "/o-shorinji/istota-budo",
+        "label": "SENS BUDO"
+      },
+      {
         "href": "/o-shorinji/symbolika-i-medytacja",
         "label": "MEDYTACJA / ZAZEN"
+      },
+      {
+        "href": "/o-shorinji/symbole-shorinji-kempo",
+        "label": "SYMBOLE"
       },
       {
         "href": "/o-shorinji/historia",
@@ -104,13 +112,5 @@ export const MENU_FALLBACK: NavLink[] = [
   {
     "label": "GALERIA",
     "href": "/galeria"
-  },
-  {
-    "label": "SENS BUDO",
-    "href": "/istota-budo"
-  },
-  {
-    "label": "SYMBOLE",
-    "href": "/symbole-shorinji-kempo"
   }
 ];

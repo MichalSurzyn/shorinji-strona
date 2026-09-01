@@ -13,9 +13,23 @@
  *   4. article_overrides  — tytuł/wstęp nadpisany przez redaktora (ma pierwszeństwo)
  *   5. custom_pages       — własne podstrony, RAZEM z `deleted_at` (kosz zostaje koszem)
  *
+ * JEDYNE ADRESY, KTÓRE SIĘ ZMIENIAJĄ — I DLACZEGO
+ * ------------------------------------------------
+ * Zasadą §5.1 jest „migracja nie zmienia ani jednego istniejącego adresu".
+ * Właściciel zrobił od niej JEDEN świadomy wyjątek (2026-09-01): dwie podstrony
+ * własne, które w menu wiszą pod „O SHORINJI KEMPO", a serwowane są z korzenia,
+ * mają dostać adresy zgodne z pozycją w menu:
+ *
+ *   /istota-budo             → /o-shorinji/istota-budo
+ *   /symbole-shorinji-kempo  → /o-shorinji/symbole-shorinji-kempo
+ *
+ * Oba stare adresy dostają przekierowanie 308 — wpisywane STĄD, nie przez
+ * trigger: trigger reaguje na ZMIANĘ adresu, a backfill wstawia wiersz od razu
+ * pod nowym. Bez tego oba zamieniłyby się w twarde 404.
+ *
  * CZEGO NIE ROBI
  * --------------
- * Nie zmienia ani jednego istniejącego adresu (§5.1). Nie przenosi TREŚCI:
+ * Nie przenosi TREŚCI:
  * bloki podstron tematycznych to etap 7, a treść ośmiu tras edytowalnych zostaje
  * w `site_settings` — węzeł dostaje tylko wskaźnik `content_key`. Nie pisze do
  * żadnej tabeli poza `pages`. Nie kasuje niczego.
@@ -273,6 +287,11 @@ const uzyteWlasne = new Set();
 
 const ostrzezenia = [];
 const doDecyzji = [];
+/**
+ * Podstrony własne, którym zagnieżdżenie w menu zmienia adres. Każda musi
+ * dostać przekierowanie ze starego adresu — patrz komentarz przy wypełnianiu.
+ */
+const przeniesioneAdresy = [];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Budowa węzłów
@@ -612,16 +631,27 @@ for (const w of wezly) {
    * wybór produktowy, a nie techniczny — kod wyjścia 1.
    */
   if (w._wlasna && w._adres !== `/${w.slug}`) {
-    doDecyzji.push(
-      `Podstrona własna „${w.title}" stoi pod ${`/${w.slug}`}, a jej pozycja w menu ` +
-        `(pod „${adresRodzica}") dałaby adres ${w._adres}. Węzeł wstawiony na GÓRNYM poziomie, ` +
-        `żeby adres się nie zmienił — zagnieżdżenie w menu przywróć w etapie 5 albo zdecyduj ` +
-        `o świadomej zmianie adresu (wtedy trigger sam zapisze przekierowanie).`,
-    );
-    w._rodzicZrodloId = undefined;
-    w._poziom = 0;
-    w.position = kolejnaPozycja++;
-    w._adres = przewidzianyAdres(w, null);
+    /**
+     * ROZSTRZYGNIĘTE PRZEZ WŁAŚCICIELA 2026-09-01: zagnieżdżamy.
+     *
+     * Węzeł zostaje tam, gdzie redaktor postawił go w menu, a adres idzie za
+     * pozycją: `/istota-budo` → `/o-shorinji/istota-budo`. Wcześniejsza wersja
+     * robiła odwrotnie (ratowała adres, odczepiała węzeł na górny poziom) —
+     * zapis tamtej decyzji jest w historii tego pliku.
+     *
+     * Stary adres MUSI dostać przekierowanie i musi je dostać STĄD.
+     * Trigger `pages_after_update` zapisuje przekierowania przy ZMIANIE adresu,
+     * a backfill nie zmienia — on WSTAWIA wiersz od razu pod nowym adresem.
+     * Bez tej listy `/istota-budo` i `/symbole-shorinji-kempo` zamieniłyby się
+     * w twarde 404 na adresach, które Google ma w indeksie.
+     */
+    przeniesioneAdresy.push({
+      old_path: `/${w.slug}`,
+      new_path: w._adres,
+      status: 308,
+      source: "manual",
+      tytul: w.title,
+    });
   }
 }
 
@@ -780,6 +810,9 @@ for (const poziom of [0, 1, 2]) {
 
 const PRZEKIEROWANIA_Z_KODU = [
   { old_path: "/cennik", new_path: "/zajecia/cennik", status: 307, source: "manual" },
+  // Plus adresy podstron własnych, które zmieniły się przez zagnieżdżenie
+  // w menu (decyzja właściciela z 2026-09-01).
+  ...przeniesioneAdresy.map(({ tytul, ...w }) => w),
 ];
 
 const przekierowania = { wstawione: [], pominiete: [] };
@@ -872,6 +905,28 @@ if (NA_SUCHO) {
 }
 
 /**
+ * Adres „nie umarł", jeśli ma węzeł ALBO przekierowanie na żywy węzeł.
+ *
+ * Kryterium §5.1 brzmi „migracja nie zabiera adresu", a nie „adres nigdy się nie
+ * przesuwa". Po świadomej decyzji o zagnieżdżeniu dwóch podstron własnych ich
+ * stare adresy nie mają już własnego wiersza w `pages` — i dobrze, bo dostały
+ * przekierowanie 308. Kontrola, która by tego nie uwzględniała, świeciłaby na
+ * czerwono na czymś poprawnym, a to najkrótsza droga do tego, żeby przestać
+ * ją czytać.
+ *
+ * Sprawdzamy CEL przekierowania, nie sam jego byt: wiersz prowadzący na adres,
+ * którego nie ma, jest gorszy od jego braku — daje 308 na 404.
+ */
+const przekierowaniaPoZapisie = NA_SUCHO
+  ? PRZEKIEROWANIA_Z_KODU
+  : await czytaj("redirects?select=old_path,new_path");
+const zywyAlboPrzekierowany = (adres) => {
+  if (zywe.has(adres)) return true;
+  const cel = przekierowaniaPoZapisie.find((p) => p.old_path === adres);
+  return Boolean(cel && zywe.has(cel.new_path));
+};
+
+/**
  * Golden master jest JEDYNYM kryterium odbioru etapu 2, które sprawdza
  * kompletność drzewa — reszta kontrol patrzy tylko na spójność tego, co jest.
  * Dlatego jego brak NIE może być ostrzeżeniem: pusta lista oczekiwań daje
@@ -895,10 +950,10 @@ try {
   bladGolden = `nie wczytano pliku (${e.code ?? e.message})`;
 }
 kontrole.push({
-  nazwa: `3. Każdy adres z golden mastera ma węzeł (${oczekiwane.length} adresów)`,
+  nazwa: `3. Każdy adres z golden mastera żyje — węzeł albo przekierowanie (${oczekiwane.length} adresów)`,
   winne: bladGolden
     ? [`docs/golden-master-przed.json — ${bladGolden}. KRYTERIUM NIEZWERYFIKOWANE, nie „spełnione".`]
-    : oczekiwane.filter((a) => !zywe.has(a)),
+    : oczekiwane.filter((a) => !zywyAlboPrzekierowany(a)),
 });
 
 const adresy = new Map();
@@ -946,11 +1001,11 @@ kontrole.push({
  * daty ważności: bierze żywe wiersze wprost z `custom_pages`.
  */
 kontrole.push({
-  nazwa: "6. Każda żywa podstrona własna ma węzeł pod swoim adresem",
+  nazwa: "6. Każda żywa podstrona własna jest osiągalna spod swojego adresu",
   winne: wlasne
     .filter((w) => !w.deleted_at && w.published)
-    .filter((w) => !zywe.has(`/${w.slug}`))
-    .map((w) => `/${w.slug} („${w.title}") — brak węzła`),
+    .filter((w) => !zywyAlboPrzekierowany(`/${w.slug}`))
+    .map((w) => `/${w.slug} („${w.title}") — brak węzła i brak przekierowania`),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -973,6 +1028,13 @@ for (const l of raport.wstawione) console.log("  " + l);
 if (raport.pominiete.length) {
   console.log(`\n— pominięte, bo już są (${raport.pominiete.length}) —`);
   for (const l of raport.pominiete) console.log("  " + l);
+}
+
+if (przeniesioneAdresy.length) {
+  console.log(`\n— podstrony własne zagnieżdżone w menu (adres poszedł za pozycją) —`);
+  for (const p of przeniesioneAdresy) {
+    console.log(`  „${p.tytul}": ${p.old_path} → ${p.new_path} (stary adres przekierowuje, ${p.status})`);
+  }
 }
 
 if (przekierowania.wstawione.length || przekierowania.pominiete.length) {
