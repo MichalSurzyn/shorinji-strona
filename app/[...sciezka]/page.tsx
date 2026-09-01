@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import NewsBlocks from "@/components/NewsBlocks";
+import ArticlePage from "@/components/ArticlePage";
 import {
   getDzieci,
   getSciezkiZBazy,
   getStrona,
+  getStronaPoId,
   sciezkaMozeBycStrona,
   type WezelStrony,
 } from "@/lib/pages";
@@ -96,6 +98,38 @@ export default async function StronaZDrzewa({ params }: Props) {
   if (!strona || strona.source === "route") return przekierujAlboNotFound(adres);
 
   const dzieci = await getDzieci(strona.id);
+
+  /**
+   * Podstrona tematyczna renderuje się szablonem `ArticlePage` — z okruszkiem,
+   * spisem treści, galerią z Cloudinary i nawigacją poprzednia/następna.
+   *
+   * Rozpoznajemy ją po `cloudinary_folder`, bo backfill ustawia tę kolumnę
+   * DOKŁADNIE dla dziesięciu podstron tematycznych i dla nikogo więcej.
+   * Kryterium „ma rodzica typu page" byłoby szersze i zmieniłoby wygląd
+   * podstron własnych (`/o-shorinji/istota-budo`), które dziś renderują się
+   * prosto — a etap 7 ma przenieść treść, nie przemeblować stron.
+   */
+  if (strona.cloudinary_folder) {
+    const rodzenstwo = strona.parent_id ? await getDzieci(strona.parent_id) : [];
+    const i = rodzenstwo.findIndex((r) => r.id === strona.id);
+    const rodzic = strona.parent_id ? await getStronaPoId(strona.parent_id) : null;
+    const naOdnosnik = (w: WezelStrony | undefined) =>
+      w?.full_path ? { href: w.full_path, title: w.title } : undefined;
+
+    return (
+      <ArticlePage
+        topicTitle={rodzic?.title ?? ""}
+        topicHref={rodzic?.full_path ?? "/"}
+        title={strona.title}
+        intro={strona.intro ?? ""}
+        blocks={strona.blocks}
+        cloudinaryFolder={strona.cloudinary_folder}
+        prev={i > 0 ? naOdnosnik(rodzenstwo[i - 1]) : undefined}
+        next={i >= 0 && i < rodzenstwo.length - 1 ? naOdnosnik(rodzenstwo[i + 1]) : undefined}
+      />
+    );
+  }
+
   return <WidokStrony strona={strona} dzieci={dzieci} />;
 }
 

@@ -1,22 +1,26 @@
 import Link from "next/link";
-import { getArticleImages } from "../actions/articleActions";
+import { getImagesFromFolder } from "../actions/articleActions";
 import ArticleGallery from "./ArticleGallery";
 import NewsBlocks, { slugifyAnchor } from "./NewsBlocks";
 import type { NewsBlock } from "../lib/newsTypes";
-import type { ArticleTopic } from "../data/articles/types";
 
 type Props = {
-  topic: ArticleTopic;
+  /** Etykieta i adres strony nadrzędnej — okruszek nad nagłówkiem. */
   topicTitle: string;
   topicHref: string; // np. /buddyzm
-  slug: string;
   title: string;
   intro: string;
   /** Treść podstrony jako wspólne bloki (te same co aktualności i strony serwisu). */
   blocks: NewsBlock[];
-  /** Prev/Next w obrębie tej samej sekcji. */
-  prev?: { slug: string; title: string };
-  next?: { slug: string; title: string };
+  /**
+   * Folder Cloudinary z galerią. PEŁNA ścieżka, nie sklejana tutaj z tematu
+   * i sluga: od etapu 7 trzyma ją kolumna `pages.cloudinary_folder`, właśnie po to,
+   * żeby zmiana adresu nie osierociła zdjęć.
+   */
+  cloudinaryFolder?: string | null;
+  /** Prev/Next w obrębie tej samej sekcji — PEŁNE adresy, bo rodzeństwo bierze się z drzewa. */
+  prev?: { href: string; title: string };
+  next?: { href: string; title: string };
 };
 
 /**
@@ -25,18 +29,16 @@ type Props = {
  * automatyczna galeria z Cloudinary i nawigacja poprzednia/następna.
  */
 export default async function ArticlePage({
-  topic,
   topicTitle,
   topicHref,
-  slug,
   title,
   intro,
   blocks,
+  cloudinaryFolder,
   prev,
   next,
 }: Props) {
-  // Zdjęcia z Cloudinary z folderu Strona/<topic>/<slug>
-  const images = await getArticleImages(topic, slug);
+  const images = cloudinaryFolder ? await getImagesFromFolder(cloudinaryFolder) : [];
 
   // Spis treści budowany z bloków-nagłówków
   const tocItems = blocks
@@ -84,7 +86,7 @@ export default async function ArticlePage({
               <nav className="mt-14 grid grid-cols-1 sm:grid-cols-2 gap-4" aria-label="Nawigacja w sekcji">
                 {prev ? (
                   <Link
-                    href={`${topicHref}/${prev.slug}`}
+                    href={prev.href}
                     className="rounded-xl border border-yellow-500/40 bg-yellow-500/5 hover:bg-yellow-500/10 hover:border-yellow-500 transition-colors px-5 py-4"
                   >
                     <div className="text-xs uppercase tracking-wider text-yellow-500">← Poprzednia</div>
@@ -93,7 +95,7 @@ export default async function ArticlePage({
                 ) : <div />}
                 {next ? (
                   <Link
-                    href={`${topicHref}/${next.slug}`}
+                    href={next.href}
                     className="rounded-xl border border-yellow-500/40 bg-yellow-500/5 hover:bg-yellow-500/10 hover:border-yellow-500 transition-colors px-5 py-4 sm:text-right"
                   >
                     <div className="text-xs uppercase tracking-wider text-yellow-500">Następna →</div>

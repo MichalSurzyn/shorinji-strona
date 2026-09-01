@@ -195,3 +195,15 @@ export async function getStronyDoSitemapy(): Promise<WezelStrony[]> {
   }
   return (data ?? []) as unknown as WezelStrony[];
 }
+
+/** Węzeł po identyfikatorze — do okruszka i rodzeństwa w trasie catch-all. */
+export async function getStronaPoId(id: string): Promise<WezelStrony | null> {
+  const { data, error } = await klient()
+    .from("pages")
+    .select(KOLUMNY)
+    .eq("id", id)
+    .abortSignal(AbortSignal.timeout(6000))
+    .maybeSingle();
+  if (error) throw new Error(`[pages] getStronaPoId(${id}): ${error.message}`);
+  return (data as WezelStrony | null) ?? null;
+}
