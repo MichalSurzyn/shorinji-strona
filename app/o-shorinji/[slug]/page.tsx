@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { przekierujAlboNotFound } from "@/lib/przekierowania";
 import ArticlePage from "../../../components/ArticlePage";
 import { o_shorinji } from "../../../data/articles/o-shorinji";
 import {
@@ -38,7 +38,10 @@ export default async function Page({ params }: Params) {
   // tytuły zmienione w panelu, a nie bazowe z kodu.
   const group = await resolveArticleGroup(o_shorinji);
   const idx = group.articles.findIndex((a) => a.slug === slug);
-  if (idx === -1) notFound();
+  // Slug nieznany treści z kodu. Zanim oddamy 404, sprawdzamy, czy adres
+  // nie został przeniesiony — catch-all tego nie zrobi, bo dynamiczne
+  // dziecko [slug] dopasowuje się przed nim.
+  if (idx === -1) return przekierujAlboNotFound(`/o-shorinji/${slug}`);
   const article = await resolveArticleBlocks("o-shorinji", slug, o_shorinji.articles[idx]);
   const prev = idx > 0 ? group.articles[idx - 1] : undefined;
   const next = idx < group.articles.length - 1 ? group.articles[idx + 1] : undefined;

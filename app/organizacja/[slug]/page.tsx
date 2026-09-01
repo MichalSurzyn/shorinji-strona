@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { przekierujAlboNotFound } from "@/lib/przekierowania";
 import ArticlePage from "../../../components/ArticlePage";
 import { organizacja } from "../../../data/articles/organizacja";
 import {
@@ -38,7 +38,9 @@ export default async function Page({ params }: Params) {
   // tytuły zmienione w panelu, a nie bazowe z kodu.
   const group = await resolveArticleGroup(organizacja);
   const idx = group.articles.findIndex((a) => a.slug === slug);
-  if (idx === -1) notFound();
+  // Jak w /o-shorinji: catch-all nie przechwyci dwusegmentowego adresu
+  // pod tym prefiksem, więc przekierowania trzeba obsłużyć tutaj.
+  if (idx === -1) return przekierujAlboNotFound(`/organizacja/${slug}`);
   const article = await resolveArticleBlocks("organizacja", slug, organizacja.articles[idx]);
   const prev = idx > 0 ? group.articles[idx - 1] : undefined;
   const next = idx < group.articles.length - 1 ? group.articles[idx + 1] : undefined;

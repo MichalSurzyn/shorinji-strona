@@ -25,17 +25,21 @@ const nextConfig: NextConfig = {
     return [
       {
         // Stary adres podstrony o założycielu (przed rozdzieleniem treści).
+        //
+        // ZOSTAJE TUTAJ, świadomie. Ten adres NIGDY nie dotrze do trasy
+        // catch-all: `app/organizacja/[slug]/page.tsx` dopasuje go pierwszy
+        // i zrobi notFound(). Przeniesienie reguły do tabeli `redirects`
+        // zamieniłoby działające 308 w twarde 404 na adresie, który Google
+        // ma w indeksie.
         source: '/organizacja/zalozyciel-i-wsko',
         destination: '/organizacja/zalozyciel',
         permanent: true,
       },
-      {
-        // Cennik przeniesiony pod Zajęcia (2026-07). 302 na start -
-        // po okresie przejściowym można zmienić na permanent.
-        source: '/cennik',
-        destination: '/zajecia/cennik',
-        permanent: false,
-      },
+      // Reguła /cennik -> /zajecia/cennik PRZENIESIONA do tabeli `redirects`
+      // (status 307, source='manual') w etapie 4. Powód: reguły z tego pliku są
+      // kompilowane przy buildzie, więc każda zmiana adresu wymaga redeploya,
+      // którego instruktor nie zrobi. Ten jeden adres da się przenieść, bo
+      // /cennik nie ma pliku trasy i trafia do catch-alla.
     ];
   },
 };

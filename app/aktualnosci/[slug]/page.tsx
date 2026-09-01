@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { przekierujAlboNotFound } from "@/lib/przekierowania";
 import NewsBlocks from "@/components/NewsBlocks";
 import { clUrl } from "@/lib/cloudinary";
 import { getNewsBySlug } from "@/lib/news";
@@ -31,7 +31,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function NewsArticlePage({ params }: Props) {
   const { slug } = await params;
   const article = await getNewsBySlug(slug);
-  if (!article) notFound();
+  // Aktualności zostają poza drzewem `pages`, więc trigger nie zapisze im
+  // przekierowania — robi to akcja zapisu przy zmianie sluga. Tu jest druga
+  // połowa tej pary: odczyt. Bez niej stary, rozesłany adres wpisu
+  // przestawałby prowadzić gdziekolwiek.
+  if (!article) return przekierujAlboNotFound(`/aktualnosci/${slug}`);
 
   return (
     <div className="relative page-shell pb-20 min-h-screen">

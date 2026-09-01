@@ -758,6 +758,71 @@ for (const poziom of [0, 1, 2]) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Przekierowania przeniesione z next.config.ts (etap 4)
+//
+// Reguły w `next.config.ts` są kompilowane przy buildzie, więc każda zmiana
+// adresu wymagałaby redeploya — którego instruktor nie zrobi. Do tabeli idzie
+// DOKŁADNIE JEDNA z dwóch reguł:
+//
+//   /cennik → /zajecia/cennik        PRZENOSZONA. Nie ma pliku trasy, więc
+//                                    trafia do catch-alla, który czyta tabelę.
+//                                    status 307, bo `permanent: false`.
+//   /organizacja/zalozyciel-i-wsko   ZOSTAJE w next.config.ts. Ten adres nigdy
+//                                    nie dotrze do catch-alla: dopasuje go
+//                                    wcześniej app/organizacja/[slug] i zrobi
+//                                    notFound(). Przeniesienie zamieniłoby
+//                                    działające 308 w twarde 404.
+//
+// Krok jest tutaj, a nie w osobnym skrypcie, żeby „przygotuj bazę" było jedną
+// komendą — pominięcie drugiej komendy przy przełączaniu produkcji kosztowałoby
+// zaindeksowany adres.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PRZEKIEROWANIA_Z_KODU = [
+  { old_path: "/cennik", new_path: "/zajecia/cennik", status: 307, source: "manual" },
+];
+
+const przekierowania = { wstawione: [], pominiete: [] };
+if (!NA_SUCHO) {
+  const istniejaceRedirect = await czytaj("redirects?select=old_path,new_path,status");
+  const znane = new Map(istniejaceRedirect.map((w) => [w.old_path, w]));
+  const brakujace = PRZEKIEROWANIA_Z_KODU.filter((w) => !znane.has(w.old_path));
+
+  for (const w of PRZEKIEROWANIA_Z_KODU) {
+    const jest = znane.get(w.old_path);
+    if (!jest) continue;
+    przekierowania.pominiete.push(`${w.old_path} → ${jest.new_path} (${jest.status}) — już jest`);
+    if (jest.new_path !== w.new_path || jest.status !== w.status) {
+      raport.rozjazdy.push(
+        `redirects ${w.old_path}: w bazie → ${jest.new_path} (${jest.status}), ` +
+          `w kodzie → ${w.new_path} (${w.status}). Wiersz ZOSTAWIONY bez zmian.`,
+      );
+    }
+  }
+
+  if (brakujace.length) {
+    const r = await fetch(`${URL_BAZY}/rest/v1/redirects`, {
+      method: "POST",
+      headers: { ...NAGLOWKI, Prefer: "return=representation" },
+      body: JSON.stringify(brakujace),
+      signal: AbortSignal.timeout(30_000),
+    });
+    const tekst = await r.text();
+    if (!r.ok) {
+      raport.rozjazdy.push(`INSERT redirects: HTTP ${r.status} ${tekst.slice(0, 300)}`);
+    } else {
+      for (const w of JSON.parse(tekst)) {
+        przekierowania.wstawione.push(`${w.old_path} → ${w.new_path} (${w.status})`);
+      }
+    }
+  }
+} else {
+  for (const w of PRZEKIEROWANIA_Z_KODU) {
+    przekierowania.wstawione.push(`[na sucho] ${w.old_path} → ${w.new_path} (${w.status})`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Kontrola — trzy zapytania obowiązkowe z §5.4, liczone po stronie skryptu
 //
 // Po stronie skryptu, a nie w SQL, bo PostgREST nie porównuje dwóch kolumn ze
@@ -908,6 +973,11 @@ for (const l of raport.wstawione) console.log("  " + l);
 if (raport.pominiete.length) {
   console.log(`\n— pominięte, bo już są (${raport.pominiete.length}) —`);
   for (const l of raport.pominiete) console.log("  " + l);
+}
+
+if (przekierowania.wstawione.length || przekierowania.pominiete.length) {
+  console.log(`\n— przekierowania przeniesione z next.config.ts —`);
+  for (const l of [...przekierowania.wstawione, ...przekierowania.pominiete]) console.log("  " + l);
 }
 
 if (doDecyzji.length) {
