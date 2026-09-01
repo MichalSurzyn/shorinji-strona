@@ -238,6 +238,12 @@ export default function TreeManager({
             >
               {w.in_menu ? "Zdejmij z menu" : "Pokaż w menu"}
             </button>
+            <Link
+              href={`/admin/drzewo/${w.id}`}
+              className="rounded-lg border border-indigo-300 text-indigo-700 px-3 py-1 text-sm hover:bg-indigo-50"
+            >
+              Edytuj
+            </Link>
             {!zRoutu && (
               <button
                 disabled={busy}
@@ -381,7 +387,12 @@ export default function TreeManager({
         </p>
         {wKoszu.length === 0 && <p className="text-sm text-slate-400">Kosz jest pusty.</p>}
         {wKoszu.map((w) => (
-          <div key={w.id} className="flex items-center justify-between gap-3 py-2 border-t border-slate-100">
+          <div
+            key={w.id}
+            data-kosz={w.id}
+            data-kosz-slug={w.slug ?? ""}
+            className="flex items-center justify-between gap-3 py-2 border-t border-slate-100"
+          >
             <div className="min-w-0">
               <div className="font-medium text-slate-800 truncate">{w.title}</div>
               <div className="text-sm text-slate-400 truncate">{w.full_path ?? "— bez adresu —"}</div>

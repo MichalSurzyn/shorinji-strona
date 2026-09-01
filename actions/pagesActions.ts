@@ -584,3 +584,11 @@ function czytelnyBlad(komunikat: string): string {
   if (komunikat.includes("pętlę")) return "Nie da się wsunąć pozycji do jej własnej podstrony.";
   return komunikat;
 }
+
+/** Jedna pozycja drzewa — do ekranu edycji. */
+export async function pobierzWezel(id: string): Promise<WezelPanelu | null> {
+  await requireUser();
+  const { data, error } = await klient().from("pages").select(KOLUMNY).eq("id", id).maybeSingle();
+  if (error) throw new Error(`Nie udało się wczytać strony: ${error.message}`);
+  return (data as unknown as WezelPanelu) ?? null;
+}
