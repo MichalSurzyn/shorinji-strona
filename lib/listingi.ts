@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { getDzieci, getStrona } from "./pages";
-import { resolveArticleGroup } from "./articleContent";
 import type { ArticleGroup } from "../data/articles/types";
 import type { KafelekListingu } from "../components/ArticleListing";
 
@@ -54,14 +53,16 @@ export async function daneListingu(adres: string, grupa: ArticleGroup): Promise<
     console.warn(`[listingi] ${adres}: odczyt drzewa nieudany, treść z kodu:`, e);
   }
 
-  // Zapas: treść bazowa z kodu, wzbogacona o nadpisania z `article_overrides`
-  // (tak działały te strony przed etapem 6).
-  const zKodu = await resolveArticleGroup(grupa);
+  // Zapas: treść bazowa z kodu, bez zaglądania do `article_overrides`.
+  // Po etapie 7 nadpisania nie są już źródłem treści — jest nim drzewo — a ta
+  // gałąź odpala się właśnie wtedy, gdy drzewa nie da się odczytać. Sięganie
+  // wtedy do drugiej tabeli w tej samej bazie nie ma szans zadziałać i tylko
+  // dokłada zapytanie do i tak niedostępnej bazy.
   return {
-    title: zKodu.topicTitle,
-    intro: zKodu.topicIntro,
+    title: grupa.topicTitle,
+    intro: grupa.topicIntro,
     kicker: null,
-    items: zKodu.articles.map((a) => ({
+    items: grupa.articles.map((a) => ({
       href: `${adres}/${a.slug}`,
       title: a.title,
       intro: a.intro,

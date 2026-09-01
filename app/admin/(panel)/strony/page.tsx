@@ -1,72 +1,38 @@
 import Link from "next/link";
-import { o_shorinji } from "@/data/articles/o-shorinji";
-import { organizacja } from "@/data/articles/organizacja";
-import { buddyzm } from "@/data/articles/buddyzm";
 import { EDITABLE_PAGES } from "@/lib/editablePages";
-import { listCustomPages } from "@/lib/customPages";
-import type { ArticleGroup } from "@/data/articles/types";
 
-const GROUPS: ArticleGroup[] = [o_shorinji, organizacja, buddyzm];
-
-export default async function AdminPagesList() {
-  const customPages = await listCustomPages();
-
+/**
+ * „Strony" po etapie 8 — już tylko OSIEM tras o stałym układzie.
+ *
+ * Zniknęły stąd dwie sekcje, bo obie zastąpiła zakładka „Strony i menu":
+ *   * własne podstrony (`custom_pages` → `/admin/wlasne/[id]`),
+ *   * podstrony tematyczne (`article_overrides` → `/admin/edit/[topic]/[slug]`).
+ *
+ * Zostało to, czego drzewo nie obsłuży: strony, których UKŁAD siedzi w pliku
+ * trasy — formularz kontaktowy między nagłówkiem a treścią, grafik zajęć, mapa,
+ * pasek aktualności w siatce 3/4+1/4. Ich treść dalej mieszka w `site_settings`
+ * i dalej edytuje się ją tutaj. Przeniesienie ich do bloków to osobna praca
+ * (etap 9), a nie skutek uboczny scalania tabel.
+ */
+export default function AdminPagesList() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Strony</h1>
+        <h1 className="text-2xl font-bold">Strony o stałym układzie</h1>
         <p className="text-slate-500 mt-1 max-w-2xl">
-          Wybierz stronę, którą chcesz zmienić. Wszystkie edytuje się tak samo
-          jak aktualności.
+          Te strony mają na sobie rzeczy, których nie da się złożyć z bloków:
+          formularz, mapę, grafik zajęć, pasek aktualności. Stąd zmieniasz ich
+          teksty; sam układ jest częścią serwisu.
         </p>
       </div>
 
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs uppercase tracking-[0.16em] text-indigo-600 font-semibold">
-            Własne podstrony
-          </h2>
-          <Link
-            href="/admin/wlasne/nowy"
-            className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold transition-colors"
-          >
-            + Nowa podstrona
-          </Link>
-        </div>
-        {customPages.length === 0 ? (
-          <p className="bg-white rounded-2xl border border-slate-200 px-5 py-6 text-sm text-slate-400">
-            Brak własnych podstron. Utwórz pierwszą - możesz ją od razu dodać
-            do menu górnego.
-          </p>
-        ) : (
-          <div className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100">
-            {customPages.map((p) => (
-              <Link
-                key={p.id}
-                href={`/admin/wlasne/${p.id}`}
-                className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50 transition-colors group"
-              >
-                <div>
-                  <div className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                    {p.title}
-                  </div>
-                  <div className="text-sm text-slate-400">/{p.slug}</div>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  {!p.published && (
-                    <span className="rounded-full bg-amber-100 text-amber-700 text-xs px-2.5 py-1">
-                      szkic
-                    </span>
-                  )}
-                  <span className="text-sm text-indigo-600 font-medium">
-                    Edytuj →
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
+      <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-sm text-indigo-900">
+        Wszystkie pozostałe strony — i to, co widać w menu na górze — są w zakładce{" "}
+        <Link href="/admin/drzewo" className="font-semibold underline">
+          Strony i menu
+        </Link>
+        . Tam dodasz nową podstronę, przestawisz ją albo przywrócisz z kosza.
+      </div>
 
       <section>
         <h2 className="text-xs uppercase tracking-[0.16em] text-indigo-600 font-semibold mb-3">
@@ -85,42 +51,11 @@ export default async function AdminPagesList() {
                 </div>
                 <div className="text-sm text-slate-400">{p.route}</div>
               </div>
-              <span className="shrink-0 text-sm text-indigo-600 font-medium">
-                Edytuj →
-              </span>
+              <span className="shrink-0 text-sm text-indigo-600 font-medium">Edytuj →</span>
             </Link>
           ))}
         </div>
       </section>
-
-      {GROUPS.map((group) => (
-        <section key={group.topic}>
-          <h2 className="text-xs uppercase tracking-[0.16em] text-indigo-600 font-semibold mb-3">
-            {group.topicTitle}
-          </h2>
-          <div className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100">
-            {group.articles.map((a) => (
-              <Link
-                key={a.slug}
-                href={`/admin/edit/${group.topic}/${a.slug}`}
-                className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50 transition-colors group"
-              >
-                <div>
-                  <div className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                    {a.title}
-                  </div>
-                  <div className="text-sm text-slate-400">
-                    /{group.topic}/{a.slug}
-                  </div>
-                </div>
-                <span className="shrink-0 text-sm text-indigo-600 font-medium">
-                  Edytuj →
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      ))}
 
       <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 text-sm text-slate-500">
         Harmonogram zajęć edytujesz w zakładce{" "}

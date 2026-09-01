@@ -66,6 +66,43 @@ const KOLUMNY =
  */
 export const SEGMENTY_BEZ_TRESCI = new Set(["admin", "api", "downloads", "zajecia"]);
 
+/**
+ * Slugi zajęte przez stałe części serwisu — walidacja przy zakładaniu strony
+ * w panelu.
+ *
+ * Przeniesione tutaj z `lib/customPages.ts`, który znika razem z tabelą
+ * `custom_pages`. Lista jest dalej potrzebna: indeks unikalny na adres broni
+ * przed kolizją z INNĄ STRONĄ, ale nie przed kolizją z trasą w kodzie
+ * (`/admin`, `/api`, `sitemap.xml`).
+ *
+ * To NIE jest to samo co `SEGMENTY_BEZ_TRESCI` wyżej — tamta lista jest węższa
+ * i służy do czego innego (guard przed zapytaniem w trasie catch-all). Użycie
+ * tej listy w guardzie zabiłoby trzeci poziom drzewa; użycie tamtej w walidacji
+ * pozwoliłoby utworzyć stronę pod `/galeria`.
+ *
+ * Dołożone wobec wersji z `customPages.ts`: `icon` i `favicon.ico` — trasa
+ * metadanych `/icon.jpg` istnieje, a na tamtej liście jej nie było, więc dało
+ * się utworzyć kolidującą podstronę.
+ */
+export const RESERVED_SLUGS = new Set([
+  "admin",
+  "api",
+  "aktualnosci",
+  "buddyzm",
+  "cennik",
+  "galeria",
+  "kontakt",
+  "o-shorinji",
+  "organizacja",
+  "program-nauczania",
+  "zajecia",
+  "downloads",
+  "sitemap.xml",
+  "robots.txt",
+  "icon",
+  "favicon.ico",
+]);
+
 /** Dozwolony kształt segmentu adresu — ten sam wzorzec co `pages_slug_format_chk`. */
 const WZORZEC_SEGMENTU = /^[a-z0-9-]+$/;
 

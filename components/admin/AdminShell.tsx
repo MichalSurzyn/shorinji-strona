@@ -23,7 +23,6 @@ const NAV = [
   { href: "/admin/pliki", label: "Pliki do pobrania", icon: "⬇" },
   { href: "/admin/harmonogram", label: "Grafik zajęć", icon: "◷" },
   { href: "/admin/wiadomosci", label: "Wiadomości", icon: "✉" },
-  { href: "/admin/nawigacja", label: "Menu na górze strony", icon: "☰" },
   { href: "/admin/stopka", label: "Stopka strony", icon: "▁" },
   { href: "/admin/dane-organizacji", label: "Dane organizacji", icon: "🏛" },
   { href: "/admin/admini", label: "Dostęp do panelu", icon: "♟" },
@@ -53,10 +52,12 @@ export default function AdminShell({
     href === "/admin"
       ? pathname === "/admin"
       : pathname === href || pathname.startsWith(href + "/") ||
-        (href === "/admin/strony" &&
-          (pathname.startsWith("/admin/edit") ||
-            pathname.startsWith("/admin/strona/") ||
-            pathname.startsWith("/admin/wlasne")));
+        // „Strony i menu" podświetla się także na ekranie edycji węzła,
+        // a „Strony" na edytorze tras o stałym układzie. Bez tego zakładka
+        // gaśnie w chwili, w której redaktor wchodzi w cokolwiek — i wygląda
+        // to, jakby wypadł z panelu.
+        (href === "/admin/drzewo" && pathname.startsWith("/admin/drzewo")) ||
+        (href === "/admin/strony" && pathname.startsWith("/admin/strona/"));
 
   const sidebar = (
     <div className="flex flex-col h-full">

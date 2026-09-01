@@ -126,7 +126,7 @@ export async function wersja(id: string): Promise<WersjaTresci | null> {
  * Wywoływane przy wyświetlaniu list w panelu - kosz i tak ogląda tylko
  * zalogowana osoba, a osobnego zadania cyklicznego tu nie ma.
  */
-export async function oproznijStaryKosz(tabela: "articles" | "custom_pages"): Promise<number> {
+export async function oproznijStaryKosz(tabela: "articles"): Promise<number> {
   const sb = getSupabaseAdmin();
   if (!sb) return 0;
   const granica = new Date();

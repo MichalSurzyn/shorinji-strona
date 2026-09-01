@@ -309,19 +309,34 @@ if (probaSesji.status === 200) {
 
 console.log(`Zrzut z ${BAZA} (origin w metadanych: ${ORIGIN_PRODUKCJA} -> ${TOKEN_ORIGIN})`);
 
-// Źródło 5: nav_items — surowe drzewo z bazy, przed normalizeNavTree.
-const navSurowe = await postgrest('nav_items?select=id,parent_id,label,href,position,visible&order=parent_id.nullsfirst,position.asc');
+// Źródło 5: menu z drzewa `pages`.
+//
+// Do etapu 8 czytaliśmy tu `nav_items`. Ta tabela już nie istnieje — została
+// skasowana razem z `custom_pages` i `article_overrides`
+// (supabase/04-contract.sql). Narzędzie pomiarowe musi zejść ze skasowanego
+// źródła tak samo jak aplikacja; inaczej "kontrola po etapie" wywala się na
+// tym, co ten etap miał zrobić.
+//
+// Kształt zapisu został ten sam (label / href / visible / dzieci), żeby zrzuty
+// sprzed i po etapie 8 dały się porównać wprost.
+const navSurowe = await postgrest(
+  'pages?select=id,parent_id,kind,menu_label,title,full_path,external_url,in_menu,published,depth,position' +
+    '&deleted_at=is.null&order=position.asc',
+);
+const adresWezla = (w) =>
+  w.kind === 'link' ? w.external_url : w.kind === 'header' ? null : w.full_path;
+const wMenu = (w) => w.in_menu && w.published;
 const menuSurowe = navSurowe
-  .filter((w) => w.parent_id === null)
+  .filter((w) => w.depth === 0 && wMenu(w))
   .sort((a, b) => a.position - b.position)
   .map((w) => ({
-    label: w.label,
-    href: w.href,
-    visible: w.visible,
+    label: w.menu_label ?? w.title,
+    href: adresWezla(w),
+    visible: w.in_menu,
     dzieci: navSurowe
-      .filter((d) => d.parent_id === w.id)
+      .filter((d) => d.parent_id === w.id && wMenu(d))
       .sort((a, b) => a.position - b.position || String(a.id).localeCompare(String(b.id)))
-      .map((d) => ({ label: d.label, href: d.href, visible: d.visible })),
+      .map((d) => ({ label: d.menu_label ?? d.title, href: adresWezla(d), visible: d.in_menu })),
   }));
 
 // Źródło 12: stopka — DWA klucze, bo profile społecznościowe idą z 'organization',
@@ -347,8 +362,12 @@ const przekierowaniaConfig = [...zrodloConfig.matchAll(/source:\s*'([^']+)'[\s\S
     status: permanent === 'true' ? 308 : 307,
   }));
 
-// Źródło 14: RESERVED_SLUGS — 14 pozycji; etap 4 ma tę listę okroić I uzupełnić.
-const zrodloCustom = readFileSync('lib/customPages.ts', 'utf8');
+// Źródło 14: RESERVED_SLUGS. Do etapu 8 lista mieszkała w `lib/customPages.ts`;
+// ten plik zniknął razem z tabelą `custom_pages`, a lista przeniosła się do
+// `lib/pages.ts` — i urosła o `icon` oraz `favicon.ico` (trasa metadanych
+// `/icon.jpg` istniała, a na tamtej liście jej nie było, więc dało się utworzyć
+// kolidującą podstronę).
+const zrodloCustom = readFileSync('lib/pages.ts', 'utf8');
 const blokReserved = zrodloCustom.match(/RESERVED_SLUGS = new Set\(\[([\s\S]*?)\]\)/);
 const reserved = blokReserved ? [...blokReserved[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]) : [];
 
@@ -365,7 +384,7 @@ const sitemap = [...sitemapXml.matchAll(/<url>([\s\S]*?)<\/url>/g)]
 
 // Adresy do zbadania: odniesienie + wszystko, co wyszło z sitemapy, menu i stopki.
 const zSitemapy = sitemap.map((w) => w.url.replace(TOKEN_ORIGIN, '') || '/');
-const zMenu = navSurowe.map((w) => w.href).filter(Boolean);
+const zMenu = navSurowe.filter(wMenu).map(adresWezla).filter(Boolean);
 const zStopki = adresyStopki.map((s) => s.slice(1, -1)).filter((s) => s.startsWith('/'));
 const znane = new Set(ADRESY_ODNIESIENIA.map(([s]) => s));
 const dodatkowe = [...new Set([...zSitemapy, ...zMenu, ...zStopki])].filter((s) => !znane.has(s)).sort();
@@ -442,7 +461,7 @@ const zrzut = {
     wykrytych_poza_lista: dodatkowe.length,
     rozjazdow_wobec_oczekiwan: rozjazdy,
     wpisow_w_sitemapie: sitemap.length,
-    wierszy_nav_items: navSurowe.length,
+    wezlow_w_drzewie: navSurowe.length,
     hrefow_w_nav_items: zMenu.length,
     par_editable_pages: paryEditable.length,
     rozjazdow_slug_route: paryEditable.filter((p) => p.rozjazd).length,
@@ -463,7 +482,7 @@ writeFileSync(WYJSCIE, JSON.stringify(zrzut, null, 2) + '\n', 'utf8');
 
 console.log(`\nZapisano ${WYJSCIE}`);
 console.log(`  adresów: ${Object.keys(adresy).length} (odniesienie ${ADRESY_ODNIESIENIA.length} + wykryte ${dodatkowe.length})`);
-console.log(`  sitemapa: ${sitemap.length} wpisów | nav_items: ${navSurowe.length} wierszy, ${zMenu.length} hrefów`);
+console.log(`  sitemapa: ${sitemap.length} wpisów | drzewo: ${navSurowe.length} węzłów, ${zMenu.length} adresów w menu`);
 console.log(`  rozjazdów wobec oczekiwanych statusów: ${rozjazdy}`);
 if (rozjazdy > 0) {
   console.log('\n  ROZJAZDY (szukaj "ROZJAZD": true w pliku):');

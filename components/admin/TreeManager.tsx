@@ -421,9 +421,12 @@ export default function TreeManager({
       </div>
 
       <p className="text-sm text-slate-400">
-        Stare zakładki <Link href="/admin/nawigacja" className="underline">Menu na górze strony</Link> i{" "}
-        <Link href="/admin/strony" className="underline">Strony</Link> działają jeszcze obok tej —
-        znikną, gdy ta zostanie sprawdzona w boju.
+        Strony o stałym układzie — te z formularzem, mapą albo grafikiem —
+        mają osobną zakładkę:{" "}
+        <Link href="/admin/strony" className="underline">
+          Strony o stałym układzie
+        </Link>
+        . Tutaj zmienisz ich nazwę i miejsce w menu, ale nie adres.
       </p>
     </div>
   );

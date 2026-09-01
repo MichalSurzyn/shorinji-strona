@@ -175,10 +175,16 @@ export default async function AdminDashboard() {
             opis="Trafią na strony zajęć i do kalendarza w telefonie"
           />
           <Zadanie
+            href="/admin/drzewo"
+            ikona="⌗"
+            tytul="Dodaj albo przestaw stronę"
+            opis="Jedno drzewo: co istnieje i co widać w menu na górze"
+          />
+          <Zadanie
             href="/admin/strony"
             ikona="❏"
             tytul="Popraw treść strony"
-            opis="Cennik, kontakt, opisy zajęć i pozostałe strony"
+            opis="Cennik, kontakt, opisy zajęć — strony o stałym układzie"
           />
         </div>
       </section>

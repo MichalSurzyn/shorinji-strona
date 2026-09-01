@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireUser } from "@/lib/supabase/server";
-import { RESERVED_SLUGS } from "@/lib/customPages";
+import { RESERVED_SLUGS } from "@/lib/pages";
 import { zapiszWersje } from "@/lib/versions";
 import type { NewsBlock } from "@/lib/newsTypes";
 

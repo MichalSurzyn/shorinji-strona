@@ -1,7 +1,7 @@
 import { getSupabaseAdmin } from "./supabaseAdmin";
 import { buildNavTree, type PageNavRow } from "./navTree";
 import { MENU_FALLBACK } from "../data/menuFallback";
-import type { NavItemRow, NavLink } from "./navTypes";
+import type { NavLink } from "./navTypes";
 
 /**
  * Nawigacja strony — od etapu 3a czytana z drzewa `public.pages`, nie z `nav_items`.
@@ -11,10 +11,10 @@ import type { NavItemRow, NavLink } from "./navTypes";
  * Dopóki menu było listą etykiet nad adresami zakutymi w plikach tras, zapas
  * z kodu mógł się co najwyżej rozjechać z nazwami. Teraz z bazy pochodzi CAŁE
  * drzewo adresów, więc zapas, który jej nie odpowiada, podstawia w awarii linki
- * do stron, których nie ma. `DEFAULT_NAV` zostaje w `navTypes.ts` na czas
- * przejściowy, ale menu go już nie używa — zapasem jest `data/menuFallback.ts`,
- * generowany z tej samej tabeli tą samą funkcją `buildNavTree`
- * (`scripts/snapshot-menu.mjs`).
+ * do stron, których nie ma. `DEFAULT_NAV` został usunięty w etapie 8 razem
+ * z `NavItemRow` — oba opisywały tabelę `nav_items`, której już nie ma.
+ * Zapasem jest `data/menuFallback.ts`, generowany z tej samej tabeli tą samą
+ * funkcją `buildNavTree` (`scripts/snapshot-menu.mjs`).
  *
  * CZTERY GAŁĘZIE ZAPASU — wszystkie cztery są potrzebne
  * ------------------------------------------------------
@@ -65,29 +65,5 @@ export async function getNavTree(): Promise<NavLink[]> {
   } catch (e) {
     console.warn("[navigation] getNavTree - fallback:", e);
     return MENU_FALLBACK; // gałąź 2
-  }
-}
-
-/**
- * Surowe wiersze `nav_items` do starego edytora w panelu (`/admin/nawigacja`).
- *
- * Zostaje na `nav_items` świadomie: publiczne menu czyta już `pages`, ale
- * zakładka „Nawigacja" nadal edytuje starą tabelę i zostanie zastąpiona
- * ekranem „Strony i menu" w etapie 5. Do tego czasu zapis w tej zakładce
- * NIE wpływa na menu na stronie — i tak ma być, bo cała gałąź idzie na
- * produkcję jednym przełączeniem, razem z nowym panelem.
- */
-export async function getNavRows(): Promise<NavItemRow[]> {
-  const sb = getSupabaseAdmin();
-  if (!sb) return [];
-  try {
-    const { data, error } = await sb
-      .from("nav_items")
-      .select("id,parent_id,label,href,position,visible")
-      .order("position", { ascending: true });
-    if (error) throw error;
-    return (data ?? []) as NavItemRow[];
-  } catch {
-    return [];
   }
 }

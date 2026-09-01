@@ -423,20 +423,28 @@ create index if not exists nav_items_parent_position_idx
 
 alter table public.nav_items enable row level security;
 
--- UWAGA: celowo NIE ma indeksu unikalnego na `href`. saveNavTree kasuje
---   wszystkie wiersze i wstawia je od nowa, nie waliduje duplikatow i nie
---   obsluguje bledu 23505 - UNIQUE zamienilby ciche zdublowanie w twardy
---   blad zapisu calego menu.
+-- NIEAKTUALNE OD 2026-09-01 (etap 8 migracji drzewa stron). Ta tabela nie ma
+--   juz zadnego konsumenta w kodzie: menu i strony czyta public.pages.
+--   Komentarze nizej opisuja stan sprzed migracji i zostaja wylacznie jako
+--   slad; sama tabela znika przy uruchomieniu supabase/04-contract.sql.
+--
+-- UWAGA (historyczna): celowo NIE bylo indeksu unikalnego na `href`. Uzasadniano
+--   to tym, ze "saveNavTree kasuje wszystkie wiersze i wstawia je od nowa".
+--   To zdanie bylo NIEPRAWDZIWE juz w chwili pisania: saveNavTree robil
+--   insert-then-delete ze sciezka wycofania (actions/navActions.ts:57-121,
+--   wycofaj() na :71-74), a nie delete-then-insert. Roznica byla istotna, bo
+--   ten wzorzec trzymal przez chwile DWA komplety wierszy - czyli bylby
+--   niekompatybilny z unikalnym indeksem na adres, ktory ma public.pages.
 -- UWAGA (defekt w kodzie, nie w schemacie): syncNavItem i edytor podstrony
 --   uzywaja .maybeSingle() na filtrze (href = X and parent_id is null)
 --   i ignoruja `error`. Przy dwoch pozycjach z tym samym href maybeSingle
 --   zwraca PGRST116, kod uznaje to za "brak pozycji" i przy kolejnym zapisie
 --   dokłada trzeci duplikat. Naprawa nalezy do kodu (.limit(1) albo obsluga
 --   bledu), a nie do bazy.
--- UWAGA: swiadomie brak osobnego indeksu na samo "position" i na "href" -
---   tabela ma rzad wielkosci kilkunastu wierszy, kazde zapytanie pobiera ja
---   w calosci bez LIMIT, a zapis menu to delete-all + reinsert. Indeksy
---   kosztowalyby wiecej, niz daja.
+-- UWAGA (historyczna): swiadomie brak osobnego indeksu na samo "position"
+--   i na "href" - tabela ma rzad wielkosci kilkunastu wierszy, a kazde
+--   zapytanie pobiera ja w calosci bez LIMIT. Okreslenie "delete-all + reinsert"
+--   w poprzedniej wersji tego komentarza bylo bledne - patrz sprostowanie wyzej.
 -- UWAGA: typ id/parent_id nie jest wyprowadzalny z kodu (aplikacja widzi
 --   tylko string). Przyjeto uuid; zaden insert nie podaje id, wiec DEFAULT
 --   generujacy wartosc musi istniec.
