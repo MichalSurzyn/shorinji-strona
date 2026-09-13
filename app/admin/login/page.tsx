@@ -100,6 +100,8 @@ function LoginForm() {
   }
 
   return (
+    // Znacznik skali panelu jest wyżej, na opakowaniu nad granicą Suspense
+    // (patrz `AdminLoginPage` na końcu pliku) — tutaj by się spóźnił o hydrację.
     <div className="fixed inset-0 z-[90] bg-slate-100 flex items-center justify-center p-6 overflow-y-auto">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
@@ -268,9 +270,17 @@ function LoginForm() {
 
 export default function AdminLoginPage() {
   // useSearchParams wymaga granicy Suspense przy prerenderowaniu.
+  //
+  // Znacznik skali panelu MUSI stać NAD granicą Suspense, nie w środku formularza.
+  // Zmierzone: przy `fallback={null}` w HTML z serwera nie ma go wcale, więc korzeń
+  // zostaje na skali 0.8x ciemnej strony (14,1 px zamiast 20,6) aż do hydracji —
+  // ekran logowania mignąłby mikroskopijnym pismem dokładnie wtedy, gdy redaktor
+  // wchodzi tu pierwszy raz, przy pustym cache.
   return (
-    <Suspense fallback={null}>
-      <LoginForm />
-    </Suspense>
+    <div data-panel-admina>
+      <Suspense fallback={null}>
+        <LoginForm />
+      </Suspense>
+    </div>
   );
 }

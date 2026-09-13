@@ -39,6 +39,26 @@ html {
   font-size: clamp(12.8px, 10.24px + 0.2vw, 15.2px);
 }
 
+/* Panel admina ma WŁASNĄ skalę i to jest cała przyczyna zgłoszenia „za małe
+   literki, na 150% wygląda dobrze". Skala 0.8x powyżej jest świadoma, ale
+   dotyczy CIEMNEJ strony klubu - panel dziedziczył ją tylko dlatego, że
+   `globals.css` jest wspólny. Efekt: cały panel chodził jak strona oddalona
+   w przeglądarce do 80%, razem z przyciskami i strzałkami zwijania (klasy
+   Tailwinda są w `rem`, więc skalują się z korzeniem, nie tylko tekst).
+
+   Dopasowane po pomiarze do tego, co właściciel ocenił jako dobre: ~20.5 px
+   fizycznych na jego ekranie. Zamiast stałej liczby - clamp, żeby na laptopie
+   nie wyszło absurdalnie duże, a na 2K/4K nie wróciło do dzisiejszej ciasnoty.
+
+   `:has()` zamiast klasy na <html>: znacznik `data-panel-admina` jest w HTML-u
+   z serwera, więc skala działa od pierwszego malowania. Ustawienie klasy
+   efektem w przeglądarce dawałoby mignięcie małym pismem przy każdym wejściu.
+   Atrybut, nie `id`, bo noszą go DWA różne ekrany (panel i logowanie), a te
+   same `id` w dwóch komponentach to pułapka na przyszłość. */
+html:has([data-panel-admina]) {
+  font-size: clamp(16px, 12px + 0.45vw, 21px);
+}
+
 /* Tło/kolor tekstu ustawia klasa na <body> (layout.tsx: bg-neutral-900
    text-white) - strona ma jeden, stały ciemny motyw niezależny od
    prefers-color-scheme. Tu tylko font (poza warstwami Tailwind, więc

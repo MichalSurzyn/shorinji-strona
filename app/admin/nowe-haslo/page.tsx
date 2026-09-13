@@ -79,7 +79,13 @@ export default function NoweHasloPage() {
   }
 
   return (
-    <div className="fixed inset-0 z-[90] bg-slate-100 flex items-center justify-center p-6 overflow-y-auto">
+    // Ten sam znacznik co w AdminShell i na logowaniu. Bez niego byłby to jedyny
+    // ekran panelu z pismem w skali 0.8x — i to akurat ten, przez który przechodzi
+    // się wtedy, gdy się do panelu nie może dostać (patrz `html:has([data-panel-admina])`).
+    <div
+      data-panel-admina
+      className="fixed inset-0 z-[90] bg-slate-100 flex items-center justify-center p-6 overflow-y-auto"
+    >
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
           <div className="flex items-center gap-3 mb-8">
