@@ -8,7 +8,9 @@ import {
   getUploadSignature,
   listFolderPreviews,
   listImages,
+  odswiezGalerie,
   setFolderCover,
+  sprawdzUzyciaZdjecia,
   type CloudFolderPodglad,
   type CloudImage,
 } from "@/actions/imageActions";
@@ -128,16 +130,39 @@ export default function ImagesManager() {
     }
   }
 
+  /**
+   * Kasowanie zdjęcia. Najpierw pytamy serwer, gdzie ono siedzi w treści -
+   * poprzednia wersja obiecywała „zniknie wszędzie, gdzie było użyte", a
+   * zostawiała rozbity kadr, o którym redaktor dowiadywał się przypadkiem.
+   */
   async function handleDelete(publicId: string) {
-    if (
-      !confirm(
-        "Usunąć to zdjęcie na stałe?\n\nZniknie ze strony wszędzie, gdzie było użyte. Tej operacji nie da się cofnąć."
-      )
-    )
+    setMsg(null);
+
+    let strony: string[] = [];
+    try {
+      strony = (await sprawdzUzyciaZdjecia(publicId)).strony;
+    } catch (e) {
+      setMsg({ ok: false, text: opiszBlad(e, "sprawdzić użycia zdjęcia") });
       return;
-    const res = await deleteImage(publicId);
+    }
+
+    const pytanie = strony.length
+      ? "To zdjęcie jest wstawione w treść stron:\n\n" +
+        strony.map((nazwa) => `  • ${nazwa}`).join("\n") +
+        "\n\nPo usunięciu zostanie tam puste miejsce - trzeba wejść w każdą " +
+        "z tych stron i usunąć obrazek z treści.\n\nUsunąć mimo to? " +
+        "Tej operacji nie da się cofnąć."
+      : "Usunąć to zdjęcie na stałe?\n\nNie jest wstawione w treść żadnej strony. " +
+        "Tej operacji nie da się cofnąć.";
+
+    if (!confirm(pytanie)) return;
+
+    const res = await deleteImage(publicId, true);
     if (!res.ok) {
-      setMsg({ ok: false, text: opiszBlad(res.error, "usunąć zdjęcia") });
+      setMsg({
+        ok: false,
+        text: opiszBlad("error" in res ? res.error : "", "usunąć zdjęcia"),
+      });
       return;
     }
     setImages((prev) => prev.filter((i) => i.publicId !== publicId));
@@ -236,11 +261,29 @@ export default function ImagesManager() {
       setWyniki(rezultaty);
       const udane = rezultaty.filter((r) => r.ok).length;
       const nieudane = rezultaty.length - udane;
+
+      // Upload leci prosto do Cloudinary, więc strona publiczna nic o nim nie
+      // wie, dopóki nie zrzucimy jej cache. Zdanie „Są już widoczne na stronie"
+      // wolno napisać dopiero, gdy to się uda - inaczej panel wysyła redaktora
+      // w diagnozowanie awarii, której nie ma.
+      let odswiezone = false;
+      if (udane > 0) {
+        try {
+          const res = await odswiezGalerie(otwarty.path);
+          odswiezone = res.ok;
+        } catch {
+          odswiezone = false;
+        }
+      }
+
       setMsg({
         ok: nieudane === 0,
         text:
           nieudane === 0
-            ? `Wgrano ${udane} ${udane === 1 ? "zdjęcie" : "zdjęć"}. Są już widoczne na stronie.`
+            ? `Wgrano ${udane} ${udane === 1 ? "zdjęcie" : "zdjęć"}. ` +
+              (odswiezone
+                ? "Są już widoczne na stronie."
+                : "Na stronie pojawią się w ciągu godziny.")
             : `Wgrano ${udane} z ${rezultaty.length}. ${nieudane} ${nieudane === 1 ? "zdjęcie się nie wgrało" : "zdjęć się nie wgrało"} - szczegóły poniżej.`,
       });
       odswiezZdjecia(otwarty.path);

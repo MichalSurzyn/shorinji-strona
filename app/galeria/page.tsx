@@ -10,6 +10,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/galeria" },
 };
 
+/**
+ * Bez tego strona jest prerenderowana raz, na buildzie, i zostaje taka na zawsze:
+ * Netlify trzymał ją w trwałym cache z TTL ~358 dni (zmierzone: `age: 39955`,
+ * `"Netlify Durable"; ttl=30919180`). Redaktor wgrywał zdjęcia, panel pisał
+ * „Są już widoczne na stronie", a /galeria pokazywała stan z dnia wdrożenia.
+ * Lista albumów i zdjęć siedzi w Cloudinary, nagłówek w bazie - jedno i drugie
+ * zmienia się bez wdrożenia, więc strona musi się odświeżać jak reszta serwisu.
+ */
+export const revalidate = 300;
+
 // Ta podstrona może pobierać dane od razu na serwerze!
 export default async function GaleriaPage() {
   const folders = await getGalleryFolders();

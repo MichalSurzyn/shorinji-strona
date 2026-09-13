@@ -7,8 +7,11 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireUser } from "@/lib/supabase/server";
 
 function revalidateSchedulePages() {
-  revalidatePath("/zajecia/dorosli");
-  revalidatePath("/zajecia/dzieci");
+  // Plan zajęć widać nie tylko na tych dwóch stronach: root layout wstrzykuje
+  // go w dane strukturalne (app/layout.tsx -> StructuredData -> openingHours),
+  // czyli w KAŻDĄ podstronę serwisu. Unieważnianie dwóch tras zostawiało
+  // wyszukiwarkom stare godziny treningów na całej reszcie.
+  revalidatePath("/", "layout");
 }
 
 export async function saveSchedule(slots: ScheduleSlot[]) {

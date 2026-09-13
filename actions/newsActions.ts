@@ -66,6 +66,10 @@ function revalidateNews(...slugi: (string | null | undefined)[]) {
   revalidatePath("/");
   revalidatePath("/aktualnosci");
   for (const s of slugi) if (s) revalidatePath(sciezkaWpisu(s));
+  // Mapa witryny ma własny wpis w cache i żaden z powyższych jej nie dotyka
+  // (jej tagi to _N_T_/layout i _N_T_/sitemap.xml, nie _N_T_/aktualnosci).
+  // Bez tego nowy artykuł nie trafiał do mapy, a skasowany w niej zostawał.
+  revalidatePath("/sitemap.xml");
 }
 
 /**

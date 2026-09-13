@@ -101,7 +101,11 @@ export default async function StronaZDrzewa({ params }: Props) {
 
   /**
    * Podstrona tematyczna renderuje się szablonem `ArticlePage` — z okruszkiem,
-   * spisem treści, galerią z Cloudinary i nawigacją poprzednia/następna.
+   * spisem treści i nawigacją poprzednia/następna. Galerii pod treścią NIE ma:
+   * folder Cloudinary był jednocześnie szufladą i wystawą, więc wszystko, co
+   * w nim leżało, lądowało na dole podstrony bez decyzji redaktora (zdjęcia
+   * wstawione w treść pokazywały się drugi raz). Zdjęcia pokazują się teraz
+   * wyłącznie tam, gdzie redaktor je wstawił.
    *
    * Rozpoznajemy ją po `cloudinary_folder`, bo backfill ustawia tę kolumnę
    * DOKŁADNIE dla dziesięciu podstron tematycznych i dla nikogo więcej.
@@ -123,7 +127,6 @@ export default async function StronaZDrzewa({ params }: Props) {
         title={strona.title}
         intro={strona.intro ?? ""}
         blocks={strona.blocks}
-        cloudinaryFolder={strona.cloudinary_folder}
         prev={i > 0 ? naOdnosnik(rodzenstwo[i - 1]) : undefined}
         next={i >= 0 && i < rodzenstwo.length - 1 ? naOdnosnik(rodzenstwo[i + 1]) : undefined}
       />

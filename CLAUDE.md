@@ -23,6 +23,23 @@ Windows został odczytany jako escape CSS i wywalił wszystkie trasy na 500. Dla
 `app/globals.css` ma `source(none)` i jawne `@source "../app"` / `"../components"`.
 Nowy katalog z kodem trzeba tam dopisać.
 
+**Trasa bez `revalidate` zamarza na rok.** Strona, ktora renderuje dane z bazy albo
+Cloudinary, ale nie ma `export const revalidate`, jest prerenderowana raz na buildzie —
+Netlify trzyma ja w trwalym cache. Zmierzone na produkcji: `/galeria` `ttl=30919180`,
+`/sitemap.xml` `ttl=31498516`, czyli ~365 dni. Redaktor zapisuje, dane **laduja w bazie**,
+panel pisze „zapisano", a strona oddaje kopie z dnia wdrozenia. Dodajac trase czytajaca
+z bazy, dopisz `revalidate`. Kontrola: kolumna `Revalidate` w tabeli `npm run build`
+nie moze byc pusta.
+
+**`revalidatePath("/sciezka")` nie rusza mapy witryny.** Tagi `/sitemap.xml` to
+`_N_T_/layout` i `_N_T_/sitemap.xml`, wiec `revalidatePath("/")` jej nie dotyka,
+a `revalidatePath("/", "layout")` — owszem. Stad akcje wolajace wariant `"layout"`
+odswiezaly mape mimochodem, a `revalidateNews` nie odswiezal jej wcale.
+
+**Cloudinary Search API indeksuje z opoznieniem.** Regeneracja strony tuz po uploadzie
+zapisze niepelna liste zdjec i utrwali ja na cale okno ISR. Do listowania folderu
+uzywaj `resources_by_asset_folder` (Admin API), nie `cloudinary.search`.
+
 **Kolejność wdrożeń przy migracji danych.** Jeśli dane wymagają nowego kodu — najpierw
 wdróż kod. Jeśli kod wymaga danych (np. `PageHeader` zwraca `null` bez wiersza) — najpierw
 zasiej dane. Odwrotna kolejność zabrała numer konta z produkcji na kilka minut.

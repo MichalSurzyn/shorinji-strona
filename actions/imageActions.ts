@@ -5,6 +5,7 @@ import { v2 as cloudinary } from "cloudinary";
 import { KLUCZ_OKLADEK, pobierzOkladki } from "@/lib/galeriaOkladki";
 import { pobierzDatyDodania, wgDatyDodania, zapiszDateDodania } from "@/lib/galeriaKolejnosc";
 import { folderSekcjiZdjec } from "@/lib/pages";
+import { getEditablePage } from "@/lib/editablePages";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireUser } from "@/lib/supabase/server";
 
@@ -290,7 +291,7 @@ export async function setFolderCover(folderPath: string, publicId: string | null
  * `revalidate` liczone w sekundach płaciłoby za nie także wtedy, gdy nikt
  * niczego nie zmienił.
  */
-function odswiezGalerie() {
+function odswiezGalerieBezpiecznie() {
   // Unieważnienie cache'u NIE MOŻE wywrócić operacji, która już się udała.
   // Wywołanie stało wcześniej wewnątrz `try` w `deleteImageFolder`, więc gdy
   // rzuciło, katalog był SKASOWANY, a redaktor dostawał „Nie udało się usunąć
@@ -313,7 +314,7 @@ export async function createImageFolder(name: string) {
     // jeszcze nie ma. O to poprosił klient: „przy dodawaniu kolejnego folderu
     // automatycznie pojawiał się on na samym początku listy".
     await zapiszDateDodania(`Galeria/${clean}`);
-    odswiezGalerie();
+    odswiezGalerieBezpiecznie();
     return { ok: true as const, path: `Galeria/${clean}` };
   } catch (e) {
     console.warn("createImageFolder:", e);
@@ -367,7 +368,10 @@ export async function deleteImageFolder(
       await cloudinary.api.delete_resources(publicIds.slice(i, i + 100));
     }
     await cloudinary.api.delete_folder(path);
-    odswiezGalerie();
+    odswiezGalerieBezpiecznie();
+    // Identyfikatory skasowanych zdjęć mogą siedzieć w blokach treści dowolnej
+    // strony, a stąd nie da się ustalić których - unieważniamy całe drzewo.
+    revalidatePath("/", "layout");
     return { ok: true as const, usunieto: publicIds.length };
   } catch (e) {
     console.warn("deleteImageFolder:", e);
@@ -379,18 +383,133 @@ export async function deleteImageFolder(
   }
 }
 
-export async function deleteImage(publicId: string) {
+/** Czy gdziekolwiek w tej strukturze siedzi dokładnie ten identyfikator. */
+function zawieraId(wartosc: unknown, publicId: string): boolean {
+  if (typeof wartosc === "string") return wartosc === publicId;
+  if (Array.isArray(wartosc)) return wartosc.some((v) => zawieraId(v, publicId));
+  if (wartosc && typeof wartosc === "object")
+    return Object.values(wartosc).some((v) => zawieraId(v, publicId));
+  return false;
+}
+
+/**
+ * Nazwy stron, na których to zdjęcie jest wstawione w treść.
+ *
+ * Bez tego kasowanie było ślepe: panel obiecywał „Zniknie ze strony wszędzie,
+ * gdzie było użyte", a w rzeczywistości zostawał rozbity kadr i nie było jak
+ * ustalić, której strony to dotyczy — identyfikator zostaje w blokach treści,
+ * a Cloudinary oddaje 404. Przechodzimy trzy miejsca, w których bloki mogą
+ * siedzieć: strony z drzewa, treść ośmiu tras o stałym układzie i aktualności. Przy awarii bazy zwracamy pustą listę: lepiej nie zablokować
+ * kasowania niż zablokować je bez powodu.
+ */
+async function znajdzUzycia(publicId: string): Promise<string[]> {
+  const sb = getSupabaseAdmin();
+  if (!sb) return [];
+  const strony: string[] = [];
+  try {
+    // Po migracji drzewa treść stron siedzi w `pages.blocks`. `article_overrides`
+    // i `custom_pages` dalej istnieją (kasuje je dopiero 04-contract.sql), ale są
+    // KOPIĄ sprzed migracji — przeszukiwanie ich obok `pages` wypisałoby tę samą
+    // stronę dwa razy, a przeszukiwanie ich ZAMIAST `pages` (tak było do scalenia
+    // z master) odpowiadałoby „nieużywane" na zdjęcie wstawione w treść.
+    const [ustawienia, strony_drzewa, artykuly] = await Promise.all([
+      sb.from("site_settings").select("key,value").like("key", "page:%"),
+      sb.from("pages").select("title,blocks").is("deleted_at", null),
+      sb.from("articles").select("title,content,cover_image").is("deleted_at", null),
+    ]);
+
+    for (const r of ustawienia.data ?? []) {
+      if (!zawieraId(r.value, publicId)) continue;
+      const slug = String(r.key).slice(5);
+      strony.push(getEditablePage(slug)?.label ?? slug);
+    }
+    for (const r of strony_drzewa.data ?? [])
+      if (zawieraId(r.blocks, publicId)) strony.push(String(r.title));
+    for (const r of artykuly.data ?? [])
+      if (r.cover_image === publicId || zawieraId(r.content, publicId))
+        strony.push(`Aktualność: ${r.title}`);
+  } catch (e) {
+    console.warn("znajdzUzycia:", e);
+    return [];
+  }
+  return strony;
+}
+
+/**
+ * Lista stron, na których zdjęcie jest wstawione w treść - do pytania w panelu.
+ *
+ * Osobno od `deleteImage`, żeby panel mógł zadać JEDNO pytanie z konkretami
+ * zamiast dwóch pod rząd. `potwierdzone` w `deleteImage` zostaje mimo to jako
+ * bezpiecznik na wypadek innego wołającego.
+ */
+export async function sprawdzUzyciaZdjecia(publicId: string) {
   await requireUser();
+  return { ok: true as const, strony: await znajdzUzycia(publicId) };
+}
+
+export async function deleteImage(publicId: string, potwierdzone = false) {
+  await requireUser();
+
+  if (!potwierdzone) {
+    const strony = await znajdzUzycia(publicId);
+    if (strony.length)
+      return { ok: false as const, wymagaPotwierdzenia: true as const, strony };
+  }
+
   try {
     const res = await cloudinary.uploader.destroy(publicId);
     if (res.result !== "ok")
       return { ok: false as const, error: `Cloudinary: ${res.result}` };
-    odswiezGalerie();
+    odswiezGalerieBezpiecznie();
+    // Jak wyżej: to zdjęcie mogło być wstawione w treść dowolnej podstrony.
+    revalidatePath("/", "layout");
     return { ok: true as const };
   } catch (e) {
     console.warn("deleteImage:", e);
     return { ok: false as const, error: "Nie udało się usunąć zdjęcia" };
   }
+}
+
+/**
+ * Trasy publiczne pokazujące zdjęcia z danego folderu Cloudinary.
+ *
+ * Zakładka „Zdjęcia" obsługuje dwa rodzaje folderów: `Galeria/<album>` zasila
+ * /galeria, a `Strona/<temat>/<slug>` gromadzi zdjęcia wstawione w treść danej
+ * podstrony. Puste wyjście znaczy „nie wiem", nie „nigdzie" — wołający ma
+ * wtedy unieważnić całe drzewo.
+ */
+function trasyDlaFolderu(folderPath: string): string[] {
+  if (/^Galeria\/[^/]+$/.test(folderPath)) return ["/galeria"];
+  const m = /^Strona\/([a-z0-9-]+)(?:\/([a-z0-9-]+))?$/.exec(folderPath);
+  if (!m) return [];
+  const [, temat, slug] = m;
+  return slug ? [`/${temat}/${slug}`, `/${temat}`] : [`/${temat}`];
+}
+
+/**
+ * Zrzuca cache tras, na których widać zdjęcia z danego folderu.
+ *
+ * Pliki idą z przeglądarki prosto do Cloudinary, z pominięciem serwera, więc
+ * po uploadzie nie wykonuje się żadna akcja, która mogłaby unieważnić stronę.
+ * Bez tego panel pisał „Wgrano 8 zdjęć. Są już widoczne na stronie", a strona
+ * dalej oddawała wersję z cache.
+ *
+ * Ścieżkę mapujemy tutaj, a nie w panelu: pierwsza wersja tej funkcji
+ * unieważniała /galeria niezależnie od folderu, więc redaktor wgrywający
+ * zdjęcia do podstrony tematycznej dostawał zapewnienie o widoczności,
+ * a odświeżała się trasa, na której tych zdjęć w ogóle nie ma.
+ */
+export async function odswiezGalerie(folderPath: string) {
+  await requireUser();
+
+  const trasy = trasyDlaFolderu(folderPath);
+  if (!trasy.length) {
+    // Nieznany kształt ścieżki - taniej unieważnić za dużo niż skłamać.
+    revalidatePath("/", "layout");
+    return { ok: true as const, trasy: ["/"] };
+  }
+  for (const trasa of trasy) revalidatePath(trasa);
+  return { ok: true as const, trasy };
 }
 
 /**

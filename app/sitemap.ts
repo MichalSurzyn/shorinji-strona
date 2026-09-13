@@ -25,7 +25,18 @@ import { getStronyDoSitemapy } from "../lib/pages";
  * przy `getNews()` sugerował coś przeciwnego.
  */
 
-export const revalidate = 300;
+/**
+ * Bez tego mapa witryny jest prerenderowana raz, na buildzie: zmierzone na
+ * produkcji `"Netlify Durable"; ttl=31498516`, czyli 365 dni. Lista stron
+ * i aktualności idzie z bazy, więc nowy wpis nie trafiał do mapy, a skasowany
+ * w niej zostawał i robot chodził po adresie zwracającym 404.
+ *
+ * Godzina, nie pięć minut: zapis w panelu unieważnia mapę od razu
+ * (`revalidatePath("/sitemap.xml")` w akcjach), więc TTL jest tu tylko
+ * zabezpieczeniem na wypadek zmiany zrobionej z boku, a nie mechanizmem,
+ * na którym stoi świeżość mapy.
+ */
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();

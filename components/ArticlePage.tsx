@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { getImagesFromFolder } from "../actions/articleActions";
-import ArticleGallery from "./ArticleGallery";
 import { slugifyAnchor } from "./NewsBlocks";
 import RenderBlocks from "./RenderBlocks";
 import type { NewsBlock } from "../lib/newsTypes";
@@ -13,12 +11,6 @@ type Props = {
   intro: string;
   /** Treść podstrony jako wspólne bloki (te same co aktualności i strony serwisu). */
   blocks: NewsBlock[];
-  /**
-   * Folder Cloudinary z galerią. PEŁNA ścieżka, nie sklejana tutaj z tematu
-   * i sluga: od etapu 7 trzyma ją kolumna `pages.cloudinary_folder`, właśnie po to,
-   * żeby zmiana adresu nie osierociła zdjęć.
-   */
-  cloudinaryFolder?: string | null;
   /** Prev/Next w obrębie tej samej sekcji — PEŁNE adresy, bo rodzeństwo bierze się z drzewa. */
   prev?: { href: string; title: string };
   next?: { href: string; title: string };
@@ -26,8 +18,8 @@ type Props = {
 
 /**
  * Wspólny szablon podstrony tematycznej: breadcrumb, nagłówek, treść
- * z bloków (jeden renderer dla całej strony), spis treści z nagłówków,
- * automatyczna galeria z Cloudinary i nawigacja poprzednia/następna.
+ * z bloków (jeden renderer dla całej strony), spis treści z nagłówków
+ * i nawigacja poprzednia/następna.
  */
 export default async function ArticlePage({
   topicTitle,
@@ -35,12 +27,9 @@ export default async function ArticlePage({
   title,
   intro,
   blocks,
-  cloudinaryFolder,
   prev,
   next,
 }: Props) {
-  const images = cloudinaryFolder ? await getImagesFromFolder(cloudinaryFolder) : [];
-
   // Spis treści budowany z bloków-nagłówków
   const tocItems = blocks
     .filter((b): b is Extract<NewsBlock, { type: "heading" }> => b.type === "heading")
@@ -78,9 +67,6 @@ export default async function ArticlePage({
             {/* Wspólny renderer z grupowaniem: kolejne bloki "person"
                 stają obok siebie (np. egzaminatorzy). */}
             <RenderBlocks blocks={blocks} />
-
-            {/* Galeria zdjęć z Cloudinary (jeśli są) */}
-            <ArticleGallery publicIds={images} alt={title} />
 
             {/* Prev / Next */}
             {(prev || next) && (
