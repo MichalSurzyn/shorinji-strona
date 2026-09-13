@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { przekierujAlboNotFound } from "@/lib/przekierowania";
-import NewsBlocks from "@/components/NewsBlocks";
+import RenderBlocks from "@/components/RenderBlocks";
 import { clUrl } from "@/lib/cloudinary";
 import { getNewsBySlug } from "@/lib/news";
 
@@ -69,7 +69,7 @@ export default async function NewsArticlePage({ params }: Props) {
               />
             </div>
           )}
-          <NewsBlocks blocks={article.content} />
+          <RenderBlocks blocks={article.content} />
         </div>
       </div>
     </div>

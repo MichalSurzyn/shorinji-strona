@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { opiszBlad } from "@/lib/adminErrors";
+import Komunikat, { useKomunikat } from "./Komunikat";
 import {
   addAdmin,
   changeOwnPassword,
@@ -24,7 +25,10 @@ export default function AdminsManager({
   const [password, setPassword] = useState("");
   const [newPass, setNewPass] = useState("");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  // Wspólny komunikat panelu. Nazwa `setMsg` zostaje, więc wywołania niżej
+  // są bez zmian — hak daje ją ze stabilną referencją, co jest warunkiem
+  // bezpieczeństwa tam, gdzie wchodzi do zależności efektu.
+  const { msg, wyczysc, ustaw: setMsg } = useKomunikat();
 
   async function refresh() {
     setAdmins(await listAdmins());
@@ -140,17 +144,7 @@ export default function AdminsManager({
 
   return (
     <div className="space-y-6">
-      {msg && (
-        <div
-          className={`rounded-lg px-4 py-3 text-sm ${
-            msg.ok
-              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              : "bg-red-50 text-red-700 border border-red-200"
-          }`}
-        >
-          {msg.text}
-        </div>
-      )}
+      <Komunikat msg={msg} onZamknij={wyczysc} />
 
       <div className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100">
         {admins.length === 0 && (

@@ -7,6 +7,14 @@ import type { NewsBlock } from "@/lib/newsTypes";
  * Wspólny renderer bloków treści (ciemny motyw strony) - używany przez
  * aktualności, strony serwisu i podstrony tematyczne.
  * Inline: **pogrubienie**, *kursywa*, ==żółte wyróżnienie==, [link](adres).
+ *
+ * NIE WOŁAJ TEGO Z TRASY — wejściem jest components/RenderBlocks.tsx.
+ * To czysty renderer: bloki „bank" i „kontakt" nie noszą własnych danych i bez
+ * propsów `bank` / `kontakt` kończą się `return null` w swoich gałęziach
+ * `switch`. Nie błędem, nie ostrzeżeniem w konsoli, nie pustą ramką — NICZYM.
+ * Cztery trasy wołały ten renderer wprost i trzy z nich gubiły te sekcje po
+ * cichu: redaktor wstawiał na stronie z drzewa „numer konta", dostawał
+ * „Zapisane." i widział stronę bez tej sekcji, bez wskazówki dlaczego.
  */
 export function InlineText({ text }: { text: string }) {
   const parts = text
@@ -484,7 +492,18 @@ function PersonCard({
             />
           </div>
         )}
-        <div className="rounded-xl border border-yellow-500/40 bg-yellow-500/5 backdrop-blur-sm p-6">
+        {/* Kolumna flex z wyśrodkowaniem w pionie, nie zwykły blok.
+            Elementy gridu rozciągają się do wysokości wiersza, więc ta karta
+            jest tak wysoka jak zdjęcie obok. Przy treści krótszej od zdjęcia
+            cała wolna przestrzeń zbierała się POD tekstem — karta wyglądała
+            jak niedokończona. Teraz dzieli się równo na górę i dół, czyli
+            czyta się jak większy padding; `p-6` jest jego dolną granicą, więc
+            przy długim opisie treść dojeżdża do krawędzi i karta rośnie
+            razem ze zdjęciem, zamiast się rozjeżdżać.
+
+            Układ kafelkowy (kilka osób obok siebie) zostaje wyrównany DO GÓRY
+            — tam nagłówki kart mają stać w jednej linii. */}
+        <div className="flex flex-col justify-center rounded-xl border border-yellow-500/40 bg-yellow-500/5 backdrop-blur-sm p-6">
           {details}
         </div>
       </div>

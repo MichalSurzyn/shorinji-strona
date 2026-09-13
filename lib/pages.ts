@@ -1,5 +1,7 @@
+import { cache } from "react";
 import { getSupabaseAdmin } from "./supabaseAdmin";
 import type { NewsBlock } from "./newsTypes";
+import { widoczneGalezie, type WierszWidocznosci } from "./widocznosc";
 
 /**
  * Odczyt drzewa stron (`public.pages`) i przekierowań (`public.redirects`).
@@ -57,14 +59,24 @@ const KOLUMNY =
  *                 renderować publicznego layoutu ani odpalać dwóch zapytań
  *                 do uśpionego Supabase, z revalidate=300 na każdym śmieciu,
  *   downloads   - `/downloads/<plik>` obsługuje route handler; samo `/downloads`
- *                 dziś daje 404 i ma dawać dalej,
- *   zajecia     - „ZAJĘCIA" to nagłówek grupujący: ma `full_path` NULL, więc
- *                 węzła pod tym adresem nie ma i nigdy nie będzie.
+ *                 dziś daje 404 i ma dawać dalej.
+ *
+ * `zajecia` BYŁO tu z uzasadnieniem „«ZAJĘCIA» to nagłówek grupujący: ma
+ * `full_path` NULL, więc węzła pod tym adresem nie ma i nigdy nie będzie".
+ * Etap E to założenie łamie: panel pozwala teraz zamienić nagłówek w stronę,
+ * a wtedy węzeł pod `/zajecia` istnieje. Przy starym wpisie ta strona byłaby
+ * WIDMEM — wiersz w bazie, plakietka „opublikowana" w panelu i 404 publicznie,
+ * bo guard odrzucał żądanie PRZED zapytaniem do bazy.
+ *
+ * Koszt zdjęcia: `/zajecia` i nieistniejące `/zajecia/cokolwiek` odpytują teraz
+ * bazę, zamiast dawać 404 od progu. Adresy `/zajecia/dorosli`, `/zajecia/dzieci`
+ * i `/zajecia/cennik` to bez zmian pliki tras, a te mają pierwszeństwo przed
+ * trasą catch-all — więc dla nich nie zmienia się nic.
  *
  * Adresy z kropką (`/robots.txt`, `/.env`, `/wp-login.php`) i z wielkimi literami
  * (`/Kontakt`) odsiewa wzorzec segmentu niżej — nie trzeba ich tu wymieniać.
  */
-export const SEGMENTY_BEZ_TRESCI = new Set(["admin", "api", "downloads", "zajecia"]);
+export const SEGMENTY_BEZ_TRESCI = new Set(["admin", "api", "downloads"]);
 
 /**
  * Slugi zajęte przez stałe części serwisu — walidacja przy zakładaniu strony
@@ -95,7 +107,12 @@ export const RESERVED_SLUGS = new Set([
   "o-shorinji",
   "organizacja",
   "program-nauczania",
-  "zajecia",
+  // `zajecia` zdjęte w etapie E. Ta lista broni przed kolizją z trasą W KODZIE,
+  // a `app/zajecia/page.tsx` NIE ISTNIEJE — są tylko `app/zajecia/dorosli`,
+  // `/dzieci` i `/cennik`. Adres `/zajecia` był więc wolny, a wpis tutaj
+  // blokował jedyną rzecz, o którą właściciel poprosił: zamianę nagłówka
+  // „ZAJĘCIA" w prawdziwą stronę. Zagnieżdżone pliki tras mają pierwszeństwo
+  // przed trasą catch-all, więc `/zajecia/dorosli` dalej serwuje kod.
   "downloads",
   "sitemap.xml",
   "robots.txt",
@@ -129,7 +146,44 @@ function klient() {
   return sb;
 }
 
-/** Strona pod adresem — wyłącznie opublikowana i poza koszem. */
+/**
+ * Szkielet drzewa do liczenia widoczności — wszystkie żywe wiersze, cztery pola.
+ *
+ * `cache()` z Reacta trzyma wynik przez JEDNO żądanie. To nie jest optymalizacja
+ * „na wszelki wypadek”: na trasie catch-all `getStrona` woła się dwa razy — raz
+ * w `generateMetadata`, raz w komponencie — a bez memoizacji ukrycie po gałęzi
+ * kosztowałoby dwa dodatkowe okrążenia do Supabase na każde żądanie.
+ *
+ * Świadomie BEZ filtrów `kind` i `source`: łańcuch przodków prowadzi przez
+ * nagłówki i przez wiersze z plików tras. `/faq` stoi dziś pod nagłówkiem
+ * „ZAJĘCIA”, a `/program-nauczania/*` pod stroną `source='route'` — zawężone
+ * zapytanie urwałoby im łańcuch.
+ */
+const wierszeWidocznosci = cache(async (): Promise<WierszWidocznosci[]> => {
+  const { data, error } = await klient()
+    .from("pages")
+    .select("id,parent_id,published,in_menu")
+    .is("deleted_at", null)
+    .abortSignal(AbortSignal.timeout(6000));
+  if (error) throw new Error(`[pages] wierszeWidocznosci: ${error.message}`);
+  return (data ?? []) as unknown as WierszWidocznosci[];
+});
+
+/** Zbiór id, których cały łańcuch przodków jest opublikowany. */
+async function opublikowaneGalezie(): Promise<Set<string>> {
+  return widoczneGalezie(await wierszeWidocznosci()).opublikowane;
+}
+
+/**
+ * Strona pod adresem — opublikowana, poza koszem I w opublikowanej gałęzi.
+ *
+ * Ostatni warunek to punkt A6. Sam `published` na wierszu nie wystarczy:
+ * strona trzeciego poziomu pod ukrytym rodzicem miała własne `published = true`
+ * i oddawała 200, choć w menu nie było już do niej żadnej drogi.
+ *
+ * Ukrycie daje `null`, czyli 404 przez `przekierujAlboNotFound` — a błąd
+ * odczytu dalej leci wyjątkiem, zgodnie z zasadą naczelną tego pliku.
+ */
 export async function getStrona(sciezka: string): Promise<WezelStrony | null> {
   const { data, error } = await klient()
     .from("pages")
@@ -144,7 +198,12 @@ export async function getStrona(sciezka: string): Promise<WezelStrony | null> {
   // PGRST116, a kod czytający samo `data` uznałby to za „nie ma strony".
   // Ten sam błąd, popełniony w `syncNavItem`, dokładał trzeci duplikat menu.
   if (error) throw new Error(`[pages] getStrona(${sciezka}): ${error.message}`);
-  return (data as WezelStrony | null) ?? null;
+  const wezel = (data as WezelStrony | null) ?? null;
+  if (!wezel) return null;
+  // Węzeł poziomu 0 nie ma przodków — oszczędzamy zapytanie na najczęstszym
+  // przypadku (wszystkie osiem sekcji menu głównego).
+  if (wezel.parent_id === null) return wezel;
+  return (await opublikowaneGalezie()).has(wezel.id) ? wezel : null;
 }
 
 /** Opublikowane dzieci węzła — kafelki na stronie-hubie. */
@@ -200,37 +259,50 @@ export async function getSciezkiZBazy(): Promise<string[]> {
     console.warn("[pages] getSciezkiZBazy: brak konfiguracji Supabase - zero stron prerenderowanych.");
     return [];
   }
+  // Bez `.eq("published", true)`: gałąź trzeba policzyć na komplecie wierszy,
+  // inaczej ukryty rodzic wypada z zestawu i jego dziecko wygląda na żywe.
+  // Filtry `kind`/`source` też muszą zejść z zapytania — łańcuch przodków
+  // prowadzi przez nagłówki i przez wiersze z plików tras.
   const { data, error } = await sb
     .from("pages")
-    .select("full_path")
-    .eq("kind", "page")
-    .eq("source", "db")
-    .eq("published", true)
+    .select("id,parent_id,published,in_menu,kind,source,full_path")
     .is("deleted_at", null)
     .abortSignal(AbortSignal.timeout(15000));
   if (error) {
     console.warn(`[pages] getSciezkiZBazy: ${error.message} - zero stron prerenderowanych.`);
     return [];
   }
-  return (data ?? []).map((w) => w.full_path as string).filter(Boolean);
+  const wiersze = (data ?? []) as unknown as (WierszWidocznosci & {
+    kind: string;
+    source: string;
+    full_path: string | null;
+  })[];
+  const { opublikowane } = widoczneGalezie(wiersze);
+  return wiersze
+    .filter((w) => w.kind === "page" && w.source === "db" && opublikowane.has(w.id))
+    .map((w) => w.full_path as string)
+    .filter(Boolean);
 }
 
 /** Wszystkie żywe strony — do sitemapy. */
 export async function getStronyDoSitemapy(): Promise<WezelStrony[]> {
   const sb = getSupabaseAdmin();
   if (!sb) return [];
+  // Jak w `getSciezkiZBazy`: komplet żywych wierszy, filtr po policzeniu gałęzi.
+  // Sitemapa ogłaszająca stronę spod ukrytego rodzica zapraszałaby Google pod
+  // adres, który od tej zmiany oddaje 404.
   const { data, error } = await sb
     .from("pages")
     .select(KOLUMNY)
-    .eq("kind", "page")
-    .eq("published", true)
     .is("deleted_at", null)
     .abortSignal(AbortSignal.timeout(15000));
   if (error) {
     console.warn(`[pages] getStronyDoSitemapy: ${error.message}`);
     return [];
   }
-  return (data ?? []) as unknown as WezelStrony[];
+  const wiersze = (data ?? []) as unknown as WezelStrony[];
+  const { opublikowane } = widoczneGalezie(wiersze);
+  return wiersze.filter((w) => w.kind === "page" && w.published && opublikowane.has(w.id));
 }
 
 /** Węzeł po identyfikatorze — do okruszka i rodzeństwa w trasie catch-all. */
@@ -243,4 +315,57 @@ export async function getStronaPoId(id: string): Promise<WezelStrony | null> {
     .maybeSingle();
   if (error) throw new Error(`[pages] getStronaPoId(${id}): ${error.message}`);
   return (data as WezelStrony | null) ?? null;
+}
+
+/**
+ * Folder zdjęć SEKCJI dla danego adresu, np. `/buddyzm/medytacja`
+ * → `Strona/buddyzm`.
+ *
+ * DLACZEGO SEKCJA, A NIE PODSTRONA
+ * --------------------------------
+ * Do etapu F zdjęcia szły do folderu per PODSTRONA (`Strona/buddyzm/medytacja`),
+ * więc w panelu rosła osobna kafelka na każdą podstronę — przy dzisiejszym
+ * drzewie dziesięć. Klient poprosił wprost: „nie ma potrzeby rozbudowywania
+ * tej galerii osobno dla każdej podstrony w zakładce Buddyzm", i chciał sześciu
+ * kafelków, po jednym na sekcję menu.
+ *
+ * Ta funkcja jest jednym miejscem, w którym ta reguła żyje — panel liczy z niej
+ * kafelki, a edytory treści podpowiadają z niej folder przy wgrywaniu. Gdyby
+ * każde z tych miejsc liczyło po swojemu, zdjęcia wgrane z edytora przestałyby
+ * być widoczne w kafelku sekcji, bez żadnego błędu.
+ *
+ * Zwraca `null` dla adresu, którego nie da się przypisać do sekcji (brak
+ * adresu — nagłówek albo odnośnik).
+ */
+export function folderSekcjiZdjec(fullPath: string | null | undefined): string | null {
+  if (!fullPath) return null;
+  const segment = fullPath.split("/").filter(Boolean)[0];
+  if (!segment) return null;
+  return `Strona/${segment}`;
+}
+
+/**
+ * Adres z nazwy: „Coś Tam” → „cos-tam”.
+ *
+ * Polskie znaki rozkładamy przez normalizację NFD i zdejmujemy znaki
+ * diakrytyczne, ale „ł" trzeba obsłużyć osobno — to NIE jest „l" ze znakiem
+ * diakrytycznym, tylko oddzielny znak Unicode, więc NFD go nie rozłoży
+ * i wypadłby z adresu razem z resztą niedozwolonych znaków.
+ *
+ * Wynik zawsze pasuje do `pages_slug_format_chk` (`^[a-z0-9-]+$`) albo jest
+ * pusty — pustego nie podpowiadamy, redaktor wpisze własny.
+ */
+export function slugZNazwy(nazwa: string): string {
+  return nazwa
+    .normalize("NFD")
+    // UWAGA: w nawiasie stoją DOSŁOWNE znaki łączące Unicode (U+0300–U+036F),
+    // niewidoczne w edytorze. Nie „porządkuj" tego wiersza ręcznie — sprawdź
+    // najpierw testem, bo skasowanie ich cicho wyłącza zdejmowanie ogonków
+    // i „Coś Tam" przestanie dawać „cos-tam".
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/ł/g, "l")
+    .replace(/Ł/g, "L")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }

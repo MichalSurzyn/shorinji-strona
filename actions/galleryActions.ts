@@ -2,6 +2,7 @@
 
 import { v2 as cloudinary } from 'cloudinary';
 import { naPoczatek, pobierzOkladki } from '@/lib/galeriaOkladki';
+import { pobierzDatyDodania, wgDatyDodania } from '@/lib/galeriaKolejnosc';
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -45,10 +46,17 @@ export async function getGalleryFolders(): Promise<GalleryFolder[]> {
     // Bez wpisu album zachowuje układ domyślny: najnowsze zdjęcie na wierzchu.
     const okladki = await pobierzOkladki();
 
-    return lista.map((f) => {
+    const albumy = lista.map((f) => {
       const zdjecia = naPoczatek(wgFolderu.get(f.path) ?? [], okladki[f.path]);
       return { name: f.name, path: f.path, covers: zdjecia.slice(0, 3), count: zdjecia.length };
     });
+
+    // Najnowszy dodany album na początku — ta sama kolejność co w panelu.
+    // `sub_folders` oddaje foldery alfabetycznie, więc bez tego nowy album
+    // trafiał w środek listy i redaktor musiał go szukać. Albumy istniejące
+    // przed wprowadzeniem tej funkcji zachowują dotychczasową kolejność
+    // alfabetyczną — patrz komentarz w lib/galeriaKolejnosc.ts.
+    return wgDatyDodania(albumy, await pobierzDatyDodania());
   } catch (error) {
     console.error("Błąd pobierania folderów:", error);
     return [];

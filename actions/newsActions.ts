@@ -6,6 +6,37 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { oproznijStaryKosz, zapiszWersje } from "@/lib/versions";
 import type { NewsBlock } from "@/lib/newsTypes";
 
+/**
+ * Aktualności — zapis. Wszystko kluczem SERWISOWYM, po `requireUser()`.
+ *
+ * DLACZEGO NIE KLIENTEM SESYJNYM (zgłoszenie E3 z trzeciej rundy)
+ * ----------------------------------------------------------------
+ * `public.articles` ma włączone RLS i ZERO polityk — sprawdzone zapytaniem
+ * `select * from pg_policies where schemaname='public'` (2026-09-09: zero
+ * wierszy dla wszystkich sześciu tabel). Klient sesyjny występuje w bazie jako
+ * rola `authenticated`, więc podlega RLS i nie widzi ani jednego wiersza.
+ *
+ * Skutki były RÓŻNE dla różnych operacji i to jest cała trudność tego błędu:
+ *   INSERT  → 42501, redaktor widzi „Twoje konto nie ma uprawnień” (to zgłosił),
+ *   UPDATE  → trafia w ZERO wierszy, PostgREST oddaje 204 BEZ błędu,
+ *   DELETE  → to samo.
+ * Czyli zapis zmian, kosz, przywracanie i kasowanie na stałe kończyły się
+ * komunikatem „Zapisano. Zmiany są już widoczne na stronie." i nie robiły nic.
+ * Zmierzone end-to-end przez przeglądarkę na poligonie: tytuł przed zapisem
+ * i po zapisie identyczny, panel zameldował sukces.
+ *
+ * Dlatego przepięte są WSZYSTKIE pięć funkcji naraz, a nie sama ta, którą
+ * redaktor umiał opisać. Zostawienie połowy dałoby stan najgorszy z możliwych:
+ * kosz wyglądający na działający i niedziałający, bez żadnego komunikatu.
+ *
+ * Poprawką NIE jest dodanie polityki RLS. Rola `authenticated` ma GRANT-y na
+ * wszystkich tabelach, a klucz anon leży w bundlu przeglądarki — polityka
+ * `for all to authenticated using (true)` oddałaby szkice i kosz każdemu, kto
+ * ma konto w tym projekcie Supabase. Bramką dostępu jest `requireUser()`
+ * i tylko ono; kolejność „requireUser() PRZED pierwszym użyciem klienta”
+ * obowiązuje w każdej funkcji tego pliku.
+ */
+
 export interface NewsInput {
   slug: string;
   title: string;
@@ -16,15 +47,44 @@ export interface NewsInput {
   published_at: string;
 }
 
-function revalidateNews(slug?: string) {
+/**
+ * Klient albo wyjątek — ten sam wzorzec co `actions/pagesActions.ts`.
+ *
+ * Świadomie NIE `if (sb) { … }`: `getSupabaseAdmin()` memoizuje także `null`,
+ * więc wariant warunkowy zamieniłby brak konfiguracji w kolejny cichy no-op,
+ * czyli dokładnie w ten błąd, który ten plik naprawia.
+ */
+function klient() {
+  const sb = getSupabaseAdmin();
+  if (!sb) throw new Error("Brak konfiguracji Supabase.");
+  return sb;
+}
+
+const sciezkaWpisu = (slug: string) => `/aktualnosci/${slug}`;
+
+function revalidateNews(...slugi: (string | null | undefined)[]) {
   revalidatePath("/");
   revalidatePath("/aktualnosci");
-  if (slug) revalidatePath(`/aktualnosci/${slug}`);
+  for (const s of slugi) if (s) revalidatePath(sciezkaWpisu(s));
+}
+
+/**
+ * Zero zmienionych wierszy to BŁĄD, nie sukces.
+ *
+ * `update`/`delete` bez `.select()` oddają 204 i nie da się odróżnić „zapisano”
+ * od „nie trafiono w żaden wiersz”. Po przepięciu na klucz serwisowy RLS już
+ * takiego stanu nie wywoła, ale wywoła go złe `id` albo druga karta, w której
+ * ktoś właśnie przeniósł ten artykuł do kosza — a wtedy panel znów powiedziałby
+ * „Zapisano”. Kosztowało to całą rundę checklisty, więc asercja zostaje na stałe.
+ */
+function czyTrafione(wiersze: unknown[] | null, czynnosc: string) {
+  if (wiersze && wiersze.length > 0) return null;
+  return `Nie udało się ${czynnosc} — tego artykułu już nie ma. Odśwież listę.`;
 }
 
 export async function createNewsArticle(input: NewsInput) {
-  const { supabase } = await requireUser();
-  const { data, error } = await supabase
+  const { user } = await requireUser();
+  const { data, error } = await klient()
     .from("articles")
     .insert({
       slug: input.slug,
@@ -34,6 +94,7 @@ export async function createNewsArticle(input: NewsInput) {
       content: input.content,
       published: input.published,
       published_at: input.published_at,
+      updated_by: user.email ?? null,
     })
     .select("id")
     .single();
@@ -44,18 +105,16 @@ export async function createNewsArticle(input: NewsInput) {
 }
 
 export async function saveNewsArticle(id: string, input: NewsInput) {
-  const { supabase, user } = await requireUser();
+  const { user } = await requireUser();
+  const sb = klient();
 
   // Migawka stanu SPRZED nadpisania - to do niej wraca się z historii.
-  // Zapisujemy przez klienta serwisowego, bo tabela historii nie ma polityk
-  // dla roli zalogowanej.
-  const sb = getSupabaseAdmin();
-  if (sb) {
-    const { data: poprzedni } = await sb.from("articles").select("*").eq("id", id).maybeSingle();
-    if (poprzedni) await zapiszWersje("article", id, poprzedni, user.email);
-  }
+  const { data: poprzedni } = await sb.from("articles").select("*").eq("id", id).maybeSingle();
+  if (poprzedni) await zapiszWersje("article", id, poprzedni, user.email);
 
-  const { error } = await supabase
+  const starySlug = (poprzedni?.slug as string | undefined) ?? null;
+
+  const { data, error } = await sb
     .from("articles")
     .update({
       slug: input.slug,
@@ -68,11 +127,62 @@ export async function saveNewsArticle(id: string, input: NewsInput) {
       updated_at: new Date().toISOString(),
       updated_by: user.email ?? null,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id");
   if (error) return { ok: false as const, error: error.message };
+  const pusto = czyTrafione(data, "zapisać artykułu");
+  if (pusto) return { ok: false as const, error: pusto };
 
-  revalidateNews(input.slug);
+  if (starySlug && starySlug !== input.slug) {
+    await przekierujWpis(starySlug, input.slug);
+  }
+
+  revalidateNews(input.slug, starySlug);
   return { ok: true as const };
+}
+
+/**
+ * Przekierowanie spod starego adresu wpisu — druga połowa pary, której dotąd
+ * nie było.
+ *
+ * `app/aktualnosci/[slug]/page.tsx` czyta `redirects` przy nieudanym odczycie
+ * wpisu i komentarz w tym pliku zapowiada, że wiersz „robi akcja zapisu”.
+ * Nie robiła go żadna — bo zapis w ogóle nie dochodził do bazy. Aktualności
+ * stoją poza drzewem `pages`, więc trigger `pages_after_update` ich nie widzi
+ * i 308 trzeba zapisać tutaj, ręcznie.
+ *
+ * Rozstrzygnięcie właściciela z etapu 0b: aktualności DOSTAJĄ przekierowania
+ * przy zmianie sluga, bo to trwałe archiwum wpisów, a nie efemeryda.
+ *
+ * Zapis idzie PO udanym UPDATE. Odwrotna kolejność przy awarii zostawiłaby
+ * przekierowanie prowadzące na adres, którego nie ma — ta sama zasada, co
+ * przy zamianie rodzaju strony.
+ */
+async function przekierujWpis(starySlug: string, nowySlug: string) {
+  const sb = klient();
+  const stary = sciezkaWpisu(starySlug);
+  const nowy = sciezkaWpisu(nowySlug);
+
+  const { error } = await sb
+    .from("redirects")
+    .upsert({ old_path: stary, new_path: nowy, status: 308, source: "auto" }, { onConflict: "old_path" });
+  if (error) {
+    // Nieudane przekierowanie nie może wycofać zapisanej treści — redaktor
+    // straciłby swoją pracę przez wiersz pomocniczy. Zostaje w logu serwera.
+    console.warn("[aktualnosci] nie zapisano przekierowania:", error.message);
+    return;
+  }
+
+  // Domknięcie łańcuchów: wpisy prowadzące na STARY adres mają odtąd prowadzić
+  // wprost na nowy. Bez tego drugi z rzędu zmieniony slug daje 308 na 308,
+  // a wyszukiwarki przestają za tym chodzić po kilku skokach.
+  await sb.from("redirects").update({ new_path: nowy }).eq("new_path", stary).neq("old_path", nowy);
+
+  // Adres, który właśnie stał się ŻYWY, nie może jednocześnie być źródłem
+  // przekierowania — czytelnik trafiłby na wiersz mówiący, że ta strona jest
+  // gdzie indziej. Odczyt strony wygrywa z `redirects`, więc to nie awaria,
+  // tylko nieprawda w tabeli; kasujemy ją przy okazji.
+  await sb.from("redirects").delete().eq("old_path", nowy);
 }
 
 /**
@@ -83,36 +193,51 @@ export async function saveNewsArticle(id: string, input: NewsInput) {
  * ale wraca jednym kliknięciem przez 30 dni.
  */
 export async function deleteNewsArticle(id: string) {
-  const { supabase, user } = await requireUser();
-  const { error } = await supabase
+  const { user } = await requireUser();
+  const sb = klient();
+  const { data, error } = await sb
     .from("articles")
     .update({ deleted_at: new Date().toISOString(), updated_by: user.email ?? null })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id,slug");
   if (error) return { ok: false as const, error: error.message };
+  const pusto = czyTrafione(data, "przenieść artykułu do kosza");
+  if (pusto) return { ok: false as const, error: pusto };
 
-  revalidateNews();
+  revalidateNews(data?.[0]?.slug as string | undefined);
   return { ok: true as const };
 }
 
 /** Przywraca artykuł z kosza. */
 export async function restoreNewsArticle(id: string) {
-  const { supabase } = await requireUser();
-  const { error } = await supabase.from("articles").update({ deleted_at: null }).eq("id", id);
+  const { user } = await requireUser();
+  const { data, error } = await klient()
+    .from("articles")
+    .update({ deleted_at: null, updated_by: user.email ?? null })
+    .eq("id", id)
+    .select("id,slug");
   if (error) return { ok: false as const, error: error.message };
-  revalidateNews();
+  const pusto = czyTrafione(data, "przywrócić artykułu");
+  if (pusto) return { ok: false as const, error: pusto };
+
+  revalidateNews(data?.[0]?.slug as string | undefined);
   return { ok: true as const };
 }
 
 /** Kasuje artykuł z kosza NA STAŁE. Jedyna operacja bez odwrotu. */
 export async function purgeNewsArticle(id: string) {
-  const { supabase } = await requireUser();
-  const { error } = await supabase
+  await requireUser();
+  const { data, error } = await klient()
     .from("articles")
     .delete()
     .eq("id", id)
-    .not("deleted_at", "is", null); // bezpiecznik: tylko z kosza
+    .not("deleted_at", "is", null) // bezpiecznik: tylko z kosza
+    .select("id,slug");
   if (error) return { ok: false as const, error: error.message };
-  revalidateNews();
+  const pusto = czyTrafione(data, "usunąć artykułu na stałe");
+  if (pusto) return { ok: false as const, error: pusto };
+
+  revalidateNews(data?.[0]?.slug as string | undefined);
   return { ok: true as const };
 }
 

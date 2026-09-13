@@ -8,6 +8,7 @@ import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import type { FooterData, FooterKolumna, FooterLink } from "@/lib/footerTypes";
 import PasekAkcji from "./PasekAkcji";
 import FilePicker from "./FilePicker";
+import Komunikat, { useKomunikat } from "./Komunikat";
 
 const inputCls =
   "w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
@@ -80,7 +81,10 @@ function ListaOdnosnikow({
 export default function FooterEditor({ initialData }: { initialData: FooterData }) {
   const [data, setData] = useState<FooterData>(initialData);
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  // Wspólny komunikat panelu. Nazwa `setMsg` zostaje, więc kilkanaście
+  // wywołań niżej jest bez zmian — hak daje ją ze stabilną referencją,
+  // co jest warunkiem bezpieczeństwa tam, gdzie wchodzi do zależności efektu.
+  const { msg, wyczysc, ustaw: setMsg } = useKomunikat();
   const [zapisany, setZapisany] = useState<FooterData>(initialData);
 
   const zmieniono = czyZmieniono(data, zapisany);
@@ -164,18 +168,7 @@ export default function FooterEditor({ initialData }: { initialData: FooterData 
         onZapisz={handleSave}
       />
 
-      {msg && (
-        <div
-          role="status"
-          className={`rounded-lg px-4 py-3 text-sm ${
-            msg.ok
-              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              : "bg-red-50 text-red-700 border border-red-200"
-          }`}
-        >
-          {msg.text}
-        </div>
-      )}
+      <Komunikat msg={msg} onZamknij={wyczysc} />
 
       <p className="text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
         Na szerokim ekranie kolumny stoją obok siebie (teraz widocznych: {widocznych}), na tablecie

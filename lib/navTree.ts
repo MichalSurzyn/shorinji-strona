@@ -1,4 +1,5 @@
-import type { NavLink } from "./navTypes";
+import type { NavChild, NavLink } from "./navTypes";
+import { widoczneGalezie } from "./widocznosc";
 
 /**
  * Budowa drzewa menu z wierszy tabeli `pages`.
@@ -24,6 +25,8 @@ export interface PageNavRow {
   menu_label: string | null;
   depth: number;
   position: number;
+  published: boolean;
+  in_menu: boolean;
 }
 
 /** Adres, pod który prowadzi pozycja menu. Nagłówek nie prowadzi nigdzie. */
@@ -33,24 +36,67 @@ function adres(w: PageNavRow): string | undefined {
   return w.full_path ?? undefined;
 }
 
-export function buildNavTree(rows: PageNavRow[]): NavLink[] {
-  const wgPozycji = (a: PageNavRow, b: PageNavRow) => a.position - b.position;
+/**
+ * Składa menu z KOMPLETU żywych wierszy drzewa.
+ *
+ * Filtr widoczności siedzi TUTAJ, a nie w zapytaniu — i to jest cała zmiana
+ * z punktu A6. Powód jest ten sam, dla którego ten plik w ogóle powstał:
+ * `scripts/snapshot-menu.mjs` woła tę samą funkcję, żeby wyprodukować zapas
+ * menu do repozytorium. Reguła zostawiona po stronie zapytania musiałaby być
+ * skopiowana do skryptu ręcznie — a rozjazd między nimi widać dopiero wtedy,
+ * gdy baza milczy i serwis pokazuje zapas, czyli w najgorszym możliwym momencie.
+ *
+ * Wejściem są WSZYSTKIE wiersze z `deleted_at is null`, także ukryte i te poza
+ * menu: bez ukrytego rodzica w zestawie nie da się stwierdzić, że jego dziecko
+ * ma zniknąć razem z nim.
+ */
+export function buildNavTree(wszystkieZywe: PageNavRow[]): NavLink[] {
+  const { wMenu } = widoczneGalezie(wszystkieZywe);
+  const rows = wszystkieZywe.filter((w) => wMenu.has(w.id));
+
+  /**
+   * Pozycja, a przy remisie `id` — dokładnie ten sam klucz, którym sortuje
+   * panel (`dzieci` w TreeManager) i akcje (`przenumeruj` w pagesActions).
+   *
+   * Indeks `pages_parent_position_idx` NIE jest unikalny, więc dwoje rodzeństwa
+   * może mieć tę samą pozycję. Bez drugiego kryterium kolejność menu u
+   * odwiedzającego jest wtedy NIEOKREŚLONA — a panel pokazuje swoją, bo on
+   * tie-break ma. Porównanie znak po znaku, nie `localeCompare`: to drugie jest
+   * zależne od locale, a ICU pomija myślnik na pierwszym poziomie porównania,
+   * więc dla identyfikatorów dawałoby inny porządek niż `order("id")`
+   * w Postgresie.
+   */
+  const wgPozycji = (a: PageNavRow, b: PageNavRow) =>
+    a.position - b.position || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+
+  /**
+   * Gałąź poniżej pierwszego poziomu — rekurencyjnie, bo drugi i trzeci poziom
+   * różnią się w menu tylko wcięciem i rozmiarem pisma.
+   *
+   * Węzeł bez adresu (nagłówek zagnieżdżony) ZOSTAJE, jeśli ma widoczne
+   * podstrony: renderuje się jako podpis. Wypada tylko wtedy, gdy nie prowadzi
+   * nigdzie i nie ma czego grupować — wcześniej wypadał zawsze, zabierając ze
+   * sobą całą swoją gałąź.
+   */
+  const galaz = (rodzic: string): NavChild[] =>
+    rows
+      .filter((w) => w.parent_id === rodzic)
+      .sort(wgPozycji)
+      .map((w) => {
+        const wnuki = galaz(w.id);
+        return {
+          label: w.menu_label ?? w.title,
+          ...(adres(w) ? { href: adres(w) } : {}),
+          ...(wnuki.length ? { children: wnuki } : {}),
+        };
+      })
+      .filter((w) => w.href || w.children?.length);
 
   return rows
     .filter((w) => w.depth === 0)
     .sort(wgPozycji)
     .map((rodzic) => {
-      const dzieci = rows
-        .filter((w) => w.parent_id === rodzic.id)
-        .sort(wgPozycji)
-        // Dziecko bez adresu wypada z menu. Dotyczy nagłówka zagnieżdżonego pod
-        // nagłówkiem: `NavChild` wymaga `href`, a rozwijane menu i tak renderuje
-        // tylko dwa poziomy (§3), więc nie ma go gdzie kliknąć. Ta sama zasada
-        // co w starym odczycie z `nav_items`, gdzie dziecko bez `href` też było
-        // pomijane.
-        .map((w) => ({ href: adres(w), label: w.menu_label ?? w.title }))
-        .filter((w): w is { href: string; label: string } => Boolean(w.href));
-
+      const dzieci = galaz(rodzic.id);
       const hrefRodzica = adres(rodzic);
       return {
         label: rodzic.menu_label ?? rodzic.title,

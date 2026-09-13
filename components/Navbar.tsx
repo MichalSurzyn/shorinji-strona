@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useId } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { type NavLink } from '@/lib/navTypes';
+import { type NavChild, type NavLink } from '@/lib/navTypes';
 import { MENU_FALLBACK } from '@/data/menuFallback';
 
 /**
@@ -150,11 +150,29 @@ export default function Navbar({ links }: { links?: NavLink[] }) {
     return () => document.removeEventListener('keydown', naKlawisz);
   }, [rozwinieta, menuMobilneOtwarte]);
 
-  const isActive = (href?: string, dropdown?: { href: string; label: string }[]) => {
+  /**
+   * Czy pozycja obejmuje bieżącą trasę — razem z CAŁĄ swoją gałęzią.
+   *
+   * Rekurencja po `children`, bo od etapu F menu ma trzy poziomy. Bez niej
+   * wejście na stronę trzeciego poziomu nie podświetlało ani jej rodzica, ani
+   * sekcji na górze — użytkownik nie widział, gdzie w serwisie stoi.
+   * `item.href` jest opcjonalny (nagłówek zagnieżdżony), więc sprawdzamy go
+   * przed `startsWith` — na `undefined` poleciałby wyjątek w layoucie, czyli
+   * na każdej trasie.
+   */
+  const wGalezi = (galaz?: NavChild[]): boolean =>
+    Boolean(
+      galaz?.some(
+        (item) =>
+          (item.href && (pathname === item.href || pathname.startsWith(item.href + '/'))) ||
+          wGalezi(item.children),
+      ),
+    );
+
+  const isActive = (href?: string, dropdown?: NavChild[]) => {
     if (href && pathname === href) return true;
     if (href && pathname.startsWith(href + '/')) return true;
-    if (dropdown && dropdown.some((item) => pathname === item.href || pathname.startsWith(item.href + '/'))) return true;
-    return false;
+    return wGalezi(dropdown);
   };
 
   /** Identyfikator listy podstron - cel `aria-controls`. Stabilny w obrębie renderu. */
@@ -172,10 +190,88 @@ export default function Navbar({ links }: { links?: NavLink[] }) {
     </svg>
   );
 
+  /**
+   * Pozycje rozwijanej listy — rekurencyjnie, dla drugiego i trzeciego poziomu.
+   *
+   * Jedna funkcja na oba widoki, bo różnica między nimi to same klasy. Dwa
+   * osobne renderery znaczyłyby, że trzeci poziom można dodać na telefonie
+   * i zapomnieć o desktopie (albo odwrotnie) — a to jest dokładnie ten rodzaj
+   * rozjazdu, którego nie widać, dopóki ktoś nie otworzy drugiego widoku.
+   *
+   * Podstrona bez adresu (nagłówek zagnieżdżony) renderuje się jako PODPIS,
+   * nie link. Wcześniej taki węzeł wypadał z menu razem z całą swoją gałęzią,
+   * bo `NavChild` wymagało `href`.
+   */
+  const pozycjeGalezi = (galaz: NavChild[], poziom: number, wariant: 'desktop' | 'mobil') => {
+    const zamknijSzuflade = wariant === 'mobil' ? () => setMenuMobilneOtwarte(false) : undefined;
+
+    const klasaLinku = (aktywny: boolean) => {
+      const kolor = aktywny ? 'text-yellow-500' : 'text-neutral-300 hover:text-yellow-500';
+      // Trzeci poziom mniejszym pismem — właściciel: „to tylko mniejsza kreska
+      // i czcionka w menu". Wcięcie robi obramowanie listy nadrzędnej.
+      // `text-xs`, a NIE `text-[13px]`. Pierwsza wersja miała tu 13 px na sztywno
+      // i była WIĘKSZA od drugiego poziomu, nie mniejsza: `globals.css` zwęża
+      // korzeń do `clamp(12.8px, 10.24px + 0.2vw, 15.2px)`, więc `text-sm`
+      // (0.875rem) wychodzi ~11,6 px. Rozmiar w px nie skaluje się razem
+      // z resztą serwisu — trzeci poziom musi być krokiem w tej samej skali.
+      const rozmiar = poziom === 0 ? 'text-sm' : 'text-xs';
+      return wariant === 'desktop'
+        ? `block transition-colors hover:bg-neutral-900 ${poziom === 0 ? 'px-4 py-3' : 'px-4 py-2'} ${rozmiar} ${kolor}`
+        : `block transition-colors ${rozmiar} ${kolor}`;
+    };
+
+    return galaz.map((sub) => (
+      <li key={`${wariant}-${poziom}-${sub.label}`}>
+        {sub.href ? (
+          <Link href={sub.href} onClick={zamknijSzuflade} className={klasaLinku(isActive(sub.href, sub.children))}>
+            {sub.label}
+          </Link>
+        ) : (
+          <span
+            className={`block text-[11px] uppercase tracking-[0.12em] text-neutral-500 ${
+              wariant === 'desktop' ? 'px-4 pt-3 pb-1' : 'pb-1'
+            }`}
+          >
+            {sub.label}
+          </span>
+        )}
+
+        {Boolean(sub.children?.length) && (
+          <ul
+            className={`flex flex-col list-none border-l border-neutral-800 ${
+              // `py-0 pr-0 pl-4`, a nie `p-0 pl-4`: dwie klasy o tej samej
+              // specyficzności rozstrzyga kolejność w wygenerowanym CSS, więc
+              // „zeruj, potem wcinaj" działa tylko dopóki Tailwind emituje
+              // `pl-*` po `p-*`. Wcięcie listy to nie jest rzecz, która ma
+              // zależeć od kolejności reguł w cudzym generatorze.
+              wariant === 'desktop' ? 'ml-4 my-1 p-0' : 'ml-1 py-0 pr-0 pl-4 mt-3 space-y-3'
+            }`}
+          >
+            {pozycjeGalezi(sub.children ?? [], poziom + 1, wariant)}
+          </ul>
+        )}
+      </li>
+    ));
+  };
+
+  /**
+   * Kolor i wysokość pozycji menu — bez podkreślenia.
+   *
+   * Podkreślenie aktywnej sekcji siedzi na wspólnym opakowaniu (`klasaGrupy`),
+   * a nie na tym elemencie. Pozycja z podstronami to link PLUS osobny przycisk
+   * strzałki (patrz komentarz na górze pliku), więc dopóki `border-b-2` było na
+   * obu, aktywna sekcja dostawała DWA rozłączne żółte odcinki z dziurą po
+   * `gap-1` między nimi. Dokładnie to zgłoszono jako „podkreśla tę strzałkę
+   * rozwijania, co źle i dziwnie wygląda".
+   */
   const klasaPozycji = (aktywna: boolean) =>
-    `flex items-center transition-colors py-4 border-b-2 ${
-      aktywna ? 'text-yellow-500 border-yellow-500' : 'text-neutral-300 border-transparent hover:text-yellow-500'
+    `flex items-center transition-colors py-4 ${
+      aktywna ? 'text-yellow-500' : 'text-neutral-300 hover:text-yellow-500'
     }`;
+
+  /** Podkreślenie aktywnej sekcji — jedno, pod całą pozycją razem ze strzałką. */
+  const klasaGrupy = (aktywna: boolean) =>
+    `flex items-center gap-1 border-b-2 ${aktywna ? 'border-yellow-500' : 'border-transparent'}`;
 
   return (
     <>
@@ -237,7 +333,7 @@ export default function Navbar({ links }: { links?: NavLink[] }) {
 
               return (
                 <li key={link.label} className="relative">
-                  <div className="flex items-center gap-1">
+                  <div className={klasaGrupy(isActive(link.href, link.dropdown))}>
                     {link.href ? (
                       <Link href={link.href} className={klasaPozycji(isActive(link.href, link.dropdown))}>
                         {link.label}
@@ -278,18 +374,7 @@ export default function Navbar({ links }: { links?: NavLink[] }) {
                     // wtedy, gdy lista jest zwinięta.
                     <div id={id} hidden={!otwarta} className="absolute top-full left-0 pt-2 z-50">
                       <ul className="flex flex-col bg-black border border-neutral-800 shadow-xl py-2 min-w-[220px] list-none m-0 p-0">
-                        {link.dropdown?.map((sublink) => (
-                          <li key={sublink.label}>
-                            <Link
-                              href={sublink.href}
-                              className={`block px-4 py-3 text-sm hover:bg-neutral-900 transition-colors ${
-                                pathname === sublink.href ? 'text-yellow-500' : 'text-neutral-300 hover:text-yellow-500'
-                              }`}
-                            >
-                              {sublink.label}
-                            </Link>
-                          </li>
-                        ))}
+                        {pozycjeGalezi(link.dropdown ?? [], 0, 'desktop')}
                       </ul>
                     </div>
                   )}
@@ -349,7 +434,9 @@ export default function Navbar({ links }: { links?: NavLink[] }) {
                         href={link.href}
                         onClick={() => setMenuMobilneOtwarte(false)}
                         className={`font-bold transition-colors ${
-                          isActive(link.href) ? 'text-yellow-500' : 'text-neutral-300 hover:text-yellow-500'
+                          isActive(link.href, link.dropdown)
+                            ? 'text-yellow-500'
+                            : 'text-neutral-300 hover:text-yellow-500'
                         }`}
                       >
                         {link.label}
@@ -367,9 +454,17 @@ export default function Navbar({ links }: { links?: NavLink[] }) {
                         aria-label={
                           link.href ? `${otwarta ? 'Zwiń' : 'Rozwiń'} podstrony: ${link.label}` : undefined
                         }
+                        // Nagłówek sekcji („ZAJĘCIA") dostaje TEN SAM kolor co pozycja
+                        // ze stroną. Wcześniej stało tu `text-neutral-500`, o dwa
+                        // stopnie ciemniej niż `text-neutral-300` sąsiadów, i wyglądało
+                        // na wyłączone — zgłoszone jako „zajęcia z jakiegoś powodu są
+                        // wyszarzone na menu telefonowym". Podświetlenie liczy się z całej
+                        // gałęzi, bo nagłówek nie ma własnego adresu.
                         className={`flex items-center gap-2 font-bold transition-colors ${
-                          link.href ? 'text-neutral-400 hover:text-yellow-500 p-1' : 'text-neutral-500 hover:text-yellow-500 flex-1'
-                        }`}
+                          isActive(link.href, link.dropdown)
+                            ? 'text-yellow-500'
+                            : 'text-neutral-300 hover:text-yellow-500'
+                        } ${link.href ? 'p-1' : 'flex-1'}`}
                       >
                         {!link.href && <span>{link.label}</span>}
                         {strzalka(otwarta)}
@@ -386,17 +481,7 @@ export default function Navbar({ links }: { links?: NavLink[] }) {
                       hidden={!otwarta}
                       className="flex flex-col pl-4 mt-4 space-y-4 border-l border-neutral-800 list-none"
                     >
-                      {link.dropdown?.map((sublink) => (
-                        <li key={`mobile-sub-${sublink.label}`}>
-                          <Link
-                            href={sublink.href}
-                            onClick={() => setMenuMobilneOtwarte(false)}
-                            className={pathname === sublink.href ? 'text-yellow-500' : 'text-neutral-300 hover:text-yellow-500'}
-                          >
-                            {sublink.label}
-                          </Link>
-                        </li>
-                      ))}
+                      {pozycjeGalezi(link.dropdown ?? [], 0, 'mobil')}
                     </ul>
                   )}
                 </li>

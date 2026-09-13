@@ -85,11 +85,18 @@ for (const wymagana of ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]
 
 const URL_BAZY = env.NEXT_PUBLIC_SUPABASE_URL.replace(/\/$/, "");
 
-// Ten sam filtr co w getNavTree: widoczne, opublikowane, poza koszem, dwa
-// poziomy. Trzeci poziom istnieje w drzewie, ale nie w rozwijanym menu (§3).
+// Ten sam zestaw wierszy co w getNavTree: KOMPLET żywych, wszystkie trzy
+// poziomy. Ograniczenie do dwóch zdjęte 2026-09-08 razem z `.lte("depth", 1)`
+// w lib/navigation.ts; filtry `in_menu`/`published` zdjęte 2026-09-09 przy
+// punkcie A6 — widoczność liczy teraz `buildNavTree` po całym łańcuchu
+// przodków, wspólnie dla serwisu i dla tego zapasu.
+//
+// To jest cały powód, dla którego reguła siedzi w `buildNavTree`, a nie
+// w zapytaniu: gdyby została w zapytaniu, TU trzeba by ją skopiować, a rozjazd
+// widać dopiero przy awarii bazy — czyli wtedy, gdy nikt nie ma jak zareagować.
 const ZAPYTANIE =
-  "pages?select=id,parent_id,kind,full_path,external_url,title,menu_label,depth,position" +
-  "&in_menu=is.true&published=is.true&deleted_at=is.null&depth=lte.1&order=position.asc";
+  "pages?select=id,parent_id,kind,full_path,external_url,title,menu_label,depth,position,published,in_menu" +
+  "&deleted_at=is.null&order=position.asc";
 
 const r = await fetch(`${URL_BAZY}/rest/v1/${ZAPYTANIE}`, {
   headers: {
@@ -165,8 +172,17 @@ if (SPRAWDZ) {
   writeFileSync(PLIK, tresc, "utf8");
   console.log(`Zapisano data/menuFallback.ts — ${pozycji} pozycji, ${dzieci} podpozycji.`);
   console.log(`Źródło: ${URL_BAZY}`);
+  // Rekurencyjnie, bo menu ma od 2026-09-08 trzy poziomy. Wypis jest jedyną
+  // kontrolą, jaką człowiek robi po zrzucie — gdyby pokazywał dwa poziomy,
+  // brak trzeciego w zapasie wyszedłby dopiero przy awarii bazy.
+  const wypisz = (galaz, wciecie) => {
+    for (const d of galaz ?? []) {
+      console.log(`${wciecie}${d.label}${d.href ? " → " + d.href : " (bez adresu)"}`);
+      wypisz(d.children, wciecie + "    ");
+    }
+  };
   for (const w of drzewo) {
     console.log(`  ${w.label}${w.href ? " → " + w.href : " (bez adresu)"}`);
-    for (const d of w.dropdown ?? []) console.log(`      ${d.label} → ${d.href}`);
+    wypisz(w.dropdown, "      ");
   }
 }

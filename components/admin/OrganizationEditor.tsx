@@ -13,6 +13,7 @@ import {
   type OrganizationData,
 } from "@/lib/organizationTypes";
 import PasekAkcji from "./PasekAkcji";
+import Komunikat, { useKomunikat } from "./Komunikat";
 
 const inputCls =
   "w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
@@ -83,7 +84,10 @@ export default function OrganizationEditor({ initial }: { initial: OrganizationD
   const [dane, setDane] = useState<OrganizationData>(initial);
   const [zapisany, setZapisany] = useState<OrganizationData>(initial);
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  // Wspólny komunikat panelu. Nazwa `setMsg` zostaje, więc kilkanaście
+  // wywołań niżej jest bez zmian — hak daje ją ze stabilną referencją,
+  // co jest warunkiem bezpieczeństwa tam, gdzie wchodzi do zależności efektu.
+  const { msg, wyczysc, ustaw: setMsg } = useKomunikat();
 
   const zmieniono = czyZmieniono(dane, zapisany);
   useUnsavedChanges(zmieniono, "Dane organizacji");
@@ -135,18 +139,7 @@ export default function OrganizationEditor({ initial }: { initial: OrganizationD
         onZapisz={handleSave}
       />
 
-      {msg && (
-        <div
-          role="status"
-          className={`rounded-lg px-4 py-3 text-sm ${
-            msg.ok
-              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-              : "bg-red-50 text-red-800 border border-red-200"
-          }`}
-        >
-          {msg.text}
-        </div>
-      )}
+      <Komunikat msg={msg} onZamknij={wyczysc} />
 
       <Sekcja
         tytul="Kontakt do klubu"
@@ -229,6 +222,19 @@ export default function OrganizationEditor({ initial }: { initial: OrganizationD
           podpowiedz="Opcjonalnie. Puste pole - w cenniku pokaże się sam numer."
           wartosc={dane.bank.nazwaBanku}
           onChange={(v) => ustaw("bank", { nazwaBanku: v })}
+        />
+        {/* Zdanie o tytule przelewu. Do 2026-09-08 dane miały je w polu
+            `wzorTytulu`, blok „Numer konta do wpłat" je renderował, a redaktor
+            nie miał go gdzie zmienić — zgłoszone jako „numer konta się ładnie
+            wstawia, ale «W tytule przelewu prosimy podać…» i jego nie da się
+            nigdzie zmienić". Zasada naczelna projektu: treść widoczna na
+            stronie jest edytowalna z panelu. */}
+        <Pole
+          etykieta="Zdanie o tytule przelewu"
+          podpowiedz="Pokazuje się pod numerem konta. Puste pole - zdanie w ogóle się nie wyświetli. Wolno użyć **pogrubienia**."
+          szeroki
+          wartosc={dane.bank.wzorTytulu}
+          onChange={(v) => ustaw("bank", { wzorTytulu: v })}
         />
       </Sekcja>
 

@@ -1,16 +1,13 @@
 import Link from "next/link";
 import { clThumb } from "@/lib/cloudinary";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { pobierzArtykulyDoPanelu } from "@/actions/articleActions";
 import KoszAktualnosci from "./KoszAktualnosci";
 
 export default async function AdminArticlesList() {
-  const supabase = await createSupabaseServer();
-  const { data: articles } = await supabase
-    .from("articles")
-    .select("id,slug,title,excerpt,cover_image,published,published_at")
-    // Kosz ma wlasna sekcje nizej - lista glowna go pomija.
-    .is("deleted_at", null)
-    .order("published_at", { ascending: false });
+  // Kluczem serwisowym, nie sesyjnym — `articles` ma RLS bez polityk, więc
+  // klient sesyjny zwracał pustą listę po cichu. Patrz komentarz przy
+  // `pobierzArtykulyDoPanelu`.
+  const articles = await pobierzArtykulyDoPanelu();
 
   return (
     <div className="space-y-6">

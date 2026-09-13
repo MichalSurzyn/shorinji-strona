@@ -37,36 +37,54 @@ export default async function AktualnosciPage() {
             Brak opublikowanych aktualności.
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {articles.map((a) => (
+          /**
+           * Jedna aktualność = JEDEN WIERSZ na całą szerokość, nowe na górze.
+           *
+           * Wcześniej stała tu siatka 1/2/3 kolumn. Właściciel: „lepiej zrobić
+           * nie jako kwadraciki je a tak jak wiadomości, że jedna aktualność
+           * 1 wiersz dłuższy(szerszy) i nowe na samą górę". W trzech kolumnach
+           * zapowiedź (`excerpt`) łamała się po 3-4 słowach i kafelek mówił
+           * tyle samo co sam tytuł; w wierszu mieści się całe zdanie.
+           *
+           * Kolejność bierze się z `getNews()` — `order("published_at",
+           * ascending: false)`, z tym samym porządkiem w zapasie z pamięci.
+           * Sortowania NIE ma tutaj: dwa miejsca sortujące tę samą listę to
+           * dwa miejsca, które mogą się rozjechać.
+           */
+          <div className="flex flex-col gap-6">
+            {articles.map((a, i) => (
               <Link
                 key={a.slug}
                 href={`/aktualnosci/${a.slug}`}
-                className="group bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden hover:border-yellow-500/60 transition-colors flex flex-col"
+                className={`group grid bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden hover:border-yellow-500/60 transition-colors ${
+                  a.cover_image ? "md:grid-cols-[20rem_1fr]" : "grid-cols-1"
+                }`}
               >
                 {a.cover_image && (
-                  <div className="aspect-video overflow-hidden bg-neutral-800">
+                  <div className="aspect-video md:aspect-auto md:min-h-[13rem] overflow-hidden bg-neutral-800">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={clUrl(a.cover_image, 900)}
                       alt=""
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
+                      // Dwie pierwsze pozycje są nad zgięciem na telefonie —
+                      // `lazy` na nich opóźnia największy element widoku.
+                      loading={i < 2 ? "eager" : "lazy"}
                     />
                   </div>
                 )}
-                <div className="p-6 flex flex-col gap-3 flex-grow">
+                <div className="p-6 md:p-8 flex flex-col gap-3">
                   <time
                     dateTime={a.published_at}
                     className="text-xs text-yellow-500 font-bold uppercase tracking-wider"
                   >
                     {formatDate(a.published_at)}
                   </time>
-                  <h2 className="text-xl font-bold text-white group-hover:text-yellow-500 transition-colors leading-snug">
+                  <h2 className="text-xl md:text-2xl font-bold text-white group-hover:text-yellow-500 transition-colors leading-snug">
                     {a.title}
                   </h2>
                   {a.excerpt && (
-                    <p className="text-neutral-400 text-sm leading-relaxed">
+                    <p className="text-neutral-400 leading-relaxed max-w-3xl">
                       {a.excerpt}
                     </p>
                   )}

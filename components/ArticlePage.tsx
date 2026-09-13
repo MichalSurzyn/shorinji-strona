@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getImagesFromFolder } from "../actions/articleActions";
 import ArticleGallery from "./ArticleGallery";
-import NewsBlocks, { slugifyAnchor } from "./NewsBlocks";
+import { slugifyAnchor } from "./NewsBlocks";
+import RenderBlocks from "./RenderBlocks";
 import type { NewsBlock } from "../lib/newsTypes";
 
 type Props = {
@@ -76,7 +77,7 @@ export default async function ArticlePage({
           <main>
             {/* Wspólny renderer z grupowaniem: kolejne bloki "person"
                 stają obok siebie (np. egzaminatorzy). */}
-            <NewsBlocks blocks={blocks} />
+            <RenderBlocks blocks={blocks} />
 
             {/* Galeria zdjęć z Cloudinary (jeśli są) */}
             <ArticleGallery publicIds={images} alt={title} />

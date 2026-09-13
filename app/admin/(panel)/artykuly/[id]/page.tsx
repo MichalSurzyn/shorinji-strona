@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import ArticleEditor from "@/components/admin/ArticleEditor";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { pobierzArtykulDoPanelu } from "@/actions/articleActions";
 import type { NewsArticle } from "@/lib/newsTypes";
 
 export default async function AdminArticleEdit({
@@ -9,12 +9,9 @@ export default async function AdminArticleEdit({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createSupabaseServer();
-  const { data: article } = await supabase
-    .from("articles")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  // Kluczem serwisowym — klient sesyjny nie widzi tej tabeli przez RLS
+  // i ten ekran dawał 404 na istniejącym artykule.
+  const article = await pobierzArtykulDoPanelu(id);
 
   if (!article) notFound();
 

@@ -6,6 +6,7 @@ import { DAY_NAMES, type ScheduleSlot } from "@/data/schedule";
 import { opiszBlad } from "@/lib/adminErrors";
 import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import PasekAkcji from "./PasekAkcji";
+import Komunikat, { useKomunikat } from "./Komunikat";
 
 const DAYS: { value: ScheduleSlot["day"]; label: string }[] = (
   [1, 2, 3, 4, 5, 6, 7] as const
@@ -20,7 +21,10 @@ export default function ScheduleEditor({
 }) {
   const [slots, setSlots] = useState<ScheduleSlot[]>(initialSlots);
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  // Wspólny komunikat panelu. Nazwa `setMsg` zostaje, więc kilkanaście
+  // wywołań niżej jest bez zmian — hak daje ją ze stabilną referencją,
+  // co jest warunkiem bezpieczeństwa tam, gdzie wchodzi do zależności efektu.
+  const { msg, wyczysc, ustaw: setMsg } = useKomunikat();
   const [zapisany, setZapisany] = useState<ScheduleSlot[]>(initialSlots);
   const [cofnij, setCofnij] = useState<{ slot: ScheduleSlot; pozycja: number } | null>(null);
 
@@ -142,25 +146,14 @@ export default function ScheduleEditor({
         }
       />
 
-      {msg && (
-        <div
-          role="status"
-          className={`rounded-lg px-4 py-3 text-sm ${
-            msg.ok
-              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              : "bg-red-50 text-red-700 border border-red-200"
-          }`}
-        >
-          {msg.text}
-        </div>
-      )}
+      <Komunikat msg={msg} onZamknij={wyczysc} />
 
       {/* Ten sam plywajacy uklad co w edytorze tresci - jedno miejsce
           na ekranie, w ktorym redaktor szuka cofniecia. */}
       {cofnij && (
         <div
           role="status"
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-3 rounded-xl border border-slate-300
+          className="fixed bottom-24 right-6 z-40 flex items-center gap-3 rounded-xl border border-slate-300
                      bg-white px-4 py-3 shadow-xl max-w-[calc(100vw-3rem)]"
         >
           <span className="text-sm text-slate-700 truncate">

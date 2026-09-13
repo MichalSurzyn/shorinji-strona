@@ -4,6 +4,38 @@ Dokument wykonawczy. Każda decyzja ma uzasadnienie z researchu (R) albo z audyt
 
 ---
 
+> ## ⚠ SPROSTOWANIA PO WDROŻENIU — czytać PRZED implementowaniem czegokolwiek z tego pliku
+>
+> Trzy decyzje właściciela z rund checklisty zmieniły model już PO napisaniu tej
+> specyfikacji. Poniższy tekst w tych miejscach jest nieaktualny; stan faktyczny
+> jest w kodzie i w `shorinji-notes/WORKLOG.md`.
+>
+> **1. Menu renderuje TRZY poziomy, nie dwa** (08.09.2026). §1 i §5 mówią
+> „rozwijane menu renderuje tylko dwa [poziomy], trzeci wychodzi na stronę-hub".
+> Właściciel to odwołał: „nigdy nie ustalałem, że ma być ukryty, to tylko mniejsza
+> kreska i czcionka w menu". Kafelki-huby zostają, ale trzeci poziom jest też
+> w menu.
+>
+> **2. Nagłówek MOŻE mieć własny adres** (09.09.2026, „wariant A"). §2.2 i §2.4
+> zakładają `slug IS NULL` dla `kind='header'` i nagłówek przezroczysty dla ścieżki
+> (patrz `pages_kind_fields_chk` i tabela w §3). Od 09.09 nagłówek ze slugiem wnosi
+> swój segment do adresów podstron i działa jak folder, a kryterium w CTE
+> `przodkowie_wzwyz` brzmi **„czy przodek ma własny adres"**, nie „czy przodek jest
+> stroną". Nagłówek BEZ sluga zostaje przezroczysty — i to jest obowiązkowa
+> zgodność wsteczna, bo `/faq` stoi pod nagłówkiem „ZAJĘCIA" i ma zostać
+> jednosegmentowe. Indeksy `pages_full_path_key` i `pages_parent_slug_key` mają
+> od tej zmiany predykat `kind <> 'link'`, nie `kind = 'page'`.
+>
+> **3. Widoczność liczy się PO GAŁĘZI** (09.09.2026). Specyfikacja opisuje
+> `published` i `in_menu` jako flagi wiersza. Od 09.09 strona pod ukrytym przodkiem
+> jest publicznie niewidoczna (404, brak w menu, brak w sitemapie i w prerenderze),
+> mimo że jej własne flagi zostają nietknięte. Reguła mieszka w `lib/widocznosc.ts`.
+> **Zakaz z §5 „panel blokuje `in_menu = true` przy `published = false`" ZOSTAJE** —
+> panel dalej zdejmuje pozycję z menu przy ukrywaniu i wstawia ją z powrotem przy
+> publikacji.
+
+---
+
 ## 1. Rekomendacja w pięciu zdaniach
 
 Zastępujemy `nav_items` i `custom_pages` **jedną tabelą `pages`** — adjacency list (`parent_id`), w której ten sam wiersz jest jednocześnie węzłem drzewa treści, źródłem adresu URL i pozycją menu, bo tylko scalenie usuwa przyczynę martwego linku typu „Test" na poziomie modelu danych (**sam wiersz `href=/test` już nie istnieje** — usunął go `actions/customPageActions.ts:153-156` przy przeniesieniu strony do kosza, a wszystkie 19 hrefów w `nav_items` prowadzi dziś do realnej trasy; mechanizm awarii jest natomiast w pełni realny i nienaprawiony, patrz test regresji nr 1 w §5.2), a nie na poziomie walidacji (R: „drzewo stron i menu powinny być JEDNYM modelem danych"; A: `syncNavItem` zna wyłącznie `parent_id IS NULL`, `actions/customPageActions.ts:33-38`). Kolumna `kind` (`page` / `link` / `header`) rozstrzyga jawnie, czym pozycja jest, a kolumna `source` (`db` / `route`) odróżnia stronę renderowaną z bazy od węzła reprezentującego istniejącą trasę w kodzie (`/kontakt`, `/zajecia/cennik`), dzięki czemu w drzewie nie powstaje ani jedna strona-placeholder. Struktura dopuszcza trzy poziomy, ale **rozwijane menu renderuje tylko dwa** — trzeci poziom wychodzi na stronę-hub z kafelkami, dokładnie jak zaproponował właściciel i jak zaleca NN/g. Adresy rozwiązuje jedna trasa catch-all `app/[...sciezka]/page.tsx` po denormalizowanej kolumnie `full_path`, a każda zmiana ścieżki zapisuje wiersz w tabeli `redirects` obsługiwanej w kodzie aplikacji, nie w `next.config.ts` (A: `next.config.ts:24-42` wymaga redeploya, którego instruktor nie zrobi). Wdrożenie idzie w ośmiu odwracalnych etapach wzorcem expand → migrate → contract, z zrzutem golden master przed pierwszą zmianą i z zasadą: **migracja nie zmienia ani jednego istniejącego adresu**.
@@ -364,7 +396,25 @@ Serwis ma dziś **osiem** tras statycznych z treścią w `site_settings` pod klu
 
 ## 3. Jak wygląda trzeci poziom
 
-**Rozstrzygnięcie: pomysł właściciela jest poprawny i to on wchodzi do wdrożenia.** Menu rozwijane zostaje dwupoziomowe. Trzeci poziom hierarchii istnieje w danych (`depth = 2`), ale w interfejsie wychodzi na stronę-hub z kafelkami.
+> **KOREKTA 2026-09-08 — właściciel odwołał to rozstrzygnięcie.** Po przejściu
+> checklisty: „dlaczego 3 poziom musi być ukryty? nigdy nie ustalałem, że ma być
+> ukryty, to tylko mniejsza kreska i czcionka w menu, nie powinno być trudne".
+> Trzeci poziom **wchodzi do rozwijanej listy** jako wcięta pozycja mniejszym
+> pismem; kafelki na stronie-hubie zostają obok, nie zamiast.
+>
+> Co się zmieniło w kodzie: `NavChild` ma `children?` i opcjonalny `href`,
+> `buildNavTree` schodzi rekurencyjnie, `getNavTree` nie filtruje po `depth`,
+> `Navbar` renderuje gałąź jedną funkcją dla obu widoków, a `sprawdzWidocznosc`
+> nie odrzuca już `in_menu` przy `depth = 2`. Punkty 1–3 poniżej opisują
+> uzasadnienie z 2026-08 i zostają jako zapis powodu, nie jako stan faktyczny.
+>
+> Cena tej zmiany jest realna i warto ją znać: kaskadowe menu jest trudniejsze
+> na dotyku, a rozwijana lista rośnie. Argument NN/g nie przestał być prawdziwy —
+> przegrał z tym, że reguła nigdy nie była decyzją właściciela, a jej skutek
+> uboczny (żeby przenieść stronę na trzeci poziom, trzeba ją było najpierw
+> ukryć) kosztował go więcej niż sam kaskadowy dropdown.
+
+**Rozstrzygnięcie (2026-08, ODWOŁANE — patrz wyżej): pomysł właściciela jest poprawny i to on wchodzi do wdrożenia.** Menu rozwijane zostaje dwupoziomowe. Trzeci poziom hierarchii istnieje w danych (`depth = 2`), ale w interfejsie wychodzi na stronę-hub z kafelkami.
 
 Uzasadnienie:
 

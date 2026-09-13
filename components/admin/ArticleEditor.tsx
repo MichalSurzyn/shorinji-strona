@@ -15,6 +15,7 @@ import type { NewsArticle, NewsBlock } from "@/lib/newsTypes";
 import BlockEditor from "./BlockEditor";
 import ImagePicker from "./ImagePicker";
 import PasekAkcji from "./PasekAkcji";
+import Komunikat, { useKomunikat } from "./Komunikat";
 
 function slugify(text: string) {
   return text
@@ -53,7 +54,10 @@ export default function ArticleEditor({
   const [blocks, setBlocks] = useState<NewsBlock[]>(article?.content ?? []);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  // Wspólny komunikat panelu. Nazwa `setMsg` zostaje, więc kilkanaście
+  // wywołań niżej jest bez zmian — hak daje ją ze stabilną referencją,
+  // co jest warunkiem bezpieczeństwa tam, gdzie wchodzi do zależności efektu.
+  const { msg, wyczysc, ustaw: setMsg } = useKomunikat();
 
   function buildInput(): NewsInput {
     return {
@@ -132,9 +136,14 @@ export default function ArticleEditor({
 
   async function handleDelete() {
     if (!article) return;
+    // „Nie można cofnąć" było nieprawdą: `deleteNewsArticle` ustawia
+    // `deleted_at`, a artykuł wraca z kosza jednym kliknięciem przez 30 dni.
+    // Nikt tego nie zauważył, bo kasowanie i tak nie dochodziło do bazy —
+    // po naprawie E3 to pierwsze zdanie, które redaktor naprawdę zobaczy.
     if (
       !confirm(
-        `Na pewno usunąć artykuł „${article.title}"? Tej operacji nie można cofnąć.`
+        `Przenieść artykuł „${article.title}" do kosza?\n\n` +
+          `Zniknie ze strony od razu, ale przez 30 dni da się go przywrócić — kosz jest na dole listy aktualności.`
       )
     )
       return;
@@ -177,17 +186,7 @@ export default function ArticleEditor({
         }
       />
 
-      {msg && (
-        <div
-          className={`rounded-lg px-4 py-3 text-sm ${
-            msg.ok
-              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              : "bg-red-50 text-red-700 border border-red-200"
-          }`}
-        >
-          {msg.text}
-        </div>
-      )}
+      <Komunikat msg={msg} onZamknij={wyczysc} />
 
       <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
         <div>

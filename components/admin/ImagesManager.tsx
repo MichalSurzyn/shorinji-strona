@@ -429,7 +429,13 @@ export default function ImagesManager() {
   /** Kafelek folderu. Usuwanie tylko dla zakladek galerii - foldery zdjec
    *  podstron sa powiazane z trescia stron. */
   const Kafelek = ({ f }: { f: CloudFolderPodglad }) => (
-    <div className="group relative rounded-2xl border border-slate-200 bg-white overflow-hidden hover:border-indigo-400 hover:shadow-md transition-all">
+    <div
+      // Zaczepy dla testu odbioru: pozwalają sprawdzić, ILE kafelków ma strefa
+      // i CZEGO dotyczą, bez dopasowywania po klasach Tailwinda.
+      data-folder={f.path}
+      data-rodzaj={f.rodzaj}
+      className="group relative rounded-2xl border border-slate-200 bg-white overflow-hidden hover:border-indigo-400 hover:shadow-md transition-all"
+    >
       <button onClick={() => setOtwarty(f)} className="block w-full text-left">
         <span className="flex aspect-[4/3] bg-slate-100 items-center justify-center overflow-hidden">
           {f.okladka ? (
@@ -515,7 +521,9 @@ export default function ImagesManager() {
             <section>
               <h2 className="font-bold">Zdjęcia użyte na podstronach</h2>
               <p className="text-sm text-slate-500 mb-3">
-                Te zdjęcia nie trafiają do galerii - są wstawione w treść konkretnych stron.
+                Te zdjęcia nie trafiają do galerii — wstawiasz je w treść stron. Jeden folder
+                na sekcję menu, wspólny dla wszystkich jej podstron. Nazwa idzie z etykiety
+                w menu, więc zmienisz ją w „Strony i menu”.
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {strony.map((f) => (

@@ -1,6 +1,8 @@
 /**
  * Typy bloków treści używane przez edytor w panelu admina.
- * Bloki renderuje components/NewsBlocks.tsx (ciemny motyw strony).
+ * Bloki rysuje components/NewsBlocks.tsx (ciemny motyw strony), ale trasy
+ * wołają opakowanie components/RenderBlocks.tsx — ono dociąga dane, których
+ * bloki „bank" i „kontakt" nie noszą w sobie (zakładka „Dane organizacji").
  * Używane w: aktualnościach (tabela articles), nadpisaniach stron
  * statycznych (site_settings) i - po konwersji - w podstronach
  * tematycznych (article_overrides, format markdown).

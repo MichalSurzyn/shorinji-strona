@@ -62,9 +62,19 @@ export function opiszBlad(e: unknown, czynnosc = "zapisać zmian"): string {
     );
   }
 
-  // 23505: naruszenie unikalności. W tym panelu zawsze chodzi o adres strony.
+  // 23505: naruszenie unikalności — zawsze adres, ale nie zawsze STRONY.
+  //
+  // `articles_slug_key` (supabase/setup.sql) jest indeksem PEŁNYM, bez
+  // `where deleted_at is null`. Artykuł w koszu dalej trzyma swój adres, więc
+  // po naprawie E3 (kasowanie zaczęło realnie działać) redaktor ma szansę
+  // trafić na kolizję z wpisem, którego nie widzi na liście. Zdanie o „innej
+  // stronie" byłoby wtedy bezużyteczne — mówiłoby o czymś, czego nie szuka.
   if (s.includes("23505") || s.includes("duplicate key") || s.includes("już istnieje")) {
-    return "Taki adres strony jest już zajęty przez inną stronę. Zmień adres i zapisz jeszcze raz.";
+    const oArtykule = /artyk/i.test(czynnosc);
+    return oArtykule
+      ? "Ten adres jest już zajęty przez inny artykuł — także taki, który leży w koszu. " +
+          "Zmień adres albo najpierw opróżnij kosz z tamtego wpisu."
+      : "Taki adres strony jest już zajęty przez inną stronę. Zmień adres i zapisz jeszcze raz.";
   }
 
   // Brak tabeli / kolumny - baza nie została skonfigurowana do końca.

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import NewsBlocks from "@/components/NewsBlocks";
+import RenderBlocks from "@/components/RenderBlocks";
+import KafelkiPodstron from "@/components/KafelkiPodstron";
 import ArticlePage from "@/components/ArticlePage";
 import {
   getDzieci,
@@ -160,34 +160,19 @@ function WidokStrony({ strona, dzieci }: { strona: WezelStrony; dzieci: WezelStr
 
         {strona.blocks.length > 0 && (
           <div className="max-w-4xl">
-            <NewsBlocks blocks={strona.blocks} />
+            <RenderBlocks blocks={strona.blocks} />
           </div>
         )}
 
-        {dzieci.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
-            {dzieci.map((d, idx) => (
-              <Link
-                key={d.id}
-                href={d.full_path ?? "#"}
-                className="group flex flex-col rounded-xl border border-yellow-500/40 bg-yellow-500/5 hover:bg-yellow-500/10 hover:border-yellow-500 transition-colors p-6"
-              >
-                <div className="text-xs uppercase tracking-[0.14em] text-yellow-500/80 group-hover:text-yellow-500 font-semibold mb-3">
-                  {String(idx + 1).padStart(2, "0")}
-                </div>
-                <h2 className="text-xl md:text-2xl font-semibold text-white mb-3 tracking-wide">
-                  {d.title}
-                </h2>
-                {d.intro && (
-                  <p className="text-sm text-neutral-400 leading-relaxed flex-1">{d.intro}</p>
-                )}
-                <div className="mt-5 text-xs uppercase tracking-wider text-yellow-500 group-hover:text-yellow-400 transition-colors">
-                  Czytaj →
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+        {/* Wspólny renderer kafelków — ten sam, którego używają listingi
+            tematyczne i `/program-nauczania`. Wcześniej ten markup istniał
+            tutaj i w `ArticleListing` w dwóch identycznych kopiach. */}
+        <KafelkiPodstron
+          className="mt-12"
+          items={dzieci
+            .filter((d) => d.full_path)
+            .map((d) => ({ href: d.full_path as string, title: d.title, intro: d.intro }))}
+        />
       </div>
     </div>
   );

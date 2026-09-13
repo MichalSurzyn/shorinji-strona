@@ -34,6 +34,12 @@ idempotentne, bo bywają puszczane po raz drugi.
 **Netlify filtruje zmienne środowiskowe kontekstem.** Klucz potrafi „nie istnieć",
 bo widok stoi na „Local development". Zanim orzekniesz, że zmiennej brak — sprawdź filtr.
 
+**Poligon buduj tylko przez `node Poligon/podglad.mjs`.** `NEXT_PUBLIC_*` wpieka się
+w build, więc `npm run build` puszczony ręcznie bierze adres bazy z `.env.local`
+(produkcja), a klucz service role dostaje w runtime z `Poligon/.env` — panel wita
+wtedy „Brak autoryzacji", a każdy odczyt „Invalid API key". Nie wygląda to na skutek
+złego buildu, tylko na zepsute klucze.
+
 **Plik z `"use server"` eksportuje wyłącznie funkcje async.** Stałe i typy idą do
 osobnego modułu w `lib/`.
 

@@ -7,6 +7,8 @@ import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import type { NewsBlock, PageContent } from "@/lib/newsTypes";
 import BlockEditor from "./BlockEditor";
 import PasekAkcji from "./PasekAkcji";
+import { folderSekcjiZdjec } from "@/lib/pages";
+import Komunikat, { useKomunikat } from "./Komunikat";
 
 const inputCls =
   "w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
@@ -33,7 +35,10 @@ export default function PageBlocksEditor({
   const [lead, setLead] = useState(initialContent.lead ?? "");
   const [blocks, setBlocks] = useState<NewsBlock[]>(initialContent.blocks);
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  // Wspólny komunikat panelu. Nazwa `setMsg` zostaje, więc kilkanaście
+  // wywołań niżej jest bez zmian — hak daje ją ze stabilną referencją,
+  // co jest warunkiem bezpieczeństwa tam, gdzie wchodzi do zależności efektu.
+  const { msg, wyczysc, ustaw: setMsg } = useKomunikat();
   // Ostatni stan potwierdzony zapisem - punkt odniesienia dla ostrzeżenia
   // o niezapisanych zmianach.
   const [zapisany, setZapisany] = useState(initialContent);
@@ -83,17 +88,7 @@ export default function PageBlocksEditor({
         onZapisz={handleSave}
       />
 
-      {msg && (
-        <div
-          className={`rounded-lg px-4 py-3 text-sm ${
-            msg.ok
-              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              : "bg-red-50 text-red-700 border border-red-200"
-          }`}
-        >
-          {msg.text}
-        </div>
-      )}
+      <Komunikat msg={msg} onZamknij={wyczysc} />
 
       {/* Nagłówek strony */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
@@ -135,7 +130,15 @@ export default function PageBlocksEditor({
         </div>
       </div>
 
-      <BlockEditor value={blocks} onChange={setBlocks} mode="page" />
+      <BlockEditor
+        value={blocks}
+        onChange={setBlocks}
+        mode="page"
+        // Folder SEKCJI, nie podstrony — ta sama reguła co w edytorze drzewa.
+        // Bez tego propa wybierak zdjęć nie podpowiadał żadnego folderu i zdjęcia
+        // wgrane z tego ekranu lądowały poza kafelkiem swojej sekcji.
+        defaultFolder={folderSekcjiZdjec(route) ?? undefined}
+      />
 
     </div>
   );

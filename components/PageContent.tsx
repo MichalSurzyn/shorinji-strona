@@ -1,7 +1,6 @@
-import NewsBlocks from "@/components/NewsBlocks";
+import RenderBlocks from "@/components/RenderBlocks";
 import { getPageContent } from "@/lib/pageOverrides";
 import { basePageContent } from "@/lib/editablePages";
-import { getOrganization } from "@/lib/organization";
 
 /**
  * Treść edytowalnej strony: nadpisanie z bazy (site_settings, klucz
@@ -49,16 +48,8 @@ export async function PageHeader({
 export async function PageBody({ slug }: { slug: string }) {
   const content = (await getPageContent(slug)) ?? basePageContent(slug);
   if (!content || content.blocks.length === 0) return null;
-  // Dane konta pobieramy tylko wtedy, gdy strona faktycznie ma blok „bank" -
-  // nie ma powodu odpytywać bazy na stronach, które go nie używają.
-  // getOrganization() jest cache'owane, więc powtórzenie nic nie kosztuje.
-  const potrzebneDane = content.blocks.some((b) => b.type === "bank" || b.type === "kontakt");
-  const org = potrzebneDane ? await getOrganization() : null;
-  return (
-    <NewsBlocks
-      blocks={content.blocks}
-      bank={org?.bank}
-      kontakt={org ? { kontakt: org.kontakt, social: org.social } : undefined}
-    />
-  );
+  // Dociąganie danych bezblokowych („bank", „kontakt") przeniesione do
+  // `RenderBlocks` — było tu jedynym takim miejscem w repo, więc trzy pozostałe
+  // renderery bloków gubiły te sekcje po cichu. Jedno miejsce, jedna reguła.
+  return <RenderBlocks blocks={content.blocks} />;
 }

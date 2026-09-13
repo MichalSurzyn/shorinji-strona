@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { deleteFile, listFiles, uploadFile } from "@/actions/fileActions";
 import { opiszBlad } from "@/lib/adminErrors";
 import { formatRozmiar, MAX_ROZMIAR, type PlikDoPobrania } from "@/lib/pliki";
+import Komunikat, { useKomunikat } from "./Komunikat";
 
 /**
  * Pliki do pobrania: deklaracje, statuty, regulaminy.
@@ -16,7 +17,10 @@ import { formatRozmiar, MAX_ROZMIAR, type PlikDoPobrania } from "@/lib/pliki";
 export default function FilesManager() {
   const [pliki, setPliki] = useState<PlikDoPobrania[] | null>(null);
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  // Wspólny komunikat panelu. Nazwa `setMsg` zostaje, więc wywołania niżej
+  // są bez zmian — hak daje ją ze stabilną referencją, co jest warunkiem
+  // bezpieczeństwa tam, gdzie wchodzi do zależności efektu.
+  const { msg, wyczysc, ustaw: setMsg } = useKomunikat();
   const [przeciaganie, setPrzeciaganie] = useState(false);
   const [skopiowany, setSkopiowany] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -33,7 +37,13 @@ export default function FilesManager() {
       setPliki([]);
       setMsg({ ok: false, text: opiszBlad(e, "wczytać listy plików") });
     }
-  }, []);
+    // `setMsg` w zależnościach jest bezpieczne WYŁĄCZNIE dlatego, że pochodzi
+    // z `useKomunikat` i jest tam owinięte w `useCallback`. Zwykła funkcja
+    // tworzona przy renderze zmieniałaby tożsamość `odswiez`, a ten stoi
+    // w zależnościach `useEffect` niżej — czyli lista plików wczytywałaby się
+    // w pętli. Wcześniej był tu setter `useState`, którego reguła lintu nie
+    // wymaga, i dlatego tablica mogła być pusta.
+  }, [setMsg]);
 
   useEffect(() => {
     odswiez();
@@ -150,21 +160,7 @@ export default function FilesManager() {
         </div>
       </div>
 
-      {msg && (
-        <div
-          role="status"
-          className={`rounded-xl px-4 py-3 text-sm flex justify-between items-start gap-4 ${
-            msg.ok
-              ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
-              : "bg-red-50 border border-red-200 text-red-800"
-          }`}
-        >
-          <span>{msg.text}</span>
-          <button onClick={() => setMsg(null)} aria-label="Zamknij" className="font-bold">
-            ×
-          </button>
-        </div>
-      )}
+      <Komunikat msg={msg} onZamknij={wyczysc} />
 
       <div
         onDragOver={(e) => {

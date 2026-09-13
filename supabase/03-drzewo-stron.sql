@@ -278,7 +278,15 @@ create table if not exists public.pages (
        (kind = 'page'   and external_url is null
                         and (slug is not null or source = 'route'))
     or (kind = 'link'   and slug is null     and external_url is not null)
-    or (kind = 'header' and slug is null     and external_url is null)
+    -- NAGLOWEK MOZE MIEC SLUG (zmiana z 2026-09-09, decyzja D1 wlasciciela).
+    -- Wczesniej bylo tu 'slug is null'. Naglowek ze slugiem wnosi swoj segment
+    -- do sciezki i dziala jak folder; naglowek BEZ sluga zostaje przezroczysty,
+    -- czyli dokladnie tak, jak dzialal dotad. Zgodnosc wsteczna nie jest tu
+    -- ostroznoscia na wszelki wypadek: jedyny naglowek w bazie ('ZAJECIA') ma
+    -- slug NULL i pod nim wisi strona /faq. Wymuszenie sluga na naglowkach
+    -- przesunieteloby /faq na /zajecia/faq, czyli ZAINDEKSOWANY adres, ktorego
+    -- niezmiennosc wlasciciel wlasnie potwierdzil w punkcie F4 checklisty.
+    or (kind = 'header' and external_url is null)
   ),
   constraint pages_source_chk check (
        (source = 'db'    and route is null)
@@ -501,13 +509,36 @@ begin
 exception when duplicate_object then null;
 end $$;
 
+-- DROP PRZED ADD, SWIADOMIE - i to jest jedyny blok w tej sekcji, ktory tak ma.
+--
+-- Idiom 'exception when duplicate_object then null' uzywany nizej dopasowuje
+-- ograniczenie po NAZWIE, nie po tresci. Na bazie, ktora pages_kind_fields_chk
+-- juz ma - a maja go i poligon, i produkcja - wklejenie tego pliku z NOWA
+-- definicja przeszloby bez bledu i zostawiloby STARA regule ('naglowek nie moze
+-- miec sluga'). Plik zameldowalby sukces, kontrola 14 na koncu tez (jej wzorzec
+-- to '%source%', pasujacy do obu wersji), a awaria wyszlaby dopiero przy
+-- pierwszej probie zapisania naglowka ze slugiem - jako surowy blad Postgresa
+-- u redaktora.
+--
+-- Bezpieczne na danych: nowa regula jest SLABSZA od starej (dopuszcza wiecej),
+-- wiec 'add constraint' nie ma jak wywrocic sie na 23514.
+alter table public.pages drop constraint if exists pages_kind_fields_chk;
+
 do $$
 begin
   alter table public.pages add constraint pages_kind_fields_chk check (
        (kind = 'page'   and external_url is null
                         and (slug is not null or source = 'route'))
     or (kind = 'link'   and slug is null     and external_url is not null)
-    or (kind = 'header' and slug is null     and external_url is null)
+    -- NAGLOWEK MOZE MIEC SLUG (zmiana z 2026-09-09, decyzja D1 wlasciciela).
+    -- Wczesniej bylo tu 'slug is null'. Naglowek ze slugiem wnosi swoj segment
+    -- do sciezki i dziala jak folder; naglowek BEZ sluga zostaje przezroczysty,
+    -- czyli dokladnie tak, jak dzialal dotad. Zgodnosc wsteczna nie jest tu
+    -- ostroznoscia na wszelki wypadek: jedyny naglowek w bazie ('ZAJECIA') ma
+    -- slug NULL i pod nim wisi strona /faq. Wymuszenie sluga na naglowkach
+    -- przesunieteloby /faq na /zajecia/faq, czyli ZAINDEKSOWANY adres, ktorego
+    -- niezmiennosc wlasciciel wlasnie potwierdzil w punkcie F4 checklisty.
+    or (kind = 'header' and external_url is null)
   );
 exception when duplicate_object then null;
 end $$;
@@ -597,17 +628,38 @@ end $$;
 -- DLA AUTORA ETAPU 2: predykat tego indeksu trzeba POWTORZYC w ON CONFLICT.
 -- Postgres nie wywnioskuje celu z indeksu czesciowego i oddaje blad 42P10:
 --   on conflict (full_path) where kind = 'page' and deleted_at is null do nothing
-create unique index if not exists pages_full_path_key
+-- PREDYKAT ROZSZERZONY NA NAGLOWKI (2026-09-09, decyzja D1).
+--
+-- Bylo 'where kind = ''page''". Odkad naglowek moze miec wlasny adres, ten
+-- predykat zostawialby dziure nie do zamkniecia z panelu: naglowek /zajecia
+-- i strona /zajecia moglyby istniec obok siebie, a getStrona czyta przez
+-- .maybeSingle() - przy dwoch wierszach PostgREST oddaje PGRST116, ktore
+-- lib/pages.ts rzuca jako 500. Czyli kolizja adresow zamienialaby sie w awarie
+-- strony, a nie w komunikat dla redaktora.
+--
+-- Naglowek bez sluga ma full_path NULL, a w indeksie unikalnym NULL-e nie
+-- koliduja - stare wiersze sa wiec objete indeksem i nic im to nie robi.
+-- Slowo 'kind' MUSI zostac w predykacie: kontrola 13 na koncu tego pliku
+-- dopasowuje definicje wzorcem '%WHERE%kind%deleted_at%'.
+--
+-- drop + create zamiast 'if not exists': to drugie dopasowuje sie po NAZWIE
+-- i podmiany predykatu by nie zrobilo (ta sama pulapka co przy
+-- pages_migrated_from_key nizej).
+drop index if exists public.pages_full_path_key;
+create unique index pages_full_path_key
   on public.pages (full_path)
-  where kind = 'page' and deleted_at is null;
+  where kind <> 'link' and deleted_at is null;
 
 -- Rodzenstwo nie moze miec dwoch takich samych slugow. coalesce zamiast samego
 -- parent_id, bo w indeksie unikalnym dwa NULL-e nie koliduja - bez tego dwie
 -- strony najwyzszego poziomu (parent_id IS NULL) o tym samym slugu przeszlyby
 -- ten indeks i zderzylyby sie dopiero na pages_full_path_key.
-create unique index if not exists pages_parent_slug_key
+-- Predykat rozszerzony na naglowki z tego samego powodu co wyzej: odkad
+-- naglowek ma slug, moze zderzyc sie o slug z rodzenstwem-strona.
+drop index if exists public.pages_parent_slug_key;
+create unique index pages_parent_slug_key
   on public.pages ((coalesce(parent_id, '00000000-0000-0000-0000-000000000000'::uuid)), slug)
-  where kind = 'page' and deleted_at is null;
+  where kind <> 'link' and deleted_at is null;
 
 -- Cel ON CONFLICT dla wierszy BEZ adresu (kind='header', kind='link') i klucz
 -- dopasowania dla dwuzapisu z etapu 3a. Bez tego indeksu backfill nie jest
@@ -904,18 +956,33 @@ begin
     new.depth := 0;
   end if;
 
-  -- ADRES - cztery rozlaczne galezie, kolejnosc ma znaczenie.
+  -- ADRES - piec rozlacznych galezi, kolejnosc ma znaczenie.
   --
-  -- Awaria, ktorej to zapobiega: "ZAJECIA" to kind='header', a naglowek ma
-  -- full_path NULL. Liczenie adresu z lancucha slugow dawalo dzieciom
-  -- coalesce(NULL,'') || '/' || slug, czyli /cennik, /dorosli, /dzieci zamiast
-  -- /zajecia/cennik, /zajecia/dorosli, /zajecia/dzieci - trzy zaindeksowane
-  -- adresy zlamane. Wezla /zajecia dolozyc NIE MOZNA: app/zajecia/ nie ma
-  -- page.tsx, a "zajecia" jest w RESERVED_SLUGS (lib/customPages.ts:18-33),
-  -- wiec ten adres dzis zwraca 404 i musi taki zostac.
-  if new.kind <> 'page' then
-    -- Naglowek i odnosnik nie maja adresu. Gdyby zostawic tu stara wartosc,
-    -- pages_full_path_key trzymalby zajety adres dla wiersza, ktory go nie uzywa.
+  -- KRYTERIUM ZMIENILO SIE 2026-09-09 (decyzja D1 wlasciciela): nie pytamy juz
+  -- "czy przodek jest strona", tylko "czy przodek MA WLASNY ADRES". Jedna
+  -- regula obsluguje wtedy trzy przypadki naraz:
+  --   strona                -> ma adres  -> zatrzymuje wspinaczke,
+  --   naglowek ZE slugiem   -> ma adres  -> zatrzymuje, czyli dziala jak folder
+  --                                         i zadna podstrona nie rusza adresu
+  --                                         przy zamianie strony w naglowek,
+  --   naglowek BEZ sluga    -> adres NULL-> dalej przezroczysty, czyli
+  --                                         dzisiejsze /faq pod "ZAJECIA"
+  --                                         zostaje /faq.
+  --
+  -- Awaria, ktorej cala ta galaz zapobiega od poczatku: "ZAJECIA" to
+  -- kind='header' bez sluga, wiec liczenie adresu z lancucha slugow dawalo
+  -- dzieciom coalesce(NULL,'') || '/' || slug. Ich adresy /zajecia/cennik,
+  -- /zajecia/dorosli i /zajecia/dzieci biora sie z kolumny route, nie z drzewa,
+  -- i tak ma zostac.
+  if new.kind = 'link' then
+    -- Odnosnik zewnetrzny nie ma wlasnego adresu w tym serwisie. Gdyby zostawic
+    -- tu stara wartosc, pages_full_path_key trzymalby zajety adres dla wiersza,
+    -- ktory go nie uzywa.
+    new.full_path := null;
+
+  elsif new.kind = 'header' and new.slug is null then
+    -- Naglowek zalozony jako naglowek: grupuje w menu i nie wnosi do sciezki
+    -- nic. To jest zgodnosc wsteczna dla wierszy sprzed zmiany D1.
     new.full_path := null;
 
   elsif new.source = 'route' then
@@ -928,18 +995,23 @@ begin
     new.full_path := '/' || new.slug;
 
   else
-    -- Tresc z bazy: adres najblizszego przodka typu 'page'. Naglowki grupujace
-    -- przeskakujemy, bo nie maja adresu.
+    -- Tresc z bazy: adres najblizszego przodka, KTORY MA WLASNY ADRES.
+    -- Naglowki bez sluga przeskakujemy, bo do sciezki nie wnosza nic.
     --
-    -- Rekurencja rozwija sie WYLACZNIE z wierszy, ktore nie sa strona
-    -- (a.kind <> 'page'), wiec zatrzymuje sie na pierwszym przodku typu 'page'
-    -- i zbior wynikowy zawiera CO NAJWYZEJ JEDEN wiersz z kind='page'.
-    -- Odnosnik przodkiem byc nie moze, bo wyzej odrzucamy rodzica kind='link'.
+    -- Rekurencja rozwija sie WYLACZNIE z wierszy bez adresu (a.full_path is
+    -- null), wiec zatrzymuje sie na pierwszym przodku z adresem i zbior
+    -- wynikowy zawiera CO NAJWYZEJ JEDEN taki wiersz. Odnosnik przodkiem byc
+    -- nie moze, bo wyzej odrzucamy rodzica kind='link'.
     -- Mimo tego jest tu jawne "order by poziom": bez ORDER BY kolejnosc wierszy
     -- z CTE nie jest przez Postgresa gwarantowana, a to, ze dzis wybor jest
     -- jednoznaczny, wynika z warunku rekurencji - czyli z rzeczy, ktora ktos
     -- moze kiedys rozluznic, nie zauwazajac, ze "limit 1" zaczyna wtedy
     -- losowac przodka, a razem z nim adres calego poddrzewa.
+    --
+    -- PRZED D1 stalo tu 'a.kind <> ''page''' i 'pw.kind = ''page'''. Podmiana
+    -- na kryterium adresu jest CALA zmiana wariantu A po stronie triggera:
+    -- naglowek ze slugiem ma full_path, wiec od teraz zatrzymuje wspinaczke
+    -- i jego podstrony zostaja tam, gdzie byly.
     with recursive przodkowie_wzwyz as (
       select p.id, p.parent_id, p.kind, p.full_path, 1 as poziom
         from public.pages p
@@ -948,21 +1020,30 @@ begin
       select p.id, p.parent_id, p.kind, p.full_path, a.poziom + 1
         from public.pages p
         join przodkowie_wzwyz a on p.id = a.parent_id
-       where a.kind <> 'page'
+       where a.full_path is null
          and a.poziom < 10
     )
     select pw.full_path
       into sciezka_rodzica
       from przodkowie_wzwyz pw
-     where pw.kind = 'page'
+     where pw.full_path is not null
      order by pw.poziom
      limit 1;
 
     -- nullif(...,'/') - zeby dziecko strony glownej dalo '/cos', nie '//cos'.
-    -- sciezka_rodzica moze byc NULL, gdy nad wezlem stoja same naglowki -
-    -- wychodzi wtedy adres jednosegmentowy. Dzis to nie wystepuje: wszystkie
-    -- trzy dzieci ZAJEC maja source='route'. Panel (etap 5) musi ZABRONIC
-    -- dodania podstrony z bazy pod naglowkiem, ktory nie ma przodka typu 'page'.
+    --
+    -- sciezka_rodzica moze byc NULL, gdy nad wezlem stoja same naglowki BEZ
+    -- slugow - wychodzi wtedy adres jednosegmentowy. To NIE jest awaria, tylko
+    -- stan faktyczny serwisu: /faq stoi pod naglowkiem "ZAJECIA" i ma byc
+    -- jednosegmentowe (punkt F4 checklisty, potwierdzony przez wlasciciela).
+    -- Wczesniejsza wersja tego komentarza twierdzila cos przeciwnego ("wszystkie
+    -- trzy dzieci ZAJEC maja source='route'") i zapowiadala zakaz w panelu -
+    -- zakaz nigdy nie powstal, a twierdzenie bylo nieaktualne co najmniej od
+    -- momentu, gdy /faq trafilo pod ZAJECIA.
+    --
+    -- Po D1 redaktor ma na to wlasciwe narzedzie: jesli chce, zeby podstrony
+    -- naglowka mialy wspolny prefiks, nadaje naglowkowi slug. Wtedy naglowek
+    -- ma adres i ta galaz go uzywa.
     new.full_path := coalesce(nullif(sciezka_rodzica, '/'), '') || '/' || new.slug;
   end if;
 
@@ -1040,9 +1121,19 @@ begin
   --       full_path (indeks jest czesciowy), a dwa wiersze z tym samym old_path
   --       w jednym poleceniu daja blad 21000 ("ON CONFLICT DO UPDATE command
   --       cannot affect row a second time").
+  --   new.kind = 'page' - DOLOZONE 2026-09-09 razem z wariantem A. Odkad
+  --       naglowek moze miec wlasny adres, zmiana jego sluga wchodzila w ten
+  --       blok i zapisywala 308 "stary adres naglowka -> nowy adres naglowka".
+  --       Naglowek publicznie nie renderuje sie w ogole (getStrona filtruje
+  --       kind='page'), wiec bylo to przekierowanie prowadzace na 404 - gorsze
+  --       od jego braku, bo wyglada w tabeli na sprawne. Przekierowanie ze
+  --       starego adresu naglowka na jego PIERWSZA PODSTRONE zapisuje jawnie
+  --       funkcja strona_na_naglowek z 05-zamiana-rodzaju.sql: ona jedna wie,
+  --       ktora podstrona przejmuje ruch.
   if old.full_path is distinct from new.full_path
      and old.full_path is not null
      and new.full_path is not null
+     and new.kind = 'page'
      and new.deleted_at is null then
 
     -- (a) Samo przekierowanie. Jesli stary adres byl juz kiedys przekierowany,

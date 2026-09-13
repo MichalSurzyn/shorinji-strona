@@ -48,6 +48,20 @@ export async function daneListingu(adres: string, grupa: ArticleGroup): Promise<
           .map((d) => ({ href: d.full_path as string, title: d.title, intro: d.intro })),
       };
     }
+    /**
+     * UWAGA, ZNANA LUKA (nieobjęta punktem A6, świadomie nie ruszona):
+     * ta gałąź nie odróżnia „węzła nie ma w drzewie" od „redaktor go ukrył".
+     * Ukrycie huba (`/o-shorinji`, `/organizacja`, `/buddyzm`) zdejmuje go
+     * z menu i wygasza jego PODSTRONY — bo te idą przez `getStrona`, które od
+     * A6 liczy widoczność po gałęzi — ale sam adres huba dalej oddaje 200
+     * z treścią bazową z kodu.
+     *
+     * Rozdzielenie tych dwóch przypadków jest wykonalne (`getStrona` rzuca przy
+     * błędzie odczytu, więc `null` znaczy „zapytanie się udało, żywej strony
+     * nie ma"), ale zmienia kontrakt zapasu opisany w nagłówku tego pliku
+     * i dotyka czterech miejsc wywołania. Do decyzji właściciela osobno —
+     * A6 dotyczyło podstrony pod ukrytym rodzicem, nie samego huba.
+     */
     console.warn(`[listingi] Brak węzła dla ${adres} — treść z kodu.`);
   } catch (e) {
     console.warn(`[listingi] ${adres}: odczyt drzewa nieudany, treść z kodu:`, e);

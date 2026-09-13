@@ -2,7 +2,7 @@ import type { NavLink } from "@/lib/navTypes";
 
 /**
  * PLIK GENEROWANY — nie edytować ręcznie.
- * Wytworzony przez scripts/snapshot-menu.mjs, 2026-09-01.
+ * Wytworzony przez scripts/snapshot-menu.mjs, 2026-09-09.
  *
  * Zapasowe menu na wypadek, gdy tabela `pages` jest nieosiągalna: brak
  * konfiguracji Supabase, timeout, błąd zapytania albo pusty wynik. Bez niego
@@ -23,28 +23,28 @@ export const MENU_FALLBACK: NavLink[] = [
     "href": "/o-shorinji",
     "dropdown": [
       {
-        "href": "/o-shorinji/wprowadzenie",
-        "label": "WPROWADZENIE"
+        "label": "WPROWADZENIE",
+        "href": "/o-shorinji/wprowadzenie"
       },
       {
-        "href": "/o-shorinji/cele-i-wartosci",
-        "label": "CELE I WARTOŚCI"
+        "label": "CELE I WARTOŚCI",
+        "href": "/o-shorinji/cele-i-wartosci"
       },
       {
-        "href": "/o-shorinji/istota-budo",
-        "label": "SENS BUDO"
+        "label": "SENS BUDO",
+        "href": "/o-shorinji/istota-budo"
       },
       {
-        "href": "/o-shorinji/symbolika-i-medytacja",
-        "label": "MEDYTACJA / ZAZEN"
+        "label": "MEDYTACJA / ZAZEN",
+        "href": "/o-shorinji/symbolika-i-medytacja"
       },
       {
-        "href": "/o-shorinji/symbole-shorinji-kempo",
-        "label": "SYMBOLE"
+        "label": "SYMBOLE",
+        "href": "/o-shorinji/symbole-shorinji-kempo"
       },
       {
-        "href": "/o-shorinji/historia",
-        "label": "HISTORIA SZKOŁY"
+        "label": "HISTORIA SZKOŁY",
+        "href": "/o-shorinji/historia"
       }
     ]
   },
@@ -52,38 +52,76 @@ export const MENU_FALLBACK: NavLink[] = [
     "label": "ZAJĘCIA",
     "dropdown": [
       {
-        "href": "/zajecia/dorosli",
-        "label": "GRUPA DOROSŁA"
+        "label": "GRUPA DOROSŁA",
+        "href": "/zajecia/dorosli"
       },
       {
-        "href": "/zajecia/dzieci",
-        "label": "GRUPA DZIECIĘCA"
+        "label": "GRUPA DZIECIĘCA",
+        "href": "/zajecia/dzieci"
       },
       {
-        "href": "/zajecia/cennik",
-        "label": "CENNIK"
+        "label": "CENNIK",
+        "href": "/zajecia/cennik"
       },
       {
-        "href": "/faq",
-        "label": "FAQ"
+        "label": "FAQ",
+        "href": "/faq"
       }
     ]
   },
   {
     "label": "PROGRAM NAUCZANIA",
-    "href": "/program-nauczania"
+    "href": "/program-nauczania",
+    "dropdown": [
+      {
+        "label": "Stopnie i wymagania",
+        "href": "/program-nauczania/stopnie-i-wymagania"
+      },
+      {
+        "label": "Podstawowe formy",
+        "href": "/program-nauczania/podstawowe-formy"
+      },
+      {
+        "label": "Filozofia Kaiso",
+        "href": "/program-nauczania/filozofia-kaiso"
+      },
+      {
+        "label": "Teoria i filozofia",
+        "href": "/program-nauczania/teoria-i-filozofia"
+      },
+      {
+        "label": "Biblioteka",
+        "href": "/program-nauczania/biblioteka"
+      },
+      {
+        "label": "Seminaria i szkolenia",
+        "href": "/program-nauczania/seminaria-i-szkolenia"
+      },
+      {
+        "label": "Kursy specjalistyczne",
+        "href": "/program-nauczania/kursy-specjalistyczne"
+      },
+      {
+        "label": "Trening z przyrządami",
+        "href": "/program-nauczania/trening-z-przyrzadami"
+      },
+      {
+        "label": "eq",
+        "href": "/program-nauczania/eq"
+      }
+    ]
   },
   {
     "label": "ORGANIZACJA",
     "href": "/organizacja",
     "dropdown": [
       {
-        "href": "/organizacja/zalozyciel",
-        "label": "ZAŁOŻYCIEL"
+        "label": "ZAŁOŻYCIEL",
+        "href": "/organizacja/zalozyciel"
       },
       {
-        "href": "/organizacja/egzaminatorzy",
-        "label": "EGZAMINATORZY"
+        "label": "EGZAMINATORZY",
+        "href": "/organizacja/egzaminatorzy"
       }
     ]
   },
@@ -92,20 +130,20 @@ export const MENU_FALLBACK: NavLink[] = [
     "href": "/buddyzm",
     "dropdown": [
       {
-        "href": "/buddyzm/podstawy",
-        "label": "PODSTAWY"
+        "label": "PODSTAWY",
+        "href": "/buddyzm/podstawy"
       },
       {
-        "href": "/buddyzm/nauki",
-        "label": "NAUKI"
+        "label": "NAUKI",
+        "href": "/buddyzm/nauki"
       },
       {
-        "href": "/buddyzm/medytacja",
-        "label": "MEDYTACJA"
+        "label": "MEDYTACJA",
+        "href": "/buddyzm/medytacja"
       },
       {
-        "href": "/buddyzm/etyka-i-swieta",
-        "label": "ETYKA I ŚWIĘTA"
+        "label": "ETYKA I ŚWIĘTA",
+        "href": "/buddyzm/etyka-i-swieta"
       }
     ]
   },
