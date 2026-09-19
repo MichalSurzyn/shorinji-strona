@@ -184,7 +184,7 @@ export default async function AdminDashboard() {
             href="/admin/strony"
             ikona="❏"
             tytul="Popraw treść strony"
-            opis="Cennik, kontakt, opisy zajęć — strony o stałym układzie"
+            opis="Cennik, kontakt, opisy zajęć – strony o stałym układzie"
           />
         </div>
       </section>

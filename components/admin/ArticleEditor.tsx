@@ -143,7 +143,7 @@ export default function ArticleEditor({
     if (
       !confirm(
         `Przenieść artykuł „${article.title}" do kosza?\n\n` +
-          `Zniknie ze strony od razu, ale przez 30 dni da się go przywrócić — kosz jest na dole listy aktualności.`
+          `Zniknie ze strony od razu, ale przez 30 dni da się go przywrócić – kosz jest na dole listy aktualności.`
       )
     )
       return;

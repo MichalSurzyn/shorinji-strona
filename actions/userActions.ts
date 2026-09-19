@@ -95,7 +95,7 @@ export async function setAdminRole(id: string, nadaj: boolean) {
       (u) => (u.app_metadata as Record<string, unknown> | undefined)?.rola === ROLA_ADMIN,
     );
     if (uprawnieni.length <= 1)
-      return { ok: false as const, error: "To ostatnie konto z uprawnieniami — nie da się go odebrać" };
+      return { ok: false as const, error: "To ostatnie konto z uprawnieniami – nie da się go odebrać" };
   }
 
   const { error } = await admin.auth.admin.updateUserById(id, {

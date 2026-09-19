@@ -564,7 +564,7 @@ export default function ImagesManager() {
             <section>
               <h2 className="font-bold">Zdjęcia użyte na podstronach</h2>
               <p className="text-sm text-slate-500 mb-3">
-                Te zdjęcia nie trafiają do galerii — wstawiasz je w treść stron. Jeden folder
+                Te zdjęcia nie trafiają do galerii – wstawiasz je w treść stron. Jeden folder
                 na sekcję menu, wspólny dla wszystkich jej podstron. Nazwa idzie z etykiety
                 w menu, więc zmienisz ją w „Strony i menu”.
               </p>

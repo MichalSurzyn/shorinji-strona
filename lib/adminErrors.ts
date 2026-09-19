@@ -72,7 +72,7 @@ export function opiszBlad(e: unknown, czynnosc = "zapisać zmian"): string {
   if (s.includes("23505") || s.includes("duplicate key") || s.includes("już istnieje")) {
     const oArtykule = /artyk/i.test(czynnosc);
     return oArtykule
-      ? "Ten adres jest już zajęty przez inny artykuł — także taki, który leży w koszu. " +
+      ? "Ten adres jest już zajęty przez inny artykuł – także taki, który leży w koszu. " +
           "Zmień adres albo najpierw opróżnij kosz z tamtego wpisu."
       : "Taki adres strony jest już zajęty przez inną stronę. Zmień adres i zapisz jeszcze raz.";
   }

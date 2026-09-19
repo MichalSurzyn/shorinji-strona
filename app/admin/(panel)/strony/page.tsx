@@ -27,7 +27,7 @@ export default function AdminPagesList() {
       </div>
 
       <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-sm text-indigo-900">
-        Wszystkie pozostałe strony — i to, co widać w menu na górze — są w zakładce{" "}
+        Wszystkie pozostałe strony – i to, co widać w menu na górze – są w zakładce{" "}
         <Link href="/admin/drzewo" className="font-semibold underline">
           Strony i menu
         </Link>

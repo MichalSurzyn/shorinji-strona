@@ -22,15 +22,15 @@ export default function NotFound() {
         </h1>
         <p className="text-neutral-300 text-lg mb-10">
           Adres jest błędny albo strona została przeniesiona. Poniżej najczęściej
-          szukane miejsca — menu na górze prowadzi do reszty serwisu.
+          szukane miejsca. Menu na górze prowadzi do reszty serwisu.
         </p>
 
         <ul className="flex flex-col gap-3 list-none m-0 p-0">
           {[
             { href: "/", label: "Strona główna" },
             { href: "/aktualnosci", label: "Aktualności" },
-            { href: "/zajecia/dorosli", label: "Zajęcia — grupa dorosła" },
-            { href: "/zajecia/dzieci", label: "Zajęcia — grupa dziecięca" },
+            { href: "/zajecia/dorosli", label: "Zajęcia: grupa dorosła" },
+            { href: "/zajecia/dzieci", label: "Zajęcia: grupa dziecięca" },
             { href: "/zajecia/cennik", label: "Cennik" },
             { href: "/kontakt", label: "Kontakt" },
           ].map((l) => (

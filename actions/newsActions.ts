@@ -83,7 +83,7 @@ function revalidateNews(...slugi: (string | null | undefined)[]) {
  */
 function czyTrafione(wiersze: unknown[] | null, czynnosc: string) {
   if (wiersze && wiersze.length > 0) return null;
-  return `Nie udało się ${czynnosc} — tego artykułu już nie ma. Odśwież listę.`;
+  return `Nie udało się ${czynnosc} – tego artykułu już nie ma. Odśwież listę.`;
 }
 
 export async function createNewsArticle(input: NewsInput) {

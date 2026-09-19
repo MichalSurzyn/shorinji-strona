@@ -568,7 +568,7 @@ function BlockBody({
           <div className="flex-1 space-y-5">
             <Pole
               etykieta="Plik zdjęcia"
-              opis="Wybierasz z biblioteki klubu albo wgrywasz z dysku — bez wklejania adresów."
+              opis="Wybierasz z biblioteki klubu albo wgrywasz z dysku – bez wklejania adresów."
             >
               <button
                 onClick={() => openPicker(false)}
@@ -773,7 +773,7 @@ function BlockBody({
             />
             <PoleTekst
               etykieta="Dopisek przy przycisku"
-              opis="Drobny druk obok nazwy — zwykle format i waga pliku."
+              opis="Drobny druk obok nazwy – zwykle format i waga pliku."
               value={block.note ?? ""}
               onChange={(e) => onChange({ ...block, note: e.target.value })}
               placeholder="Dopisek (np. PDF, 2 MB)"
@@ -870,7 +870,7 @@ function PersonEditor({
         />
         <PoleTekst
           etykieta="Rola w klubie"
-          opis="Wiersz zaraz pod nazwiskiem — funkcja albo stopień."
+          opis="Wiersz zaraz pod nazwiskiem – funkcja albo stopień."
           value={block.role ?? ""}
           onChange={(e) => onChange({ ...block, role: e.target.value })}
           placeholder="Rola (np. Shibucho – mistrz kierujący filią)"
@@ -1061,7 +1061,7 @@ function LinksEditor({
   return (
     <Pole
       etykieta="Odnośniki"
-      opis="Na stronie staną jeden pod drugim. Widać nazwę — adres otwiera się po kliknięciu."
+      opis="Na stronie staną jeden pod drugim. Widać nazwę – adres otwiera się po kliknięciu."
     >
       <PasekKolumn uklad={UKLAD_WIERSZA_LINKU} nazwy={["Nazwa", "Adres", ""]} />
       <div className="space-y-3">
@@ -1127,7 +1127,7 @@ const OPISY_TEKSTU: Record<
   },
   callout: {
     etykieta: "Treść wyróżnionej ramki",
-    opis: "Na stronie stoi na kolorowym tle — na jedną rzecz, której nie można przeoczyć.",
+    opis: "Na stronie stoi na kolorowym tle – na jedną rzecz, której nie można przeoczyć.",
   },
   quote: {
     etykieta: "Treść cytatu",

@@ -387,7 +387,7 @@ export default function TreeManager({
     // Przed wariantem A pierwsze było jedyną możliwością i ta funkcja mówiła
     // wprost „nagłówek nie ma adresu"; dziś to zależy od tego, czy redaktor
     // adres wpisze.
-    if (rodzaj === "header" && !slug) return "(bez adresu — nagłówek tylko grupuje)";
+    if (rodzaj === "header" && !slug) return "(bez adresu – nagłówek tylko grupuje)";
     const baza =
       rodzicWybrany?.full_path && rodzicWybrany.full_path !== "/" ? rodzicWybrany.full_path : "";
     return `${baza}/${slug || "…"}`;
@@ -469,7 +469,7 @@ export default function TreeManager({
           published: true,
           menuLabel: undefined,
         }).then((r) => (r.ok ? { ok: true } : r)),
-      rodzaj !== "page" ? "Dodane." : "Dodane — opublikowane i widoczne w menu.",
+      rodzaj !== "page" ? "Dodane." : "Dodane – opublikowane i widoczne w menu.",
     );
     setNazwa("");
     setSlug("");
@@ -530,9 +530,9 @@ export default function TreeManager({
               onChange={(e) => setRodzaj(e.target.value as RodzajWezla)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             >
-              <option value="page">Strona — ma własny adres i treść</option>
-              <option value="header">Nagłówek — grupuje w menu, sam nie ma treści</option>
-              <option value="link">Odnośnik — prowadzi poza serwis</option>
+              <option value="page">Strona – ma własny adres i treść</option>
+              <option value="header">Nagłówek – grupuje w menu, sam nie ma treści</option>
+              <option value="link">Odnośnik – prowadzi poza serwis</option>
             </select>
           </label>
 
@@ -553,7 +553,7 @@ export default function TreeManager({
               }}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             >
-              <option value="">— najwyższy poziom —</option>
+              <option value="">– najwyższy poziom –</option>
               {listaMiejsc.map((m) => (
                 <option key={m.id} value={m.id}>
                   {/* Twarde spacje, bo zwykłe przeglądarka w <option> skleja. */}
@@ -565,7 +565,7 @@ export default function TreeManager({
             </select>
             {glebokoscNowego === 2 && (
               <span className="block mt-1 text-xs text-slate-500">
-                Trzeci poziom — najgłębszy. Wejdzie do rozwijanego menu jako wcięta pozycja
+                Trzeci poziom – najgłębszy. Wejdzie do rozwijanego menu jako wcięta pozycja
                 mniejszym pismem i dodatkowo jako kafelek na stronie nadrzędnej.
               </span>
             )}
@@ -598,7 +598,7 @@ export default function TreeManager({
           <label className="text-sm block">
             <span className="block text-slate-500 mb-1">
               {rodzaj === "header"
-                ? "Adres (fragment po ukośniku) — nieobowiązkowy"
+                ? "Adres (fragment po ukośniku) – nieobowiązkowy"
                 : "Adres (fragment po ukośniku)"}
             </span>
             {/* Nagłówek MOŻE mieć adres (decyzja D1). Z adresem zachowuje się
@@ -688,7 +688,7 @@ export default function TreeManager({
     if (naStrone && !w.slug) {
       const podany = prompt(
         `„${w.title}" to nagłówek bez własnego adresu, więc przy zamianie w stronę trzeba go nadać.\n\n` +
-          "Podaj adres — fragment po ukośniku, małe litery, cyfry i myślniki:",
+          "Podaj adres – fragment po ukośniku, małe litery, cyfry i myślniki:",
         // Ten sam `slugZNazwy` co w formularzu dodawania. Poprzedni zapis gubił
         // polskie znaki: „Zajęcia" dawało „zaj-cia", bo `[^a-z0-9]` zjada „ę"
         // razem z myślnikiem po nim.
@@ -710,7 +710,7 @@ export default function TreeManager({
     } else {
       linie.push(
         `„${w.title}" przestanie być stroną. Adres ${skutki.adres?.z} zostaje przy niej ` +
-          "jako miejsce w drzewie, ale nie będzie już otwierał żadnej treści —",
+          "jako miejsce w drzewie, ale nie będzie już otwierał żadnej treści –",
       );
       linie.push(`zamiast tego zacznie przerzucać na „${skutki.adres?.celTytul}" (${skutki.adres?.na}).`);
     }
@@ -721,7 +721,7 @@ export default function TreeManager({
     }
     if (skutki.bezZmianAdresu?.length) {
       linie.push("");
-      linie.push("BEZ ZMIAN — te adresy zostają dokładnie takie, jakie są:");
+      linie.push("BEZ ZMIAN – te adresy zostają dokładnie takie, jakie są:");
       skutki.bezZmianAdresu.forEach((t) => linie.push(`  • ${t}`));
     }
     if (skutki.usuwanePrzekierowania?.length) {
@@ -835,8 +835,8 @@ export default function TreeManager({
             <Podpowiedz
               tresc={
                 czyZwiniete
-                  ? "Pokazuje z powrotem podstrony schowane w tej karcie — w menu na stronie i tak są."
-                  : "Chowa podstrony w tej karcie, żeby ogarnąć długą listę — na stronie nic to nie zmienia."
+                  ? "Pokazuje z powrotem podstrony schowane w tej karcie – w menu na stronie i tak są."
+                  : "Chowa podstrony w tej karcie, żeby ogarnąć długą listę – na stronie nic to nie zmienia."
               }
             >
               <button
@@ -902,30 +902,30 @@ export default function TreeManager({
               {powodUkrycia === "rodzic-ukryty" && (
                 <span
                   className="rounded border border-amber-400 bg-amber-50 px-1.5 py-0.5 text-[0.68rem] font-medium text-amber-900"
-                  title="Ta pozycja ma własne ustawienia w porządku, ale leży pod ukrytą stroną — więc nie widać jej ani w menu, ani pod jej adresem. Odkryj stronę wyżej, a wróci sama."
+                  title="Ta pozycja ma własne ustawienia w porządku, ale leży pod ukrytą stroną – więc nie widać jej ani w menu, ani pod jej adresem. Odkryj stronę wyżej, a wróci sama."
                 >
-                  niewidoczna — rodzic ukryty
+                  niewidoczna – rodzic ukryty
                 </span>
               )}
               {powodUkrycia === "rodzic-poza-menu" && (
                 <span
                   className="rounded border border-slate-400 bg-slate-100 px-1.5 py-0.5 text-[0.68rem] font-medium text-slate-700"
-                  title="Ta pozycja jest opublikowana i jej adres działa, ale w menu nie ma do niej drogi — pozycja wyżej jest zdjęta z menu."
+                  title="Ta pozycja jest opublikowana i jej adres działa, ale w menu nie ma do niej drogi – pozycja wyżej jest zdjęta z menu."
                 >
-                  poza menu — przez rodzica
+                  poza menu – przez rodzica
                 </span>
               )}
               {zRoutu && (
                 <span
                   className="rounded border border-indigo-300 bg-indigo-50 px-1.5 py-0.5 text-[0.68rem] font-medium text-indigo-700"
-                  title="Układ tej strony jest częścią serwisu — z panelu zmienisz nazwę i widoczność, ale nie adres."
+                  title="Układ tej strony jest częścią serwisu – z panelu zmienisz nazwę i widoczność, ale nie adres."
                 >
                   stała część serwisu
                 </span>
               )}
             </div>
             <div className="mt-1 truncate font-mono text-xs text-slate-500">
-              {w.kind === "link" ? w.external_url : (w.full_path ?? "— bez adresu —")}
+              {w.kind === "link" ? w.external_url : (w.full_path ?? "– bez adresu –")}
             </div>
           </div>
 
@@ -1000,7 +1000,7 @@ export default function TreeManager({
               aria-label={`Kolejność: ${w.title}`}
               className="flex overflow-hidden rounded-lg border border-slate-300"
             >
-              <Podpowiedz tresc="Zamienia się miejscem z pozycją stojącą nad nią w tej samej gałęzi — zmienia się kolejność w menu, nie adres.">
+              <Podpowiedz tresc="Zamienia się miejscem z pozycją stojącą nad nią w tej samej gałęzi – zmienia się kolejność w menu, nie adres.">
                 <button
                   disabled={busy}
                   onClick={() => wykonaj(() => przesun(w.id, "gora" as Kierunek), "Przesunięte wyżej.")}
@@ -1010,7 +1010,7 @@ export default function TreeManager({
                   ↑
                 </button>
               </Podpowiedz>
-              <Podpowiedz tresc="Zamienia się miejscem z pozycją stojącą pod nią w tej samej gałęzi — zmienia się kolejność w menu, nie adres.">
+              <Podpowiedz tresc="Zamienia się miejscem z pozycją stojącą pod nią w tej samej gałęzi – zmienia się kolejność w menu, nie adres.">
                 <button
                   disabled={busy}
                   onClick={() => wykonaj(() => przesun(w.id, "dol" as Kierunek), "Przesunięte niżej.")}
@@ -1034,7 +1034,7 @@ export default function TreeManager({
                   widziała już wyszukiwarka. Przekierowanie ze starego adresu
                   zakłada trigger w bazie (03-drzewo-stron.sql), więc obietnica
                   „stary zacznie przekierowywać" jest prawdziwa. */}
-              <Podpowiedz tresc="Wychodzi spod swojej strony nadrzędnej o poziom wyżej — adres się skraca, a stary zacznie przekierowywać na nowy.">
+              <Podpowiedz tresc="Wychodzi spod swojej strony nadrzędnej o poziom wyżej – adres się skraca, a stary zacznie przekierowywać na nowy.">
                 <button
                   disabled={busy}
                   onClick={() => wykonaj(() => przesun(w.id, "wysun" as Kierunek), "Wysunięte na wyższy poziom.")}
@@ -1044,7 +1044,7 @@ export default function TreeManager({
                   ←
                 </button>
               </Podpowiedz>
-              <Podpowiedz tresc="Chowa się jako podstrona pozycji stojącej nad nią — adres wydłuża się o jej człon, a stary zacznie przekierowywać na nowy.">
+              <Podpowiedz tresc="Chowa się jako podstrona pozycji stojącej nad nią – adres wydłuża się o jej człon, a stary zacznie przekierowywać na nowy.">
                 <button
                   disabled={busy}
                   onClick={() => wykonaj(() => przesun(w.id, "wsun" as Kierunek), "Wsunięte pod pozycję wyżej.")}
@@ -1062,7 +1062,7 @@ export default function TreeManager({
             <Podpowiedz
               tresc={
                 w.published
-                  ? "Znika z menu i przestaje otwierać się pod swoim adresem — razem ze wszystkim, co pod nią."
+                  ? "Znika z menu i przestaje otwierać się pod swoim adresem – razem ze wszystkim, co pod nią."
                   : "Wraca do menu i znów otwiera się pod swoim adresem."
               }
             >
@@ -1102,7 +1102,7 @@ export default function TreeManager({
             <Podpowiedz
               tresc={
                 w.in_menu
-                  ? "Znika z menu na stronie, ale dalej działa pod swoim adresem — linki i wyszukiwarka bez zmian."
+                  ? "Znika z menu na stronie, ale dalej działa pod swoim adresem – linki i wyszukiwarka bez zmian."
                   : "Wraca do menu na stronie, w swoim miejscu w drzewie."
               }
             >
@@ -1127,7 +1127,7 @@ export default function TreeManager({
                 tresc={
                   w.kind === "header"
                     ? "Adres znów zacznie otwierać własną treść, zamiast przerzucać na pierwszą podstronę."
-                    : "Treść przestaje się otwierać — adres zostaje, ale zacznie przerzucać na pierwszą podstronę."
+                    : "Treść przestaje się otwierać – adres zostaje, ale zacznie przerzucać na pierwszą podstronę."
                 }
               >
                 <button
@@ -1154,7 +1154,7 @@ export default function TreeManager({
                 </Link>
               </Podpowiedz>
               {!zRoutu && (
-                <Podpowiedz tresc="Odkłada do kosza razem z podstronami — ze strony znika od razu, ale da się ją stamtąd przywrócić.">
+                <Podpowiedz tresc="Odkłada do kosza razem z podstronami – ze strony znika od razu, ale da się ją stamtąd przywrócić.">
                   <button
                     disabled={busy}
                     onClick={() => handleUsun(w)}
@@ -1291,7 +1291,7 @@ export default function TreeManager({
           >
             <div className="min-w-0">
               <div className="font-medium text-slate-800 truncate">{w.title}</div>
-              <div className="text-sm text-slate-400 truncate">{w.full_path ?? "— bez adresu —"}</div>
+              <div className="text-sm text-slate-400 truncate">{w.full_path ?? "– bez adresu –"}</div>
             </div>
             <div className="flex gap-2 shrink-0">
               <button
@@ -1325,7 +1325,7 @@ export default function TreeManager({
       </div>
 
       <p className="text-sm text-slate-400">
-        Strony o stałym układzie — te z formularzem, mapą albo grafikiem —
+        Strony o stałym układzie – te z formularzem, mapą albo grafikiem –
         mają osobną zakładkę:{" "}
         <Link href="/admin/strony" className="underline">
           Strony o stałym układzie
