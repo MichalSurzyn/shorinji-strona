@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader, PageBody } from "@/components/PageContent";
 import KafelkiPodstron from "@/components/KafelkiPodstron";
-import { getDzieci, getStrona } from "@/lib/pages";
+import { getDzieci, getStrona, kafelkiWidoczne } from "@/lib/pages";
 
 export const revalidate = 300;
 
@@ -28,6 +28,10 @@ async function podstrony() {
   try {
     const wezel = await getStrona("/program-nauczania");
     if (!wezel) return [];
+    // Przełącznik z panelu obowiązuje i tutaj. Bez tego warunku strona o stałym
+    // układzie byłaby jedynym miejscem, w którym redaktor ustawia „bez kafelków"
+    // i nic się nie dzieje.
+    if (!kafelkiWidoczne(wezel.layout)) return [];
     const dzieci = await getDzieci(wezel.id);
     return dzieci
       .filter((d) => d.full_path)

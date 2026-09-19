@@ -79,6 +79,31 @@ const KOLUMNY =
 export const SEGMENTY_BEZ_TRESCI = new Set(["admin", "api", "downloads"]);
 
 /**
+ * Wartość kolumny `layout` znacząca „ta strona NIE pokazuje kafelków podstron".
+ *
+ * Kolumna istnieje od etapu 5 i do dziś nie była przez nikogo czytana — kafelki
+ * doklejały się pod treścią każdej strony, która ma opublikowane podstrony,
+ * bez żadnej decyzji redaktora. Zgłoszenie właściciela dotyczyło
+ * `/program-nauczania/stopnie-i-wymagania`: strona wymienia stopnie w treści,
+ * a pod spodem dostawała drugi raz to samo w kafelkach.
+ *
+ * DLACZEGO PRZEŁĄCZNIK DWUSTANOWY, A NIE TRZY UKŁADY
+ * --------------------------------------------------
+ * Zbiór wartości opisany w schemacie to `auto` / `article` / `listing` / `route`,
+ * ale kafelki i tak nie mają z czego się złożyć, gdy strona nie ma podstron —
+ * więc „auto" i „listing" robią DOKŁADNIE to samo, a wybór między nimi byłby
+ * pozorny. W panelu jest więc jedno pytanie: pokazywać kafelki, czy nie.
+ * Pozostałe wartości (gdyby kiedyś doszła np. siatka strony głównej) ta funkcja
+ * traktuje jak `auto`, a zapis w panelu ich NIE nadpisuje.
+ */
+export const UKLAD_BEZ_KAFELKOW = "article";
+
+/** Czy pod treścią tej strony mają stanąć kafelki jej podstron. */
+export function kafelkiWidoczne(layout: string | null | undefined): boolean {
+  return layout !== UKLAD_BEZ_KAFELKOW;
+}
+
+/**
  * Slugi zajęte przez stałe części serwisu — walidacja przy zakładaniu strony
  * w panelu.
  *

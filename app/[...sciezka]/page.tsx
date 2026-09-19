@@ -8,6 +8,7 @@ import {
   getSciezkiZBazy,
   getStrona,
   getStronaPoId,
+  kafelkiWidoczne,
   sciezkaMozeBycStrona,
   type WezelStrony,
 } from "@/lib/pages";
@@ -140,10 +141,10 @@ export default async function StronaZDrzewa({ params }: Props) {
  * Układ: nagłówek (kicker + H1 + wstęp) → własne bloki → kafelki dzieci.
  *
  * Kafelki rysuje węzeł, który MA opublikowane dzieci - listingiem jest się przez
- * posiadanie dzieci, a nie przez osobny typ strony (§3). Dlatego `layout` z bazy
- * nie jest tu jeszcze czytany: domyślne `auto` opisuje 100% dzisiejszych
- * przypadków, a wymuszanie `article`/`listing` wchodzi razem z ekranem panelu,
- * który pozwoli to ustawić.
+ * posiadanie dzieci, a nie przez osobny typ strony (§3). Redaktor może je
+ * jednak WYŁĄCZYĆ: kolumna `layout` ustawiona na `article` (panel → przełącznik
+ * „Kafelki podstron pod treścią") znaczy „nie doklejaj". Do tej zmiany kafelki
+ * doklejały się bez pytania i nie było ich jak zdjąć inaczej niż z SQL Editora.
  */
 function WidokStrony({ strona, dzieci }: { strona: WezelStrony; dzieci: WezelStrony[] }) {
   return (
@@ -170,12 +171,14 @@ function WidokStrony({ strona, dzieci }: { strona: WezelStrony; dzieci: WezelStr
         {/* Wspólny renderer kafelków — ten sam, którego używają listingi
             tematyczne i `/program-nauczania`. Wcześniej ten markup istniał
             tutaj i w `ArticleListing` w dwóch identycznych kopiach. */}
-        <KafelkiPodstron
-          className="mt-12"
-          items={dzieci
-            .filter((d) => d.full_path)
-            .map((d) => ({ href: d.full_path as string, title: d.title, intro: d.intro }))}
-        />
+        {kafelkiWidoczne(strona.layout) && (
+          <KafelkiPodstron
+            className="mt-12"
+            items={dzieci
+              .filter((d) => d.full_path)
+              .map((d) => ({ href: d.full_path as string, title: d.title, intro: d.intro }))}
+          />
+        )}
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireUser } from "@/lib/supabase/server";
-import { RESERVED_SLUGS } from "@/lib/pages";
+import { RESERVED_SLUGS, UKLAD_BEZ_KAFELKOW } from "@/lib/pages";
 import { zapiszWersje } from "@/lib/versions";
 import type { NewsBlock } from "@/lib/newsTypes";
 
@@ -51,6 +51,13 @@ export interface WezelPanelu {
   title: string;
   intro: string | null;
   blocks: NewsBlock[];
+  /**
+   * Układ strony. Kod czyta z niej dziś jedną rzecz: czy pod treścią stanąć mają
+   * kafelki podstron (`article` = nie, cokolwiek innego = tak — patrz
+   * `kafelkiWidoczne` w `lib/pages.ts`). Panel przestawia wyłącznie tę parę
+   * wartości i NIE nadpisuje innych, gdyby kiedyś doszły.
+   */
+  layout: string;
   menu_label: string | null;
   in_menu: boolean;
   published: boolean;
@@ -61,7 +68,7 @@ export interface WezelPanelu {
 
 const KOLUMNY =
   "id,parent_id,kind,source,route,slug,full_path,content_key,external_url,kicker,title,intro," +
-  "blocks,menu_label,in_menu,published,depth,position,deleted_at";
+  "blocks,layout,menu_label,in_menu,published,depth,position,deleted_at";
 
 /**
  * Dwa osobne typy zamiast jednego warunkowego. Wariant generyczny
@@ -184,7 +191,7 @@ async function sprawdzPrzekierowanie(adres: string): Promise<string | null> {
   if (data) {
     return (
       `Adres „${adres}” jest dziś przekierowaniem na „${data.new_path}”. ` +
-      "Utworzenie tu strony wyłączyłoby to przekierowanie po cichu — najpierw usuń je z listy przekierowań."
+      "Utworzenie tu strony wyłączyłoby to przekierowanie po cichu – najpierw usuń je z listy przekierowań."
     );
   }
   return null;
@@ -202,7 +209,7 @@ function sprawdzWidocznosc(wezel: {
 }): string | null {
   if (wezel.in_menu && !wezel.published) {
     return (
-      "Strona jest ukryta (nieopublikowana), więc nie może być w menu — odnośnik prowadziłby do 404. " +
+      "Strona jest ukryta (nieopublikowana), więc nie może być w menu – odnośnik prowadziłby do 404. " +
       "Najpierw ją opublikuj albo odznacz „pokaż w menu”."
     );
   }
@@ -216,7 +223,7 @@ function sprawdzWidocznosc(wezel: {
   // `in_menu` — zgłoszone jako „żeby przenieść ją na 3 poziom musiałem
   // najpierw ukryć".
   if (wezel.kind === "header" && !wezel.in_menu) {
-    return "Nagłówek grupujący istnieje tylko po to, żeby był w menu — nie da się go ukryć.";
+    return "Nagłówek grupujący istnieje tylko po to, żeby był w menu – nie da się go ukryć.";
   }
   return null;
 }
@@ -274,7 +281,7 @@ export async function dodajWezel(input: NowyWezel): Promise<WynikZ<{ id: string 
   const sb = klient();
 
   const title = input.title.trim();
-  if (!title) return blad("Podaj nazwę — bez niej pozycja nie ma czego pokazać w menu.");
+  if (!title) return blad("Podaj nazwę – bez niej pozycja nie ma czego pokazać w menu.");
 
   let depth = 0;
   // Adres rodzica czytamy RAZ i przekazujemy dalej. Wcześniej to samo pytanie
@@ -377,6 +384,8 @@ export interface ZmianaWezla {
   inMenu?: boolean;
   published?: boolean;
   blocks?: NewsBlock[];
+  /** Kafelki podstron pod treścią. Zapisuje się w kolumnie `layout`. */
+  kafelkiPodstron?: boolean;
 }
 
 export async function zapiszWezel(id: string, zmiana: ZmianaWezla): Promise<Wynik> {
@@ -385,7 +394,7 @@ export async function zapiszWezel(id: string, zmiana: ZmianaWezla): Promise<Wyni
 
   const { data: przed, error: bladOdczytu } = await sb.from("pages").select(KOLUMNY).eq("id", id).maybeSingle();
   if (bladOdczytu) return blad(`Nie udało się wczytać strony: ${bladOdczytu.message}`);
-  if (!przed) return blad("Ta strona już nie istnieje — ktoś mógł ją usunąć w międzyczasie.");
+  if (!przed) return blad("Ta strona już nie istnieje – ktoś mógł ją usunąć w międzyczasie.");
   const stary = przed as unknown as WezelPanelu;
 
   const docelowy = {
@@ -408,6 +417,18 @@ export async function zapiszWezel(id: string, zmiana: ZmianaWezla): Promise<Wyni
   if (zmiana.inMenu !== undefined) aktualizacja.in_menu = zmiana.inMenu;
   if (zmiana.published !== undefined) aktualizacja.published = zmiana.published;
   if (zmiana.blocks !== undefined) aktualizacja.blocks = zmiana.blocks;
+  if (zmiana.kafelkiPodstron !== undefined) {
+    // Włączenie przywraca `auto` TYLKO wtedy, gdy stoi tam wyłącznik. Gdyby
+    // w kolumnie siedziała inna wartość (schemat dopuszcza m.in. `listing`
+    // i `route`), zapisanie na sztywno `auto` kasowałoby ustawienie, którego
+    // ten przełącznik w ogóle nie dotyczy.
+    const docelowyUklad = zmiana.kafelkiPodstron
+      ? stary.layout === UKLAD_BEZ_KAFELKOW
+        ? "auto"
+        : stary.layout
+      : UKLAD_BEZ_KAFELKOW;
+    if (docelowyUklad !== stary.layout) aktualizacja.layout = docelowyUklad;
+  }
   if (zmiana.externalUrl !== undefined && stary.kind === "link") {
     if (!/^https?:\/\//.test(zmiana.externalUrl.trim()))
       return blad("Odnośnik musi zaczynać się od http:// albo https://");
@@ -427,7 +448,7 @@ export async function zapiszWezel(id: string, zmiana: ZmianaWezla): Promise<Wyni
   let sciezkiPrzed: string[] = [];
   if (zmianaSluga) {
     if (stary.source === "route")
-      return blad("Tej strony nie da się przenieść pod inny adres — obsługuje ją stała część serwisu.");
+      return blad("Tej strony nie da się przenieść pod inny adres – obsługuje ją stała część serwisu.");
     const slug = zmiana.slug!.trim().toLowerCase();
 
     /**
@@ -562,13 +583,13 @@ export async function przesun(id: string, kierunek: Kierunek): Promise<Wynik> {
 
   if (kierunek === "wsun") {
     // Nowym rodzicem zostaje poprzednie rodzeństwo — tak jak w edytorach list.
-    if (i <= 0) return blad("Nie ma nad czym wsunąć — nad tą pozycją nie ma innej.");
+    if (i <= 0) return blad("Nie ma nad czym wsunąć – nad tą pozycją nie ma innej.");
     const { data: nowyRodzic } = await sb
       .from("pages")
       .select("id,kind,depth")
       .eq("id", rodzenstwo[i - 1])
       .maybeSingle();
-    if (!nowyRodzic) return blad("Pozycja powyżej właśnie zniknęła — odśwież ekran.");
+    if (!nowyRodzic) return blad("Pozycja powyżej właśnie zniknęła – odśwież ekran.");
     if (nowyRodzic.kind === "link") return blad("Odnośnik zewnętrzny nie może mieć podstron.");
     if ((nowyRodzic.depth as number) >= 2) return blad("Drzewo ma najwyżej trzy poziomy.");
     const bladW = sprawdzWidocznosc({
@@ -606,7 +627,7 @@ export async function przesun(id: string, kierunek: Kierunek): Promise<Wynik> {
       .select("id,parent_id")
       .eq("id", staryRodzic)
       .maybeSingle();
-    if (!rodzic) return blad("Strona nadrzędna właśnie zniknęła — odśwież ekran.");
+    if (!rodzic) return blad("Strona nadrzędna właśnie zniknęła – odśwież ekran.");
     const dziadek = (rodzic.parent_id as string) ?? null;
 
     /**
@@ -726,12 +747,12 @@ export async function skutkiZamiany(
   const w = wezel as unknown as WezelPanelu;
 
   if (w.deleted_at) {
-    return { mozliwe: false, powod: "Ta pozycja jest w koszu — przywróć ją najpierw." };
+    return { mozliwe: false, powod: "Ta pozycja jest w koszu – przywróć ją najpierw." };
   }
   if (w.kind === "link") {
     return {
       mozliwe: false,
-      powod: "Odnośniki zewnętrzne nie mają tej funkcji — dotyczy tylko przejścia strona ↔ nagłówek.",
+      powod: "Odnośniki zewnętrzne nie mają tej funkcji – dotyczy tylko przejścia strona ↔ nagłówek.",
     };
   }
 
@@ -752,7 +773,7 @@ export async function skutkiZamiany(
       return {
         mozliwe: false,
         powod:
-          "Tej pozycji nie da się zamienić w nagłówek — jej adres i układ na stałe " +
+          "Tej pozycji nie da się zamienić w nagłówek – jej adres i układ na stałe " +
           "obsługuje kod serwisu, nie panel.",
       };
     }
@@ -761,7 +782,7 @@ export async function skutkiZamiany(
         mozliwe: false,
         powod:
           "Ta strona jest na trzecim poziomie, a nagłówek istnieje po to, żeby coś " +
-          "grupować — czwartego poziomu drzewo nie ma, więc nie miałby czego.",
+          "grupować – czwartego poziomu drzewo nie ma, więc nie miałby czego.",
       };
     }
 
@@ -796,7 +817,7 @@ export async function skutkiZamiany(
         powod:
           "Ta strona nie ma ani jednej zwykłej podstrony, więc po zamianie jej adres „" +
           (w.full_path ?? "") +
-          "” nie miałby dokąd przerzucać — zostałby twardym 404. " +
+          "” nie miałby dokąd przerzucać – zostałby twardym 404. " +
           "Dodaj najpierw podstronę treściową.",
       };
     }
@@ -905,7 +926,7 @@ export async function skutkiZamiany(
         mozliwe: false,
         powod:
           `Adres „${nowyAdres}" jest dziś przekierowaniem na „${przek.new_path}", ` +
-          "które nie należy do tej gałęzi. Strona pod tym adresem wyłączyłaby je po cichu — " +
+          "które nie należy do tej gałęzi. Strona pod tym adresem wyłączyłaby je po cichu – " +
           "wybierz inny adres.",
       };
     }
@@ -957,7 +978,7 @@ function bladZamiany(komunikat: string): string | null {
   if (komunikat.includes("ZAMIANA_BRAK_WEZLA")) return "Tej pozycji już nie ma.";
   if (komunikat.includes("ZAMIANA_NIE_STRONA")) return "Ta pozycja przestała być stroną. Odśwież ekran.";
   if (komunikat.includes("ZAMIANA_ROUTE"))
-    return "Tej pozycji nie da się zamienić w nagłówek — jej adres obsługuje kod serwisu.";
+    return "Tej pozycji nie da się zamienić w nagłówek – jej adres obsługuje kod serwisu.";
   if (komunikat.includes("ZAMIANA_GLEBOKOSC")) return "Na trzecim poziomie nagłówek się nie zmieści.";
   if (komunikat.includes("ZAMIANA_BRAK_DZIECKA"))
     return "Ta strona nie ma już podstrony, która mogłaby przejąć jej adres. Odśwież ekran.";
@@ -967,7 +988,7 @@ function bladZamiany(komunikat: string): string | null {
   // Editorze). Bez tego wpisu redaktor zobaczyłby surowy tekst wyjątku.
   if (komunikat.includes("ZAMIANA_WIELE_DZIECI"))
     return (
-      "Baza odmawia zamiany przy kilku podstronach — najpewniej stoi na niej starsza " +
+      "Baza odmawia zamiany przy kilku podstronach – najpewniej stoi na niej starsza " +
       "wersja funkcji strona_na_naglowek. Do wklejenia: supabase/05-zamiana-rodzaju.sql."
     );
   return null;
@@ -1128,7 +1149,7 @@ export async function przywroc(id: string): Promise<Wynik> {
       .maybeSingle();
     if (!rodzic || rodzic.deleted_at) {
       return blad(
-        "Strona nadrzędna też jest w koszu. Przywróć najpierw ją — inaczej ta pozycja nie miałaby gdzie wisieć.",
+        "Strona nadrzędna też jest w koszu. Przywróć najpierw ją – inaczej ta pozycja nie miałaby gdzie wisieć.",
       );
     }
   }
@@ -1149,7 +1170,7 @@ export async function przywroc(id: string): Promise<Wynik> {
   } catch (e) {
     ostrzezenie =
       " Uwaga: nie udało się przeliczyć kolejności rodzeństwa" +
-      `${e instanceof Error ? ` (${e.message})` : ""} — sprawdź kolejność i przestaw ręcznie.`;
+      `${e instanceof Error ? ` (${e.message})` : ""} – sprawdź kolejność i przestaw ręcznie.`;
   }
 
   odswiez(await sciezkiPoddrzewa(id));
@@ -1161,7 +1182,7 @@ export async function usunTrwale(id: string): Promise<Wynik> {
   const sb = klient();
   const { data: dzieci } = await sb.from("pages").select("id").eq("parent_id", id);
   if ((dzieci ?? []).length) {
-    return blad("Ta pozycja ma podstrony — usuń najpierw je, żeby nie zniknęły niezauważone.");
+    return blad("Ta pozycja ma podstrony – usuń najpierw je, żeby nie zniknęły niezauważone.");
   }
   const { error } = await sb.from("pages").delete().eq("id", id);
   if (error) return blad(czytelnyBlad(error.message));
@@ -1183,7 +1204,7 @@ function czytelnyBlad(komunikat: string): string {
   if (komunikat.includes("pages_header_visible_chk"))
     return "Nagłówek grupujący musi być widoczny w menu.";
   if (komunikat.includes("Drzewo ma najwyżej trzy poziomy"))
-    return "Drzewo ma najwyżej trzy poziomy — głębiej strony nie da się wsunąć.";
+    return "Drzewo ma najwyżej trzy poziomy – głębiej strony nie da się wsunąć.";
   if (komunikat.includes("pętlę")) return "Nie da się wsunąć pozycji do jej własnej podstrony.";
   // Dwa ograniczenia, ktore po wariancie A moga realnie dojsc do redaktora:
   // pierwsze przy naglowku ze zlym kompletem pol, drugie przy adresie
@@ -1191,7 +1212,7 @@ function czytelnyBlad(komunikat: string): string {
   // komunikat Postgresa o naruszeniu ograniczenia.
   if (komunikat.includes("pages_kind_fields_chk"))
     return (
-      "Ta pozycja ma niepasujący komplet pól — strona musi mieć adres, a odnośnik " +
+      "Ta pozycja ma niepasujący komplet pól – strona musi mieć adres, a odnośnik " +
       "zewnętrzny pełny link. Odśwież ekran i spróbuj jeszcze raz."
     );
   if (komunikat.includes("pages_slug_format_chk"))

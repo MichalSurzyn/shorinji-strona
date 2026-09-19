@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getDzieci, getStrona } from "./pages";
+import { getDzieci, getStrona, kafelkiWidoczne } from "./pages";
 import type { ArticleGroup } from "../data/articles/types";
 import type { KafelekListingu } from "../components/ArticleListing";
 
@@ -38,7 +38,11 @@ export async function daneListingu(adres: string, grupa: ArticleGroup): Promise<
   try {
     const wezel = await getStrona(adres);
     if (wezel) {
-      const dzieci = await getDzieci(wezel.id);
+      // Przełącznik „kafelki podstron" z panelu działa też na hubach. Na nich
+      // kafelki są zwykle całą treścią strony, więc wyłączenie zostawi sam
+      // nagłówek — to jest świadomy wybór redaktora, a nie skutek uboczny:
+      // pole w panelu stoi obok reszty ustawień tej samej strony.
+      const dzieci = kafelkiWidoczne(wezel.layout) ? await getDzieci(wezel.id) : [];
       return {
         title: wezel.title,
         intro: wezel.intro,

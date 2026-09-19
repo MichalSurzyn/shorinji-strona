@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import BlockEditor from "@/components/admin/BlockEditor";
 import Komunikat, { useKomunikat } from "@/components/admin/Komunikat";
 import PasekAkcji from "@/components/admin/PasekAkcji";
-import { PoleTekst, PoleWieloliniowe } from "@/components/admin/Pole";
+import { Pole, PoleTekst, PoleWieloliniowe } from "@/components/admin/Pole";
 import { opiszBlad } from "@/lib/adminErrors";
 import { czyZmieniono, useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import { zapiszWezel, type WezelPanelu } from "@/actions/pagesActions";
 import { savePageContent } from "@/actions/pageActions";
-import { folderSekcjiZdjec } from "@/lib/pages";
+import { folderSekcjiZdjec, kafelkiWidoczne } from "@/lib/pages";
 import type { NewsBlock, PageContent } from "@/lib/newsTypes";
 
 /**
@@ -73,6 +73,16 @@ export default function TreeNodeEditor({
   const [intro, setIntro] = useState(wezel.intro ?? "");
   const [menuLabel, setMenuLabel] = useState(wezel.menu_label ?? "");
   const [blocks, setBlocks] = useState<NewsBlock[]>(wezel.blocks ?? []);
+  /**
+   * Kafelki podstron pod treścią — WŁ/WYŁ, trzymane w kolumnie `layout`.
+   *
+   * Do tej zmiany doklejały się same każdej stronie, która ma opublikowane
+   * podstrony, i nie było ich jak zdjąć. Zgłoszenie właściciela dotyczyło
+   * „Stopni i wymagań": strona wymienia stopnie w treści, a pod spodem
+   * dostawała to samo drugi raz. Pytanie jest jedno i dwustanowe — patrz
+   * `kafelkiWidoczne` w `lib/pages.ts`, dlaczego nie trzy układy.
+   */
+  const [kafelki, setKafelki] = useState(kafelkiWidoczne(wezel.layout));
 
   // Treść strony o stałym układzie — osobny zestaw pól, bo trafia do innego
   // miejsca w bazie. `tTitle` to DUŻY NAGŁÓWEK NA STRONIE, a `title` wyżej to
@@ -106,8 +116,11 @@ export default function TreeNodeEditor({
       menuLabel,
       ...(adresEdytowalny ? { slug: slug.trim().toLowerCase() } : {}),
       ...(zBazy ? { blocks } : {}),
+      // Tylko dla STRONY. Nagłówek i odnośnik nie mają się gdzie wyrenderować,
+      // więc wysyłanie im układu zapisywałoby ustawienie bez żadnego skutku.
+      ...(wezel.kind === "page" ? { kafelkiPodstron: kafelki } : {}),
     }),
-    [title, kicker, intro, menuLabel, zBazy, adresEdytowalny, slug, blocks],
+    [title, kicker, intro, menuLabel, zBazy, adresEdytowalny, slug, blocks, wezel.kind, kafelki],
   );
   /** Treść strony o stałym układzie — drugi cel zapisu, więc drugi wzorzec. */
   const wysylanaTresc = useMemo(
@@ -129,7 +142,7 @@ export default function TreeNodeEditor({
       if (
         !confirm(
           `Zmieniasz adres strony.\n\nStary: ${stary}\nNowy: …/${slug.trim().toLowerCase()}\n\n` +
-            "Stary adres zacznie przekierowywać na nowy, więc linki nie umrą — ale " +
+            "Stary adres zacznie przekierowywać na nowy, więc linki nie umrą – ale " +
             "podstrony tej strony też zmienią adresy.\n\nZapisać?",
         )
       )
@@ -183,7 +196,7 @@ export default function TreeNodeEditor({
         powrotHref="/admin/drzewo"
         powrotEtykieta="← Strony i menu"
         tytul={wezel.title}
-        opis={`${wezel.full_path ?? "— bez adresu —"}${!wezel.published ? " · ukryta" : ""}${
+        opis={`${wezel.full_path ?? "– bez adresu –"}${!wezel.published ? " · ukryta" : ""}${
           !wezel.in_menu ? " · poza menu" : ""
         }`}
         zmieniono={zmieniono}
@@ -203,10 +216,10 @@ export default function TreeNodeEditor({
 
       {maTresc && (
         <p className="text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5">
-          Ta strona ma <strong>stały układ</strong> — poniżej nagłówka stoją na niej rzeczy,
+          Ta strona ma <strong>stały układ</strong> – poniżej nagłówka stoją na niej rzeczy,
           których nie da się złożyć z elementów treści (formularz kontaktowy, mapa, grafik
           zajęć, kafelki). Ich kolejności stąd nie zmienisz, ale <strong>całą treść tej
-          strony edytujesz tutaj</strong> — nie ma już potrzeby przechodzenia do osobnej
+          strony edytujesz tutaj</strong> – nie ma już potrzeby przechodzenia do osobnej
           zakładki. Adresu też nie zmienisz: pilnuje go kod serwisu.
         </p>
       )}
@@ -221,19 +234,19 @@ export default function TreeNodeEditor({
               nie prowadzi poza serwis". */}
           {wezel.kind === "header" ? (
             <>
-              Ta pozycja <strong>tylko grupuje w menu</strong> — nie ma własnej strony.
+              Ta pozycja <strong>tylko grupuje w menu</strong> – nie ma własnej strony.
               Stąd zmienisz nazwę i etykietę w menu.
             </>
           ) : wezel.kind === "link" ? (
             <>
-              Ta pozycja <strong>prowadzi poza serwis</strong> — nie ma własnej treści.
+              Ta pozycja <strong>prowadzi poza serwis</strong> – nie ma własnej treści.
               Stąd zmienisz nazwę i etykietę w menu.
             </>
           ) : (
             <>
-              Ta strona <strong>pokazuje kafelki swoich podstron</strong> — własnej treści
+              Ta strona <strong>pokazuje kafelki swoich podstron</strong> – własnej treści
               nie ma. Stąd zmienisz tytuł, wstęp i etykietę w menu; kafelki układają się
-              same z podstron.
+              same z podstron, a przełącznikiem niżej możesz je zdjąć.
             </>
           )}
         </p>
@@ -292,7 +305,7 @@ export default function TreeNodeEditor({
               opis={
                 wezel.kind === "header"
                   ? "Nieobowiązkowy fragment po ukośniku. Adres nagłówka staje się wspólnym początkiem adresów jego podstron. Puste pole znaczy, że nagłówek tylko grupuje w menu i do adresów nie wnosi nic."
-                  : "Fragment adresu po ukośniku — końcówka adresu tej strony."
+                  : "Fragment adresu po ukośniku – końcówka adresu tej strony."
               }
               value={slug}
               onChange={(e) => setSlug(e.target.value.toLowerCase())}
@@ -311,12 +324,38 @@ export default function TreeNodeEditor({
         )}
       </div>
 
+      {/* Kafelki podstron. Karta stoi między nagłówkiem a treścią, bo dotyczy
+          tego, co publicznie stoi POD treścią — i żeby redaktor zobaczył ją
+          przy okazji każdej edycji strony, a nie tylko wtedy, gdy jej szuka. */}
+      {wezel.kind === "page" && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <Pole
+            etykieta="Kafelki podstron pod treścią"
+            opis={
+              kafelki
+                ? "Na dole strony stanie siatka kafelków z jej podstronami – tytuł, wstęp i odnośnik „Czytaj”. Strona bez podstron nie pokaże nic, więc przełącznik jest wtedy bez skutku."
+                : "Podstrony tej strony NIE pokażą się na jej dole. Dalej są dostępne z menu i z odnośników wstawionych w treść."
+            }
+          >
+            <label className="flex cursor-pointer items-center gap-2 text-base text-slate-700">
+              <input
+                type="checkbox"
+                checked={kafelki}
+                onChange={(e) => setKafelki(e.target.checked)}
+                className="h-4 w-4 accent-indigo-600"
+              />
+              Pokazuj kafelki podstron
+            </label>
+          </Pole>
+        </div>
+      )}
+
       {zBazy && (
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <h2 className="font-bold mb-1">Treść</h2>
           <p className="text-sm text-slate-500 mb-4">
-            Elementy układasz w kolejności, w jakiej mają się pokazać. Jeśli ta strona ma
-            podstrony, ich kafelki pojawią się pod treścią automatycznie.
+            Elementy układasz w kolejności, w jakiej mają się pokazać. Kafelki podstron
+            stają pod nimi, o ile zostawisz włączony przełącznik wyżej.
           </p>
           <BlockEditor
             value={blocks}
@@ -343,7 +382,7 @@ export default function TreeNodeEditor({
                   w miejscu, podczas gdy otaczające `text-sm` rosło razem z nią —
                   mono-adres robił się mniejszy od zdania, w którym stoi. */}
               <span className="font-mono text-xs">{wezel.full_path}</span>. Pola wyżej
-              dotyczyły nazwy w menu i w drzewie — to dwie różne rzeczy.
+              dotyczyły nazwy w menu i w drzewie – to dwie różne rzeczy.
             </p>
           </div>
 
