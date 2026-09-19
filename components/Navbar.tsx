@@ -20,14 +20,26 @@ import { MENU_FALLBACK } from '@/data/menuFallback';
  * listy. Stąd para: `<a>` prowadzi na stronę, sąsiedni `<button>` rozwija
  * podstrony i to on nosi `aria-expanded`/`aria-controls`.
  *
- * DLACZEGO KLIK, A NIE HOVER
- * --------------------------
- * Poprzednia wersja otwierała listę czystym CSS-em (`group-hover`), bez stanu
- * w Reakcie. Na dotyku działało to przez przypadek - `globals.css` zdejmuje
+ * NAJECHANIE MYSZĄ OTWIERA, ALE STEROWANIE ZOSTAJE W STANIE REAKTA
+ * ----------------------------------------------------------------
+ * Właściciel zgłosił: „navbar rozwija się dopiero po kliknięciu zamiast po
+ * najechaniu". Na myszy lista otwiera się więc znowu najechaniem - ale przez
+ * `onPointerEnter`/`onPointerLeave` z warunkiem `pointerType === 'mouse'`,
+ * nie przez CSS-owy `group-hover`.
+ *
+ * Ten warunek jest cały sens tej konstrukcji. Pierwsza wersja serwisu robiła
+ * to czystym CSS-em i na dotyku działała przez przypadek: `globals.css` zdejmuje
  * `@media (hover:hover)` z wariantu `hover:`, więc pierwsze dotknięcie
- * „najeżdżało". Efekt: nie dało się tego zamknąć inaczej niż przez dotknięcie
- * gdzie indziej, a z klawiatury nie dało się otworzyć w ogóle. Teraz otwiera
- * klik, zamyka Escape (oddając fokus na przycisk), klik poza menu i zmiana trasy.
+ * „najeżdżało" i listy nie dało się zamknąć inaczej niż dotknięciem gdzie
+ * indziej, a z klawiatury nie dało się jej otworzyć w ogóle. Zdarzenia
+ * wskaźnika niosą swój rodzaj, więc palec i rysik po prostu nie wchodzą w tę
+ * ścieżkę - dla nich (i dla klawiatury) zostaje przycisk strzałki.
+ *
+ * Zamyka: wyjechanie myszą, Escape (oddając fokus na przycisk), klik poza menu
+ * i zmiana trasy. Lista rozwinięta siedzi WEWNĄTRZ `<li>`, więc przejazd myszy
+ * z pozycji menu na jej podstronę nie przechodzi przez `pointerleave` - liczy
+ * się drzewo dokumentu, nie odległość na ekranie. Zapas `pt-2` na opakowaniu
+ * listy domyka szparę między paskiem a ramką, żeby nie było przez co „wypaść".
  *
  * `--nav-h` - UWAGA PRZY KAŻDEJ ZMIANIE TEGO PLIKU
  * ------------------------------------------------
@@ -332,7 +344,22 @@ export default function Navbar({ links }: { links?: NavLink[] }) {
               const id = idListy('desktop', i);
 
               return (
-                <li key={link.label} className="relative">
+                <li
+                  key={link.label}
+                  className="relative"
+                  // Tylko mysz. `pointerType` rozstrzyga to na poziomie
+                  // zdarzenia - patrz nagłówek pliku, akapit o dotyku.
+                  onPointerEnter={(e) => {
+                    if (maPodstrony && e.pointerType === 'mouse') setRozwinieta(link.label);
+                  }}
+                  onPointerLeave={(e) => {
+                    if (e.pointerType !== 'mouse') return;
+                    // Zwijamy TYLKO własną listę. Bez tego warunku wyjechanie
+                    // z pozycji A zamykałoby listę otwartą właśnie na B, gdyby
+                    // zdarzenia przyszły w tej kolejności.
+                    setRozwinieta((biezaca) => (biezaca === link.label ? null : biezaca));
+                  }}
+                >
                   <div className={klasaGrupy(isActive(link.href, link.dropdown))}>
                     {link.href ? (
                       <Link href={link.href} className={klasaPozycji(isActive(link.href, link.dropdown))}>
