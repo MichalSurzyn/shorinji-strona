@@ -6,6 +6,7 @@ import type { NewsBlock } from "@/lib/newsTypes";
 import { clThumb } from "@/lib/cloudinary";
 import ImagePicker from "./ImagePicker";
 import FilePicker from "./FilePicker";
+import EdytorTekstu from "./EdytorTekstu";
 import { KLASY_KONTROLKI, Pole, PoleTekst, PoleWieloliniowe } from "./Pole";
 
 /**
@@ -297,30 +298,21 @@ export default function BlockEditor({
             ⓘ Pomoc – formatowanie
           </summary>
           <div className="absolute right-0 mt-2 w-80 rounded-xl border border-slate-200 bg-white shadow-xl p-4 text-slate-600 space-y-2">
-            <p className="font-semibold text-slate-900">W tekście możesz użyć:</p>
             <p>
-              <code className="bg-slate-100 px-1 rounded">**pogrubienie**</code>{" "}
-              → <strong>pogrubienie</strong>
-            </p>
-            <p>
-              <code className="bg-slate-100 px-1 rounded">*kursywa*</code>{" "}
-              → <em>kursywa</em>
+              W tekście, liście, ramce i cytacie formatujesz jak w Wordzie: zaznacz
+              słowo i kliknij <strong>B</strong> albo naciśnij Ctrl+B. Formaty można
+              łączyć, np. pogrubienie z kursywą albo pogrubiony link.
             </p>
             {mode !== "article" && (
               <p>
-                <code className="bg-slate-100 px-1 rounded">==wyróżnienie==</code>{" "}
-                → <span className="text-yellow-600">żółty kolor strony</span>
+                <strong>Żółty</strong> to kolor strony. Na linku przełącza, czy link
+                jest żółty od razu, czy dopiero po najechaniu myszką. Żółte tło w polu
+                znaczy: na stronie będzie żółte.
               </p>
             )}
-            <p>
-              <code className="bg-slate-100 px-1 rounded">[tekst](/adres)</code>{" "}
-              → <span className="text-indigo-600 underline">link</span> (np.{" "}
-              <code className="bg-slate-100 px-1 rounded">[cennik](/cennik)</code>)
-            </p>
             <p className="pt-1 border-t border-slate-100">
-              Najszybciej: <strong>zaznacz tekst</strong> i kliknij przycisk{" "}
-              <strong>B</strong>{mode !== "article" && ", Żółty"} albo{" "}
-              <strong>Link</strong> nad polem.
+              Tekst z Worda wklejasz razem z pogrubieniami i linkami. Ctrl+Z cofa,
+              Ctrl+Y ponawia.
             </p>
             <p>
               <strong>Zdjęcia</strong> dodajesz blokiem „Zdjęcie&rdquo; – wybierasz
@@ -527,29 +519,16 @@ function BlockBody({
           className={block.type === "heading" ? "font-bold" : "font-semibold"}
         />
       );
+    // Akapit ma już pole „jak w Wordzie" (EdytorTekstu). Ramka i cytat dostaną
+    // je w następnym kroku — do tego czasu zostają przy polu ze znacznikami.
+    // Akapit, ramka, cytat i listy mają to samo pole „jak w Wordzie" (EdytorTekstu).
     case "paragraph":
     case "callout":
     case "quote":
-      return <TextAreaWithFormat block={block} mode={mode} onChange={onChange} />;
+      return <TekstSformatowany block={block} mode={mode} onChange={onChange} />;
     case "list":
     case "ordered":
-      return (
-        <PoleWieloliniowe
-          etykieta="Punkty listy"
-          opis={
-            block.type === "list"
-              ? "Każda linia to jeden punkt z kropką na stronie."
-              : "Każda linia to jeden punkt. Numery 1, 2, 3 dopisują się same."
-          }
-          value={block.items.join("\n")}
-          onChange={(e) =>
-            onChange({ ...block, items: e.target.value.split("\n") })
-          }
-          rows={Math.max(3, block.items.length + 1)}
-          placeholder={"Pierwszy punkt\nDrugi punkt\nTrzeci punkt"}
-          className="leading-relaxed"
-        />
-      );
+      return <ListaSformatowana block={block} mode={mode} onChange={onChange} />;
     case "image":
       return (
         <div className="flex flex-col sm:flex-row gap-5">
@@ -1110,10 +1089,10 @@ function LinksEditor({
   );
 }
 
-/* ---------------- Pole tekstowe z formatowaniem ---------------- */
+/* ---------------- Pola tekstowe z formatowaniem ---------------- */
 
 /**
- * Nazwa i opis pola dla trzech bloków tekstowych. Dotąd stał tu sam
+ * Nazwa i opis pola dla bloków tekstowych. Dotąd stał tu sam
  * placeholder „Wpisz treść..." — znikał po pierwszej literze i redaktor
  * patrzył na trzy nierozróżnialne prostokąty.
  */
@@ -1123,19 +1102,20 @@ const OPISY_TEKSTU: Record<
 > = {
   paragraph: {
     etykieta: "Tekst akapitu",
-    opis: "Zwykły akapit treści. Pogrubienie i linki wstawiasz przyciskami nad polem.",
+    opis: "Zaznacz słowo i kliknij B albo Link – jak w Wordzie. Tekst z Worda wklejasz razem z pogrubieniami; Enter robi nowy wiersz także na stronie.",
   },
   callout: {
     etykieta: "Treść wyróżnionej ramki",
-    opis: "Na stronie stoi na kolorowym tle – na jedną rzecz, której nie można przeoczyć.",
+    opis: "Na stronie stoi na kolorowym tle – na jedną rzecz, której nie można przeoczyć. Formatujesz jak w Wordzie.",
   },
   quote: {
     etykieta: "Treść cytatu",
-    opis: "Na stronie wygląda jak wypowiedź: wcięta, z kreską z boku.",
+    opis: "Na stronie wygląda jak wypowiedź: wcięta, z kreską z boku. Formatujesz jak w Wordzie.",
   },
 };
 
-function TextAreaWithFormat({
+/** Akapit, ramka i cytat w polu „jak w Wordzie" — format zapisu w `lib/formatTekstu.ts`. */
+function TekstSformatowany({
   block,
   mode,
   onChange,
@@ -1144,90 +1124,57 @@ function TextAreaWithFormat({
   mode: EditorMode;
   onChange: (b: NewsBlock) => void;
 }) {
-  const ref = useRef<HTMLTextAreaElement>(null);
   const idPola = useId();
   const { etykieta, opis } = OPISY_TEKSTU[block.type];
-
-  function wrap(before: string, after = before) {
-    const el = ref.current;
-    if (!el) return;
-    const { selectionStart: s, selectionEnd: e, value: v } = el;
-    const selected = s === e ? "tekst" : v.slice(s, e);
-    const next = v.slice(0, s) + before + selected + after + v.slice(e);
-    onChange({ ...block, text: next });
-    requestAnimationFrame(() => {
-      el.focus();
-      el.setSelectionRange(s + before.length, s + before.length + selected.length);
-    });
-  }
-
-  function makeLink() {
-    const el = ref.current;
-    if (!el) return;
-    const { selectionStart: s, selectionEnd: e, value: v } = el;
-    const selected = s === e ? "tekst linku" : v.slice(s, e);
-    const snippet = `[${selected}](/adres)`;
-    const next = v.slice(0, s) + snippet + v.slice(e);
-    onChange({ ...block, text: next });
-    requestAnimationFrame(() => {
-      el.focus();
-      const addrStart = s + selected.length + 3;
-      el.setSelectionRange(addrStart, addrStart + 6);
-    });
-  }
-
   return (
-    // Pasek formatowania stoi MIĘDZY nazwą pola a samym polem: dotyczy tego,
-    // co się w polu zaznaczy, więc przy polu, a nie nad nazwą sekcji.
     <Pole etykieta={etykieta} opis={opis} htmlFor={idPola}>
-      <div className="flex flex-wrap gap-1.5 mb-2">
-        <button
-          onClick={() => wrap("**")}
-          type="button"
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-bold hover:bg-slate-100 transition-colors"
-          title="Pogrub zaznaczony tekst"
-        >
-          B
-        </button>
-        <button
-          onClick={() => wrap("*")}
-          type="button"
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm italic font-semibold hover:bg-slate-100 transition-colors"
-          title="Kursywa (zaznaczony tekst)"
-        >
-          I
-        </button>
-        {mode !== "article" && (
-          <button
-            onClick={() => wrap("==")}
-            type="button"
-            className="rounded-md border border-yellow-400 bg-yellow-50 px-3 py-1.5 text-sm font-bold text-yellow-700 hover:bg-yellow-100 transition-colors"
-            title="Żółte wyróżnienie (kolor strony)"
-          >
-            Żółty
-          </button>
-        )}
-        <button
-          onClick={makeLink}
-          type="button"
-          className="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-sm font-bold text-indigo-700 hover:bg-indigo-100 transition-colors"
-          title="Zamień zaznaczenie w link"
-        >
-          Link
-        </button>
-        <span className="text-sm text-slate-500 self-center ml-1">
-          zaznacz tekst i kliknij
-        </span>
-      </div>
-      <textarea
-        ref={ref}
-        id={idPola}
-        aria-describedby={`${idPola}-opis`}
+      <EdytorTekstu
         value={block.text}
-        onChange={(e) => onChange({ ...block, text: e.target.value })}
-        rows={Math.max(3, Math.ceil(block.text.length / 90))}
-        placeholder="Wpisz treść..."
-        className={`${KLASY_KONTROLKI} leading-relaxed`}
+        onChange={(text) => onChange({ ...block, text })}
+        zolty={mode !== "article"}
+        idPola={idPola}
+        idOpisu={`${idPola}-opis`}
+        etykieta={etykieta}
+      />
+    </Pole>
+  );
+}
+
+/**
+ * Lista w tym samym polu co akapit: jedna linia = jeden punkt. Dotąd punkty
+ * wpisywało się w gołą textarea i nie dało się w nich niczego pogrubić ani
+ * wstawić linku przyciskiem — choć strona od zawsze je rysowała (zgłoszenie
+ * właściciela 2026-10-12, lista technik z filmami na stronach stopni).
+ */
+function ListaSformatowana({
+  block,
+  mode,
+  onChange,
+}: {
+  block: Extract<NewsBlock, { type: "list" | "ordered" }>;
+  mode: EditorMode;
+  onChange: (b: NewsBlock) => void;
+}) {
+  const idPola = useId();
+  return (
+    <Pole
+      etykieta="Punkty listy"
+      opis={
+        block.type === "list"
+          ? "Każda linia to jeden punkt z kropką na stronie – Enter zaczyna następny. Formatujesz jak w Wordzie."
+          : "Każda linia to jeden punkt, numery 1, 2, 3 dopisują się same – Enter zaczyna następny. Formatujesz jak w Wordzie."
+      }
+      htmlFor={idPola}
+    >
+      <EdytorTekstu
+        value={block.items.join("\n")}
+        onChange={(text) => onChange({ ...block, items: text.split("\n") })}
+        zolty={mode !== "article"}
+        idPola={idPola}
+        idOpisu={`${idPola}-opis`}
+        etykieta="Punkty listy"
+        podpowiedz="Pierwszy punkt – kolejny po Enterze..."
+        lista
       />
     </Pole>
   );
