@@ -1,5 +1,6 @@
 import type { NavChild, NavLink } from "./navTypes";
 import { widoczneGalezie } from "./widocznosc";
+import { NAJGLEBSZY_POZIOM_MENU } from "./drzewoLimity";
 
 /**
  * Budowa drzewa menu z wierszy tabeli `pages`.
@@ -52,7 +53,9 @@ function adres(w: PageNavRow): string | undefined {
  */
 export function buildNavTree(wszystkieZywe: PageNavRow[]): NavLink[] {
   const { wMenu } = widoczneGalezie(wszystkieZywe);
-  const rows = wszystkieZywe.filter((w) => wMenu.has(w.id));
+  // Menu ma trzy poziomy — czwarty (techniki pod stopniem) do niego nie wchodzi,
+  // nawet z „Pokaż w menu". Uzasadnienie przy NAJGLEBSZY_POZIOM_MENU.
+  const rows = wszystkieZywe.filter((w) => wMenu.has(w.id) && w.depth <= NAJGLEBSZY_POZIOM_MENU);
 
   /**
    * Pozycja, a przy remisie `id` — dokładnie ten sam klucz, którym sortuje

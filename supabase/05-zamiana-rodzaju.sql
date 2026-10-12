@@ -77,7 +77,9 @@ begin
   -- żeby stan nie zmienił się między odczytem panelu a tym zapisem.
   if v_kind <> 'page'   then raise exception 'ZAMIANA_NIE_STRONA'; end if;
   if v_source = 'route' then raise exception 'ZAMIANA_ROUTE';      end if;
-  if v_depth >= 2       then raise exception 'ZAMIANA_GLEBOKOSC';  end if;
+  -- Najgłębszy poziom (3 od 2026-10-12) nie ma pod sobą miejsca na podstrony,
+  -- więc nagłówek nie miałby tam czego grupować.
+  if v_depth >= 3       then raise exception 'ZAMIANA_GLEBOKOSC';  end if;
 
   -- ODMOWA PRZY BRAKU PODSTRON ZOSTAJE (punkt D4 checklisty, przeklikany jako
   -- ok), ale w wariancie A ma INNE uzasadnienie niż wcześniej.

@@ -2,6 +2,7 @@ import { cache } from "react";
 import { getSupabaseAdmin } from "./supabaseAdmin";
 import type { NewsBlock } from "./newsTypes";
 import { widoczneGalezie, type WierszWidocznosci } from "./widocznosc";
+import { NAJWIECEJ_SEGMENTOW } from "./drzewoLimity";
 
 /**
  * Odczyt drzewa stron (`public.pages`) i przekierowań (`public.redirects`).
@@ -153,7 +154,7 @@ const WZORZEC_SEGMENTU = /^[a-z0-9-]+$/;
  * jakimkolwiek zapytaniem — to jest cały sens tego guarda.
  */
 export function sciezkaMozeBycStrona(segmenty: string[]): boolean {
-  if (!segmenty.length || segmenty.length > 3) return false;
+  if (!segmenty.length || segmenty.length > NAJWIECEJ_SEGMENTOW) return false;
   if (SEGMENTY_BEZ_TRESCI.has(segmenty[0])) return false;
   return segmenty.every((s) => WZORZEC_SEGMENTU.test(s));
 }

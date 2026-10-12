@@ -7,6 +7,7 @@ import Podpowiedz from "./Podpowiedz";
 import { usePotwierdzenie } from "./DialogPotwierdzenia";
 import { slugZNazwy } from "@/lib/pages";
 import { powodNiewidocznosci } from "@/lib/widocznosc";
+import { NAJGLEBSZY_POZIOM, NAJGLEBSZY_POZIOM_MENU } from "@/lib/drzewoLimity";
 import {
   dodajWezel,
   doKosza,
@@ -115,12 +116,26 @@ const STYL_POZIOMU = [
     nazwa: "text-[0.85rem] font-medium text-slate-700",
     stopka: "bg-transparent border-slate-200",
   },
+  // Czwarty poziom (od 2026-10-12): techniki pod stopniem. Pismo tej samej
+  // wielkości co poziom wyżej — właściciel zgłaszał już „za małe literki" —
+  // a odróżnia go bursztynowa krawędź i lżejsza waga.
+  {
+    karta: "overflow-hidden rounded-lg border border-slate-300 bg-white",
+    naglowekKarty: "border-l-4 border-l-amber-300 px-4 py-2.5",
+    strefa: "bg-slate-600/45 border-slate-700",
+    prowadnica: "border-slate-700",
+    wciecie: "pl-4",
+    nazwa: "text-[0.85rem] font-normal text-slate-700",
+    stopka: "bg-transparent border-slate-200",
+  },
 ] as const;
 
 const styl = (poziom: number) => STYL_POZIOMU[Math.min(poziom, STYL_POZIOMU.length - 1)];
 
 /** Zwinięte pozycje drzewa, pamiętane per przeglądarka. */
 const KLUCZ_ZWINIETE = "kempo-drzewo-zwiniete";
+/** Rozwinięte gałęzie z najgłębszym poziomem pod spodem — te startują zwinięte. */
+const KLUCZ_ROZWINIETE_GLEBOKIE = "kempo-drzewo-rozwiniete-glebokie";
 
 /**
  * Odmiana po liczbie na plakietce zwiniętej sekcji.
@@ -203,6 +218,17 @@ export default function TreeManager({
   const [zwiniete, setZwiniete] = useState<Set<string>>(new Set());
 
   /**
+   * WYJĄTEK od „domyślnie rozwinięte": gałęzie, pod którymi leży najgłębszy
+   * poziom (stopień z technikami), startują ZWINIĘTE i pamiętamy te otwarte.
+   *
+   * Zgłoszenie właściciela przy czwartym poziomie: „kiedyś będzie po 40 technik
+   * na poziom" — rozwinięte domyślnie dałyby kilkaset kart jedna pod drugą.
+   * Reszta drzewa zostaje przy starej regule, więc testy odbioru celujące
+   * w wiersze trzech górnych poziomów (patrz komentarz wyżej) działają bez zmian.
+   */
+  const [rozwiniete, setRozwiniete] = useState<Set<string>>(new Set());
+
+  /**
    * Zapis do `localStorage` wolno włączyć DOPIERO po wczytaniu.
    *
    * Efekty na pierwszym montażu idą w kolejności deklaracji, ale ten drugi
@@ -219,15 +245,19 @@ export default function TreeManager({
    */
   useEffect(() => {
     try {
-      const zapisane: unknown = JSON.parse(localStorage.getItem(KLUCZ_ZWINIETE) ?? "[]");
-      if (Array.isArray(zapisane)) {
-        // Przecięcie z istniejącymi węzłami: bez niego lista puchnie o id
-        // stron dawno skasowanych i nigdy się nie czyści.
-        const istniejace = new Set(drzewo.map((w) => w.id));
-        setZwiniete(
-          new Set(zapisane.filter((id): id is string => typeof id === "string" && istniejace.has(id)))
-        );
-      }
+      // Przecięcie z istniejącymi węzłami: bez niego lista puchnie o id
+      // stron dawno skasowanych i nigdy się nie czyści.
+      const istniejace = new Set(drzewo.map((w) => w.id));
+      const wczytaj = (klucz: string): Set<string> | null => {
+        const zapisane: unknown = JSON.parse(localStorage.getItem(klucz) ?? "[]");
+        return Array.isArray(zapisane)
+          ? new Set(zapisane.filter((id): id is string => typeof id === "string" && istniejace.has(id)))
+          : null;
+      };
+      const zw = wczytaj(KLUCZ_ZWINIETE);
+      if (zw) setZwiniete(zw);
+      const rw = wczytaj(KLUCZ_ROZWINIETE_GLEBOKIE);
+      if (rw) setRozwiniete(rw);
     } catch {
       // Prywatne okno albo zablokowane dane witryny — zwinięć po prostu nie
       // pamiętamy. Zakładka musi działać dalej, to tylko wygoda.
@@ -239,10 +269,11 @@ export default function TreeManager({
     if (!zwinieciaWczytane.current) return;
     try {
       localStorage.setItem(KLUCZ_ZWINIETE, JSON.stringify([...zwiniete]));
+      localStorage.setItem(KLUCZ_ROZWINIETE_GLEBOKIE, JSON.stringify([...rozwiniete]));
     } catch {
       /* jak wyżej — brak pamięci nie może zablokować klikania */
     }
-  }, [zwiniete]);
+  }, [zwiniete, rozwiniete]);
 
   /**
    * Kursor w polu nazwy zaraz po rozwinięciu formularza w miejscu.
@@ -263,16 +294,51 @@ export default function TreeManager({
    * wszystkie" nigdy nie pokazałby stanu „wszystko zwinięte": strony bez
    * podstron nie mają czego schować, a ich id nigdy nie wpada do `zwiniete`.
    */
-  const zwijalne = wezly.filter((w) => wezly.some((d) => d.parent_id === w.id)).map((w) => w.id);
-  const wszystkoZwiniete = zwijalne.length > 0 && zwijalne.every((id) => zwiniete.has(id));
+  const zwijalneWezly = wezly.filter((w) => wezly.some((d) => d.parent_id === w.id));
+  const zwijalne = zwijalneWezly.map((w) => w.id);
 
-  const przelaczZwiniecie = (id: string) =>
-    setZwiniete((poprzednie) => {
-      const nowe = new Set(poprzednie);
-      if (nowe.has(id)) nowe.delete(id);
-      else nowe.add(id);
-      return nowe;
-    });
+  /** Gałąź, pod którą leży najgłębszy poziom — patrz `rozwiniete`. */
+  const domyslnieZwiniety = (w: WezelPanelu) => w.depth === NAJGLEBSZY_POZIOM - 1;
+  const czyZwiniety = (w: WezelPanelu) =>
+    domyslnieZwiniety(w) ? !rozwiniete.has(w.id) : zwiniete.has(w.id);
+  const wszystkoZwiniete = zwijalneWezly.length > 0 && zwijalneWezly.every(czyZwiniety);
+
+  const przelacz = (zbior: Set<string>, id: string) => {
+    const nowe = new Set(zbior);
+    if (nowe.has(id)) nowe.delete(id);
+    else nowe.add(id);
+    return nowe;
+  };
+  const przelaczZwiniecie = (w: WezelPanelu) =>
+    domyslnieZwiniety(w)
+      ? setRozwiniete((p) => przelacz(p, w.id))
+      : setZwiniete((p) => przelacz(p, w.id));
+
+  /**
+   * Rozwija gałąź, do której właśnie trafiła pozycja (dodanie, „wsuń").
+   * Zwinięty rodzic schowałby ją w strefie, której nie widać — redaktor dostałby
+   * komunikat „Dodane" i pustą kartę. Jedyne miejsca, w których zwinięcie
+   * zmienia się samo.
+   */
+  const rozwinWezel = (id: string) => {
+    const w = wezly.find((x) => x.id === id);
+    if (!w) return;
+    if (domyslnieZwiniety(w)) {
+      setRozwiniete((p) => (p.has(id) ? p : new Set(p).add(id)));
+    } else {
+      setZwiniete((p) => {
+        if (!p.has(id)) return p;
+        const nowe = new Set(p);
+        nowe.delete(id);
+        return nowe;
+      });
+    }
+  };
+
+  const ustawWszystko = (zwin: boolean) => {
+    setZwiniete(zwin ? new Set(zwijalne) : new Set());
+    setRozwiniete(zwin ? new Set() : new Set(zwijalneWezly.filter(domyslnieZwiniety).map((w) => w.id)));
+  };
 
   async function odswiez() {
     const [d, k] = await Promise.all([pobierzDrzewo(), pobierzKosz()]);
@@ -366,8 +432,8 @@ export default function TreeManager({
   const listaMiejsc: { id: string; etykieta: string; glebokosc: number }[] = [];
   const zbierzMiejsca = (rodzic: string | null, poziom: number) => {
     for (const w of dzieci(rodzic)) {
-      // Odnośnik zewnętrzny nie może mieć podstron, a poziom trzeci jest ostatni.
-      if (w.kind !== "link" && w.depth < 2) {
+      // Odnośnik zewnętrzny nie może mieć podstron, a najgłębszy poziom jest ostatni.
+      if (w.kind !== "link" && w.depth < NAJGLEBSZY_POZIOM) {
         listaMiejsc.push({ id: w.id, etykieta: w.menu_label ?? w.title, glebokosc: poziom });
       }
       zbierzMiejsca(w.id, poziom + 1);
@@ -478,17 +544,7 @@ export default function TreeManager({
 
     if (!udane) return;
     setDodawanieW(null);
-    // Rodzic zwinięty schowałby świeżo dodaną podstronę w strefie, której nie
-    // widać — redaktor dostałby komunikat „Dodane" i pustą kartę. Rozwijamy go
-    // więc za niego; to jedyne miejsce, w którym zwinięcie zmienia się samo.
-    if (rodzicDodawania) {
-      setZwiniete((poprzednie) => {
-        if (!poprzednie.has(rodzicDodawania)) return poprzednie;
-        const nowe = new Set(poprzednie);
-        nowe.delete(rodzicDodawania);
-        return nowe;
-      });
-    }
+    if (rodzicDodawania) rozwinWezel(rodzicDodawania);
   }
 
   /**
@@ -565,8 +621,14 @@ export default function TreeManager({
             </select>
             {glebokoscNowego === 2 && (
               <span className="block mt-1 text-xs text-slate-500">
-                Trzeci poziom – najgłębszy. Wejdzie do rozwijanego menu jako wcięta pozycja
+                Trzeci poziom. Wejdzie do rozwijanego menu jako wcięta pozycja
                 mniejszym pismem i dodatkowo jako kafelek na stronie nadrzędnej.
+              </span>
+            )}
+            {glebokoscNowego > NAJGLEBSZY_POZIOM_MENU && (
+              <span className="block mt-1 text-xs text-slate-500">
+                Czwarty poziom – najgłębszy (np. technika pod stopniem). Do menu nie wchodzi:
+                prowadzi do niej lista albo kafelek na stronie nadrzędnej.
               </span>
             )}
           </label>
@@ -803,12 +865,16 @@ export default function TreeManager({
   function wierszDrzewa(w: WezelPanelu, poziom: number) {
     const potomstwo = dzieci(w.id);
     const zRoutu = w.source === "route";
-    // Odnośnik zewnętrzny nie ma podstron, a trzeci poziom jest ostatni —
+    // Odnośnik zewnętrzny nie ma podstron, a najgłębszy poziom jest ostatni —
     // ten sam warunek co przy liście miejsc w formularzu.
-    const mozeMiecPodstrony = w.kind !== "link" && w.depth < 2;
+    const najglebszy = w.depth >= NAJGLEBSZY_POZIOM;
+    const mozeMiecPodstrony = w.kind !== "link" && !najglebszy;
+    // Czwarty poziom do menu nie wchodzi (NAJGLEBSZY_POZIOM_MENU) — przełącznik
+    // „Pokaż w menu" obiecywałby tu coś, czego menu nie narysuje.
+    const ponizejMenu = w.depth > NAJGLEBSZY_POZIOM_MENU;
     const s = styl(poziom);
     const powodUkrycia = powod(w.id);
-    const czyZwiniete = zwiniete.has(w.id);
+    const czyZwiniete = czyZwiniety(w);
     return (
       <div key={w.id} className={s.karta}>
         <div
@@ -841,7 +907,7 @@ export default function TreeManager({
             >
               <button
                 type="button"
-                onClick={() => przelaczZwiniecie(w.id)}
+                onClick={() => przelaczZwiniecie(w)}
                 aria-expanded={!czyZwiniete}
                 // BEZ `title` — powód opisany przy rzędzie akcji niżej.
                 // Nazwy pozycji w etykiecie już nie ma: ma to być STAŁY ciąg,
@@ -889,10 +955,19 @@ export default function TreeManager({
                   ukryta
                 </span>
               )}
-              {!w.in_menu && (
-                <span className="rounded border border-slate-400 bg-slate-200 px-1.5 py-0.5 text-[0.68rem] font-medium text-slate-700">
-                  poza menu
+              {ponizejMenu ? (
+                <span
+                  className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[0.68rem] font-medium text-amber-900"
+                  title="Menu na stronie ma trzy poziomy. Do strony z czwartego poziomu prowadzi lista albo kafelek na stronie nadrzędnej – jej adres działa normalnie."
+                >
+                  4. poziom – poza menu
                 </span>
+              ) : (
+                !w.in_menu && (
+                  <span className="rounded border border-slate-400 bg-slate-200 px-1.5 py-0.5 text-[0.68rem] font-medium text-slate-700">
+                    poza menu
+                  </span>
+                )
               )}
               {/* Punkt A6: „jak ukryję podstronę 2 poziomu, to podstrona
                   3 poziomu zostaje ukryta, ale plakietka na to nie wskazuje".
@@ -907,7 +982,7 @@ export default function TreeManager({
                   niewidoczna – rodzic ukryty
                 </span>
               )}
-              {powodUkrycia === "rodzic-poza-menu" && (
+              {powodUkrycia === "rodzic-poza-menu" && !ponizejMenu && (
                 <span
                   className="rounded border border-slate-400 bg-slate-100 px-1.5 py-0.5 text-[0.68rem] font-medium text-slate-700"
                   title="Ta pozycja jest opublikowana i jej adres działa, ale w menu nie ma do niej drogi – pozycja wyżej jest zdjęta z menu."
@@ -1044,10 +1119,27 @@ export default function TreeManager({
                   ←
                 </button>
               </Podpowiedz>
-              <Podpowiedz tresc="Chowa się jako podstrona pozycji stojącej nad nią – adres wydłuża się o jej człon, a stary zacznie przekierowywać na nowy.">
+              <Podpowiedz
+                tresc={
+                  najglebszy
+                    ? "Głębiej już się nie da – to czwarty, najgłębszy poziom drzewa."
+                    : "Chowa się jako podstrona pozycji stojącej nad nią – adres wydłuża się o jej człon, a stary zacznie przekierowywać na nowy."
+                }
+              >
                 <button
-                  disabled={busy}
-                  onClick={() => wykonaj(() => przesun(w.id, "wsun" as Kierunek), "Wsunięte pod pozycję wyżej.")}
+                  // Na najgłębszym poziomie „wsuń" zawsze by odmówiło — wyszarzony
+                  // zamiast ukrytego, żeby para strzałek nie zmieniała szerokości.
+                  disabled={busy || najglebszy}
+                  onClick={async () => {
+                    // Nowym rodzicem zostaje pozycja stojąca wyżej (tak liczy `przesun`).
+                    // Gdy jest zwinięta — a stopień z technikami startuje zwinięty —
+                    // wsunięta pozycja zniknęłaby z oczu, więc rozwijamy rodzica.
+                    const rodzenstwo = dzieci(w.parent_id);
+                    const i = rodzenstwo.findIndex((r) => r.id === w.id);
+                    const nowyRodzic = i > 0 ? rodzenstwo[i - 1].id : null;
+                    const udane = await wykonaj(() => przesun(w.id, "wsun" as Kierunek), "Wsunięte pod pozycję wyżej.");
+                    if (udane && nowyRodzic) rozwinWezel(nowyRodzic);
+                  }}
                   aria-label="Wsuń pod pozycję powyżej"
                   className="px-2.5 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-40"
                 >
@@ -1098,7 +1190,10 @@ export default function TreeManager({
               </button>
             </Podpowiedz>
             {/* Najczęściej mylona para w całym rzędzie: „zdejmij z menu"
-                brzmi jak wyłączenie strony, a strona zostaje żywa. */}
+                brzmi jak wyłączenie strony, a strona zostaje żywa.
+                Na czwartym poziomie przełącznika nie ma — menu go nie narysuje
+                (plakietka „4. poziom – poza menu" mówi dlaczego). */}
+            {!ponizejMenu && (
             <Podpowiedz
               tresc={
                 w.in_menu
@@ -1117,12 +1212,15 @@ export default function TreeManager({
                 {w.in_menu ? "Zdejmij z menu" : "Pokaż w menu"}
               </button>
             </Podpowiedz>
+            )}
 
             {/* Zamiana rodzaju tylko dla pozycji z bazy. Przy „stałej części
                 serwisu" baza tego nie przepuści (`pages_source_chk`), a przycisk,
                 który zawsze odmawia, jest gorszy od jego braku. Odnośnik
                 zewnętrzny też nie jest objęty tą funkcją. */}
-            {!zRoutu && w.kind !== "link" && (
+            {/* Na najgłębszym poziomie zamiana strony w nagłówek zawsze odmawia
+                (nagłówek nie miałby czego grupować), więc przycisku tam nie ma. */}
+            {!zRoutu && w.kind !== "link" && !(w.kind === "page" && najglebszy) && (
               <Podpowiedz
                 tresc={
                   w.kind === "header"
@@ -1251,7 +1349,7 @@ export default function TreeManager({
         <div className="flex justify-end">
           <button
             type="button"
-            onClick={() => setZwiniete(wszystkoZwiniete ? new Set() : new Set(zwijalne))}
+            onClick={() => ustawWszystko(!wszystkoZwiniete)}
             className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900"
           >
             {wszystkoZwiniete ? "Rozwiń wszystkie" : "Zwiń wszystkie"}

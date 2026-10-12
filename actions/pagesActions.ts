@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireUser } from "@/lib/supabase/server";
 import { RESERVED_SLUGS, UKLAD_BEZ_KAFELKOW } from "@/lib/pages";
+import { NAJGLEBSZY_POZIOM } from "@/lib/drzewoLimity";
 import { zapiszWersje } from "@/lib/versions";
 import type { NewsBlock } from "@/lib/newsTypes";
 
@@ -198,6 +199,14 @@ async function sprawdzPrzekierowanie(adres: string): Promise<string | null> {
 }
 
 /**
+ * Odmowa przy próbie dodania albo wsunięcia strony pod najgłębszy poziom.
+ * Ten sam limit trzyma baza (06-czwarty-poziom.sql) — tu jest dla czytelnego
+ * komunikatu, zanim zapis w ogóle pójdzie.
+ */
+const KOMUNIKAT_WYSOKOSCI =
+  "Drzewo ma najwyżej cztery poziomy – pod stroną z czwartego poziomu nie da się już niczego dodać.";
+
+/**
  * Kombinacje, które model dopuszcza, a interfejs nie powinien.
  * Odrzucamy z wyjaśnieniem — patrz zasada 2 w nagłówku.
  */
@@ -243,7 +252,7 @@ async function sciezkiPoddrzewa(id: string): Promise<string[]> {
   const sb = klient();
   const sciezki: string[] = [];
   let poziom = [id];
-  for (let i = 0; i < 3 && poziom.length; i++) {
+  for (let i = 0; i < NAJGLEBSZY_POZIOM && poziom.length; i++) {
     const { data } = await sb.from("pages").select("id,full_path").in("parent_id", poziom);
     const wiersze = data ?? [];
     for (const w of wiersze) if (w.full_path) sciezki.push(w.full_path as string);
@@ -298,7 +307,7 @@ export async function dodajWezel(input: NowyWezel): Promise<WynikZ<{ id: string 
     if (error) return blad(`Nie udało się sprawdzić miejsca w drzewie: ${error.message}`);
     if (!rodzic) return blad("Miejsce, w którym chcesz dodać stronę, już nie istnieje.");
     if (rodzic.kind === "link") return blad("Odnośnik zewnętrzny nie może mieć podstron.");
-    if ((rodzic.depth as number) >= 2) return blad("Drzewo ma najwyżej trzy poziomy.");
+    if ((rodzic.depth as number) >= NAJGLEBSZY_POZIOM) return blad(KOMUNIKAT_WYSOKOSCI);
     depth = (rodzic.depth as number) + 1;
     adresRodzica = (rodzic.full_path as string) ?? null;
   }
@@ -591,7 +600,7 @@ export async function przesun(id: string, kierunek: Kierunek): Promise<Wynik> {
       .maybeSingle();
     if (!nowyRodzic) return blad("Pozycja powyżej właśnie zniknęła – odśwież ekran.");
     if (nowyRodzic.kind === "link") return blad("Odnośnik zewnętrzny nie może mieć podstron.");
-    if ((nowyRodzic.depth as number) >= 2) return blad("Drzewo ma najwyżej trzy poziomy.");
+    if ((nowyRodzic.depth as number) >= NAJGLEBSZY_POZIOM) return blad(KOMUNIKAT_WYSOKOSCI);
     const bladW = sprawdzWidocznosc({
       kind: w.kind,
       depth: (nowyRodzic.depth as number) + 1,
@@ -777,12 +786,12 @@ export async function skutkiZamiany(
           "obsługuje kod serwisu, nie panel.",
       };
     }
-    if (w.depth >= 2) {
+    if (w.depth >= NAJGLEBSZY_POZIOM) {
       return {
         mozliwe: false,
         powod:
-          "Ta strona jest na trzecim poziomie, a nagłówek istnieje po to, żeby coś " +
-          "grupować – czwartego poziomu drzewo nie ma, więc nie miałby czego.",
+          "Ta strona jest na czwartym, najgłębszym poziomie, a nagłówek istnieje po to, " +
+          "żeby coś grupować – głębiej drzewo nie sięga, więc nie miałby czego.",
       };
     }
 
@@ -979,7 +988,7 @@ function bladZamiany(komunikat: string): string | null {
   if (komunikat.includes("ZAMIANA_NIE_STRONA")) return "Ta pozycja przestała być stroną. Odśwież ekran.";
   if (komunikat.includes("ZAMIANA_ROUTE"))
     return "Tej pozycji nie da się zamienić w nagłówek – jej adres obsługuje kod serwisu.";
-  if (komunikat.includes("ZAMIANA_GLEBOKOSC")) return "Na trzecim poziomie nagłówek się nie zmieści.";
+  if (komunikat.includes("ZAMIANA_GLEBOKOSC")) return "Na najgłębszym poziomie nagłówek się nie zmieści.";
   if (komunikat.includes("ZAMIANA_BRAK_DZIECKA"))
     return "Ta strona nie ma już podstrony, która mogłaby przejąć jej adres. Odśwież ekran.";
   // ZAMIANA_WIELE_DZIECI zostaje w tłumaczeniu, choć nowa wersja funkcji tego
@@ -1074,7 +1083,7 @@ export async function policzPotomkow(id: string): Promise<{ id: string; title: s
   const sb = klient();
   const wynik: { id: string; title: string; full_path: string | null }[] = [];
   let poziom = [id];
-  for (let i = 0; i < 3 && poziom.length; i++) {
+  for (let i = 0; i < NAJGLEBSZY_POZIOM && poziom.length; i++) {
     const { data } = await sb
       .from("pages")
       .select("id,title,full_path")
@@ -1203,8 +1212,15 @@ function czytelnyBlad(komunikat: string): string {
     return "W tym samym miejscu jest już strona o takim adresie.";
   if (komunikat.includes("pages_header_visible_chk"))
     return "Nagłówek grupujący musi być widoczny w menu.";
+  if (komunikat.includes("Drzewo ma najwyżej cztery poziomy"))
+    return "Drzewo ma najwyżej cztery poziomy – głębiej strony nie da się wsunąć.";
+  // Stary komunikat triggera: kod już zna czwarty poziom, a baza jeszcze nie
+  // (supabase/06-czwarty-poziom.sql wkleja się ręcznie w SQL Editorze).
   if (komunikat.includes("Drzewo ma najwyżej trzy poziomy"))
-    return "Drzewo ma najwyżej trzy poziomy – głębiej strony nie da się wsunąć.";
+    return (
+      "Baza nie przyjmuje jeszcze czwartego poziomu – administrator techniczny musi " +
+      "wkleić supabase/06-czwarty-poziom.sql w Supabase."
+    );
   if (komunikat.includes("pętlę")) return "Nie da się wsunąć pozycji do jej własnej podstrony.";
   // Dwa ograniczenia, ktore po wariancie A moga realnie dojsc do redaktora:
   // pierwsze przy naglowku ze zlym kompletem pol, drugie przy adresie

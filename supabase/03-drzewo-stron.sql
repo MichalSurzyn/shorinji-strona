@@ -266,7 +266,7 @@ create table if not exists public.pages (
 
   constraint pages_kind_chk          check (kind in ('page', 'link', 'header')),
   constraint pages_source_values_chk check (source in ('db', 'route')),
-  constraint pages_depth_chk         check (depth between 0 and 2),
+  constraint pages_depth_chk         check (depth between 0 and 3),
 
   -- Strona glowna: EDITABLE_PAGES ma wpis slug='home', route='/'
   -- (lib/editablePages.ts). Jest edytowalna z panelu i siedzi w sitemapie
@@ -505,7 +505,7 @@ end $$;
 do $$
 begin
   alter table public.pages
-    add constraint pages_depth_chk check (depth between 0 and 2);
+    add constraint pages_depth_chk check (depth between 0 and 3);
 exception when duplicate_object then null;
 end $$;
 
@@ -915,8 +915,10 @@ begin
       raise exception 'Odnośnik zewnętrzny nie może mieć podstron.';
     end if;
 
-    if rodzic.depth >= 2 then
-      raise exception 'Drzewo ma najwyżej trzy poziomy.';
+    -- Cztery poziomy od 2026-10-12 (06-czwarty-poziom.sql): techniki pod stopniem,
+    -- np. /program-nauczania/stopnie-i-wymagania/6-kyu/kote-nuki.
+    if rodzic.depth >= 3 then
+      raise exception 'Drzewo ma najwyżej cztery poziomy.';
     end if;
 
     -- Petla w drzewie. Idziemy w gore od PROPONOWANEGO rodzica po zapisanych
@@ -1186,9 +1188,9 @@ begin
   --      w dol i nigdy w gore ani w bok. Zeby lancuch wrocil do wiersza, ktory
   --      juz byl dotkniety, w drzewie musialby istniec cykl - a temu zapobiega
   --      trigger BEFORE z sekcji 7, ktory jest jedyna droga zapisu do tej tabeli.
-  --   2. WYSOKOSC DRZEWA. depth ma CHECK 0..2, a trigger BEFORE odrzuca dziecko
-  --      rodzica o depth >= 2. Poddrzewo ma wiec najwyzej dwa poziomy pod
-  --      dotknietym wierszem: rekurencja jest ograniczona z gory liczba 2,
+  --   2. WYSOKOSC DRZEWA. depth ma CHECK 0..3, a trigger BEFORE odrzuca dziecko
+  --      rodzica o depth >= 3. Poddrzewo ma wiec najwyzej trzy poziomy pod
+  --      dotknietym wierszem: rekurencja jest ograniczona z gory liczba 3,
   --      niezaleznie od czegokolwiek innego.
   --   3. BRAK ZMIANY. Dla wierszy kind='page' klauzula WHEN sprawdza, czy adres
   --      albo glebokosc FAKTYCZNIE sie zmienily; dziecko, ktore przeliczylo sie
@@ -1197,8 +1199,8 @@ begin
   --      warunek trywialny: zapytanie nie dopasowuje zadnego wiersza.
   --      UWAGA: dla naglowkow i odnosnikow ten punkt NIE dziala (patrz nizej),
   --      wiec zatrzymanie stoi wtedy wylacznie na punktach 1 i 2 - a one
-  --      wystarczaja same: kierunek w dol plus depth ograniczone do 0..2 daja
-  --      najwyzej dwa poziomy zejscia, niezaleznie od czegokolwiek innego.
+  --      wystarczaja same: kierunek w dol plus depth ograniczone do 0..3 daja
+  --      najwyzej trzy poziomy zejscia, niezaleznie od czegokolwiek innego.
   --
   -- CZWARTY I PIATY CZLON WARUNKU - poprawka wobec par. 2.4 specyfikacji.
   -- Awaria, ktora zamykaja (znaleziona niezaleznie przez dwie kontrole):

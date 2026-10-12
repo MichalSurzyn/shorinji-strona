@@ -52,7 +52,7 @@ export interface WidoczneGalezie {
 /**
  * Ile skoków w górę wolno zrobić, zanim uznamy dane za zapętlone.
  *
- * Drzewo ma `depth` 0..2, więc realnie potrzeba najwyżej trzech. Limit jest
+ * Drzewo ma `depth` 0..3 (od 2026-10-12), więc realnie potrzeba najwyżej czterech. Limit jest
  * mimo to jawny i z zapasem — dokładnie tak, jak `poziom < 10` w obu CTE
  * w `supabase/03-drzewo-stron.sql`. Bez niego jeden zapętlony wiersz (a taki
  * potrafi powstać przy ręcznym zapisie z pominięciem triggera) zawiesiłby

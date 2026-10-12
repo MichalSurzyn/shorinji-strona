@@ -42,6 +42,13 @@ z panelu i tak odświeżają strony od razu przez `revalidatePath`. Krótszego `
 nie dawać bez powodu. Zużycie: `GET https://api.netlify.com/api/v1/sites/<id>/usage`
 (szczegóły w `shorinji-notes/zadanie-netlify-limit-funkcji.md`).
 
+**Drzewo stron ma cztery poziomy (od 2026-10-12), menu górne trzy.** Limit siedzi
+w dwóch miejscach, które trzeba zmieniać RAZEM: baza (`pages_depth_chk`, trigger
+`pages_before_write`, `strona_na_naglowek` — `supabase/06-czwarty-poziom.sql`) i kod
+(`lib/drzewoLimity.ts`: trasa, akcje panelu, menu, drzewo w panelu). Sam kod bez SQL-a
+kończy się odmową zapisu z bazy, sam SQL bez kodu — adresami z 4 segmentami, które
+trasa odrzuca jako 404. Gałęzie z czwartym poziomem pod spodem startują w panelu zwinięte.
+
 **`revalidatePath("/sciezka")` nie rusza mapy witryny.** Tagi `/sitemap.xml` to
 `_N_T_/layout` i `_N_T_/sitemap.xml`, wiec `revalidatePath("/")` jej nie dotyka,
 a `revalidatePath("/", "layout")` — owszem. Stad akcje wolajace wariant `"layout"`
