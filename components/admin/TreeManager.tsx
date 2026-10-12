@@ -6,7 +6,7 @@ import Komunikat, { useKomunikat } from "./Komunikat";
 import Podpowiedz from "./Podpowiedz";
 import { usePotwierdzenie } from "./DialogPotwierdzenia";
 import { slugZNazwy } from "@/lib/pages";
-import { powodNiewidocznosci } from "@/lib/widocznosc";
+import { powodNiewidocznosci, widoczneGalezie } from "@/lib/widocznosc";
 import { NAJGLEBSZY_POZIOM, NAJGLEBSZY_POZIOM_MENU } from "@/lib/drzewoLimity";
 import {
   dodajWezel,
@@ -403,6 +403,13 @@ export default function TreeManager({
    * ani jednego zapytania.
    */
   const powod = (id: string) => powodNiewidocznosci(id, wezly);
+  /**
+   * Strony, które odwiedzający faktycznie zobaczy — cały łańcuch przodków
+   * opublikowany, ta sama reguła co na stronie publicznej (`getStrona`).
+   * Nie `powod()`: ten zwraca `null` dla każdej pozycji spoza menu, także
+   * leżącej pod ukrytym rodzicem — „Zobacz" prowadziłoby wtedy na 404.
+   */
+  const widoczne = widoczneGalezie(wezly).opublikowane;
 
   /**
    * Wybrany rodzic WYLICZANY, nie przechowywany — i to jest cała poprawka.
@@ -1242,6 +1249,22 @@ export default function TreeManager({
             {/* Edycja i usuwanie odsunięte od przełączników widoczności:
                 pierwsze dwa da się cofnąć jednym kliknięciem, „Usuń" nie. */}
             <div className="flex items-center gap-1.5 border-l border-slate-200 pl-3">
+              {/* Zgłoszenie właściciela: podgląd był dostępny dopiero w edytorze
+                  pozycji. Tylko dla stron, które odwiedzający zobaczy — inaczej
+                  przycisk prowadziłby na 404. */}
+              {w.kind === "page" && w.full_path && widoczne.has(w.id) && (
+                <Podpowiedz tresc="Otwiera tę stronę tak, jak widzi ją odwiedzający – w nowej karcie.">
+                  <a
+                    href={w.full_path}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Zobacz stronę"
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
+                  >
+                    Zobacz ↗
+                  </a>
+                </Podpowiedz>
+              )}
               <Podpowiedz tresc="Otwiera osobny ekran tej pozycji: nazwa, adres, opis i treść.">
                 <Link
                   href={`/admin/drzewo/${w.id}`}
