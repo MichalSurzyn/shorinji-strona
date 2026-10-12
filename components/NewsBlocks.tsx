@@ -2,11 +2,14 @@ import { clThumb, clUrl } from "@/lib/cloudinary";
 import { formatIban, formatTelefon } from "@/lib/organizationTypes";
 import type { OrgBank, OrgKontakt, OrgSocial } from "@/lib/organizationTypes";
 import type { NewsBlock } from "@/lib/newsTypes";
+import { Fragment } from "react";
+import { przytnijEntery, rozbijTekst, type Kawalek } from "@/lib/formatTekstu";
 
 /**
  * Wspólny renderer bloków treści (ciemny motyw strony) - używany przez
  * aktualności, strony serwisu i podstrony tematyczne.
- * Inline: **pogrubienie**, *kursywa*, ==żółte wyróżnienie==, [link](adres).
+ * Inline: **pogrubienie**, *kursywa*, ==żółte wyróżnienie==, [link](adres) — także
+ * zagnieżdżone, i [link](adres "bez-koloru"). Format: `lib/formatTekstu.ts`.
  *
  * NIE WOŁAJ TEGO Z TRASY — wejściem jest components/RenderBlocks.tsx.
  * To czysty renderer: bloki „bank" i „kontakt" nie noszą własnych danych i bez
@@ -17,50 +20,62 @@ import type { NewsBlock } from "@/lib/newsTypes";
  * „Zapisane." i widział stronę bez tej sekcji, bez wskazówki dlaczego.
  */
 export function InlineText({ text }: { text: string }) {
-  const parts = text
-    .split(/(\*\*[^*]+\*\*|\*[^*\n]+\*|==[^=]+==|\[[^\]]+\]\([^)\s]+\))/g)
-    .filter(Boolean);
-  return (
-    <>
-      {parts.map((p, i) => {
-        if (p.startsWith("**") && p.endsWith("**"))
-          return (
-            <strong key={i} className="font-semibold text-white">
-              {p.slice(2, -2)}
-            </strong>
-          );
-        if (p.startsWith("*") && p.endsWith("*") && p.length > 2)
-          return (
-            <em key={i} className="italic">
-              {p.slice(1, -1)}
-            </em>
-          );
-        if (p.startsWith("==") && p.endsWith("=="))
-          return (
-            <span key={i} className="text-yellow-500">
-              {p.slice(2, -2)}
-            </span>
-          );
-        const m = p.match(/^\[([^\]]+)\]\(([^)\s]+)\)$/);
-        if (m) {
-          const external = /^https?:\/\//.test(m[2]);
-          return (
-            <a
-              key={i}
-              href={m[2]}
-              {...(external
-                ? { target: "_blank", rel: "noopener noreferrer" }
-                : {})}
-              className="text-yellow-500 hover:text-yellow-400 underline-offset-4 hover:underline transition-colors"
-            >
-              {m[1]}
-            </a>
-          );
+  // Podział na kawałki mieszka w `lib/formatTekstu.ts`, wspólnie z edytorem
+  // w panelu — edytor nie może pokazać formatowania, którego tu nie narysujemy.
+  const kawalki = rozbijTekst(text);
+  const wynik: React.ReactNode[] = [];
+  for (let i = 0; i < kawalki.length; ) {
+    const link = kawalki[i].link;
+    if (!link) {
+      wynik.push(<Fragment key={i}>{sformatuj(kawalki[i], false)}</Fragment>);
+      i++;
+      continue;
+    }
+    // Kawałki jednego linku dzielą ten sam obiekt — dwa linki obok siebie
+    // z tym samym adresem zostają dwoma `<a>`, tak jak dotąd.
+    let j = i + 1;
+    while (j < kawalki.length && kawalki[j].link === link) j++;
+    const external = /^https?:\/\//.test(link.adres);
+    wynik.push(
+      <a
+        key={i}
+        href={link.adres}
+        {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+        // Link „bez koloru" ma kolor tekstu i żółknie dopiero po najechaniu
+        // (decyzja właściciela 2026-10-12: lista technik z filmami wyglądała
+        // jak przypadkowo pokolorowana, bo żółty link = żółte wyróżnienie).
+        className={
+          link.bezKoloru
+            ? "hover:text-yellow-500 underline-offset-4 hover:underline transition-colors"
+            : "text-yellow-500 hover:text-yellow-400 underline-offset-4 hover:underline transition-colors"
         }
-        return <span key={i}>{p}</span>;
-      })}
-    </>
-  );
+      >
+        {kawalki.slice(i, j).map((k, n) => (
+          <Fragment key={n}>{sformatuj(k, true)}</Fragment>
+        ))}
+      </a>,
+    );
+    i = j;
+  }
+  return <>{wynik}</>;
+}
+
+/**
+ * Jeden kawałek tekstu z formatami. Dla kawałka z jednym formatem wynik jest
+ * identyczny z dawnym rendererem (sprawdzone porównaniem 66 stron z produkcją),
+ * zagnieżdżenia owijają się w stałej kolejności: żółty > pogrubienie > kursywa.
+ *
+ * Pogrubienie traci `text-white` w linku i w żółtym — inaczej biały nadpisałby
+ * kolor, który nadaje mu otoczenie.
+ */
+function sformatuj(k: Kawalek, wLinku: boolean): React.ReactNode {
+  const zolty = !!k.z && !(k.link && !k.link.bezKoloru);
+  let tresc: React.ReactNode = k.tekst;
+  if (k.i) tresc = <em className="italic">{tresc}</em>;
+  if (k.b) tresc = <strong className={wLinku || zolty ? "font-semibold" : "font-semibold text-white"}>{tresc}</strong>;
+  if (zolty) tresc = <span className="text-yellow-500">{tresc}</span>;
+  else if (!wLinku && !k.b && !k.i) tresc = <span>{tresc}</span>;
+  return tresc;
 }
 
 /** Bezpieczna kotwica (anchor) z polskiego tekstu - do spisu treści. */
@@ -104,10 +119,13 @@ export function BlockRenderer({
           <InlineText text={block.text} />
         </h3>
       );
+    // `whitespace-pre-line`: Enter wpisany w panelu ma być nowym wierszem.
+    // Do 2026-10 przeglądarka zwijała go w spację i siedem bloków w bazie
+    // pokazywało sklejone zdania, choć autor wyraźnie je rozdzielił.
     case "paragraph":
       return (
-        <p>
-          <InlineText text={block.text} />
+        <p className="whitespace-pre-line">
+          <InlineText text={przytnijEntery(block.text)} />
         </p>
       );
     case "kontakt": {
@@ -180,14 +198,14 @@ export function BlockRenderer({
     }
     case "callout":
       return (
-        <div className="rounded-xl border border-yellow-500/40 bg-yellow-500/5 px-6 py-5 text-neutral-200 backdrop-blur-sm">
-          <InlineText text={block.text} />
+        <div className="whitespace-pre-line rounded-xl border border-yellow-500/40 bg-yellow-500/5 px-6 py-5 text-neutral-200 backdrop-blur-sm">
+          <InlineText text={przytnijEntery(block.text)} />
         </div>
       );
     case "quote":
       return (
-        <blockquote className="border-l-4 border-yellow-500/60 pl-5 italic text-neutral-200">
-          <InlineText text={block.text} />
+        <blockquote className="whitespace-pre-line border-l-4 border-yellow-500/60 pl-5 italic text-neutral-200">
+          <InlineText text={przytnijEntery(block.text)} />
         </blockquote>
       );
     case "list":
