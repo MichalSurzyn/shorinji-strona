@@ -18,7 +18,7 @@ export const metadata: Metadata = {
  * Lista albumów i zdjęć siedzi w Cloudinary, nagłówek w bazie - jedno i drugie
  * zmienia się bez wdrożenia, więc strona musi się odświeżać jak reszta serwisu.
  */
-export const revalidate = 300;
+export const revalidate = 3600;
 
 // Ta podstrona może pobierać dane od razu na serwerze!
 export default async function GaleriaPage() {

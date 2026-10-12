@@ -38,7 +38,7 @@ import { przekierujAlboNotFound } from "@/lib/przekierowania";
  *   4. błąd odczytu → wyjątek (500), nigdy `notFound()`.
  */
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 type Props = { params: Promise<{ sciezka: string[] }> };
 
@@ -80,7 +80,7 @@ export default async function StronaZDrzewa({ params }: Props) {
   // KROK 0 - guard. Musi stać przed jakimkolwiek zapytaniem: bez niego każda
   // literówka w adresie panelu (`/admin/typo`) i każde żądanie skanera
   // (`/wp-login.php`, `/.env`) renderowałoby publiczny layout i odpalało dwa
-  // zapytania do bazy, na nieograniczonym zbiorze ścieżek, z revalidate=300
+  // zapytania do bazy, na nieograniczonym zbiorze ścieżek, z wpisem ISR
   // na każdym śmieciu. Dziś oba dają 404 i mają dawać dalej.
   if (!sciezkaMozeBycStrona(segmenty)) notFound();
 

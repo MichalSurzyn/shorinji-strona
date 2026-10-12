@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Odnosnik";
 import { clThumb } from "@/lib/cloudinary";
 import { pobierzArtykulyDoPanelu } from "@/actions/articleActions";
 import KoszAktualnosci from "./KoszAktualnosci";

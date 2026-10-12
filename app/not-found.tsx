@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Odnosnik";
 
 /**
  * Własna strona 404.

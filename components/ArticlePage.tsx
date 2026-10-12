@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Odnosnik";
 import { slugifyAnchor } from "./NewsBlocks";
 import RenderBlocks from "./RenderBlocks";
 import type { NewsBlock } from "../lib/newsTypes";

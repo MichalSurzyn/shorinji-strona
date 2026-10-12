@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/Odnosnik";
 import ScheduleWeek from "../../../components/ScheduleWeek";
 import LocationMap from "../../../components/LocationMap";
 import ContactForm from "@/components/ContactForm";
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/zajecia/dorosli" },
 };
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export default async function ZajeciaDorosliPage() {
   const slots = await getSchedule();

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useId } from 'react';
-import Link from 'next/link';
+import Link from '@/components/Odnosnik';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { type NavChild, type NavLink } from '@/lib/navTypes';

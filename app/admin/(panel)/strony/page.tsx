@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Odnosnik";
 import { EDITABLE_PAGES } from "@/lib/editablePages";
 
 /**

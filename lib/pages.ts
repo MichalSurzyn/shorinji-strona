@@ -57,7 +57,7 @@ const KOLUMNY =
  * Zostaje więc część wspólna „zarezerwowane ORAZ bez węzła w `pages`":
  *   admin, api  - literówka w adresie panelu albo żądanie skanera nie może
  *                 renderować publicznego layoutu ani odpalać dwóch zapytań
- *                 do uśpionego Supabase, z revalidate=300 na każdym śmieciu,
+ *                 do uśpionego Supabase, z wpisem ISR na każdym śmieciu,
  *   downloads   - `/downloads/<plik>` obsługuje route handler; samo `/downloads`
  *                 dziś daje 404 i ma dawać dalej.
  *

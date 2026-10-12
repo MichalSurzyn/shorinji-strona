@@ -31,6 +31,17 @@ panel pisze „zapisano", a strona oddaje kopie z dnia wdrozenia. Dodajac trase 
 z bazy, dopisz `revalidate`. Kontrola: kolumna `Revalidate` w tabeli `npm run build`
 nie moze byc pusta.
 
+**Netlify Free ma limit 125 000 wywołań funkcji na miesiąc — po przekroczeniu
+wyłącza WSZYSTKIE projekty zespołu do 1. dnia kolejnego miesiąca.** Cały Next to jedna
+funkcja, a każde chybienie cache CDN (także przeterminowany wpis odświeżany w tle) to
+wywołanie. Zmierzone 2026-10-12: ~3 500 dziennie przy ~100 wizytach — prefetch linków
+(~31 wpisów na wejście na stronę główną) razy `revalidate = 300` (przy rzadkich wizytach
+prawie każdy wpis był przeterminowany). Dlatego: linki tylko przez `components/Odnosnik`
+(prefetch wyłączony, pilnuje tego ESLint), a `revalidate` na trasach to 3600 — edycje
+z panelu i tak odświeżają strony od razu przez `revalidatePath`. Krótszego `revalidate`
+nie dawać bez powodu. Zużycie: `GET https://api.netlify.com/api/v1/sites/<id>/usage`
+(szczegóły w `shorinji-notes/zadanie-netlify-limit-funkcji.md`).
+
 **`revalidatePath("/sciezka")` nie rusza mapy witryny.** Tagi `/sitemap.xml` to
 `_N_T_/layout` i `_N_T_/sitemap.xml`, wiec `revalidatePath("/")` jej nie dotyka,
 a `revalidatePath("/", "layout")` — owszem. Stad akcje wolajace wariant `"layout"`

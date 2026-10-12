@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Odnosnik";
 import { useState } from "react";
 import { saveFooter } from "@/actions/footerActions";
 import { opiszBlad } from "@/lib/adminErrors";

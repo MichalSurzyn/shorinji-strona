@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/Odnosnik";
 import Komunikat, { useKomunikat } from "./Komunikat";
 import Podpowiedz from "./Podpowiedz";
 import { usePotwierdzenie } from "./DialogPotwierdzenia";

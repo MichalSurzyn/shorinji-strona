@@ -20,7 +20,7 @@ import { getStronyDoSitemapy } from "../lib/pages";
  *   strona z bazy         0.6  monthly   (było: listCustomPages)
  *   aktualność            0.6  yearly
  *
- * `revalidate = 300` zamiast prerenderu raz na build: przedtem nowa podstrona
+ * `revalidate` zamiast prerenderu raz na build: przedtem nowa podstrona
  * nie pojawiała się w sitemapie bez przebudowy projektu, mimo że komentarz
  * przy `getNews()` sugerował coś przeciwnego.
  */

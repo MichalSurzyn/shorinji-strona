@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import Link from "@/components/Odnosnik";
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 
 const inputCls =

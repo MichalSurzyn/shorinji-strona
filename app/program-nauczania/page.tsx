@@ -3,7 +3,7 @@ import { PageHeader, PageBody } from "@/components/PageContent";
 import KafelkiPodstron from "@/components/KafelkiPodstron";
 import { getDzieci, getStrona, kafelkiWidoczne } from "@/lib/pages";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Program nauczania",

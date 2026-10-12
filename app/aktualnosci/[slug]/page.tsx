@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/Odnosnik";
 import { przekierujAlboNotFound } from "@/lib/przekierowania";
 import RenderBlocks from "@/components/RenderBlocks";
 import { clUrl } from "@/lib/cloudinary";
 import { getNewsBySlug } from "@/lib/news";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 type Props = { params: Promise<{ slug: string }> };
 

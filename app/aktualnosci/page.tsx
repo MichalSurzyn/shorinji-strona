@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/Odnosnik";
 import { clUrl } from "@/lib/cloudinary";
 import { getNews } from "@/lib/news";
 import { PageHeader } from "@/components/PageContent";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Aktualności",

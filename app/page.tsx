@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { PageHeader, PageBody } from '@/components/PageContent';
 import NewsSidebar from '../components/NewsSidebar';
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   alternates: { canonical: '/' },

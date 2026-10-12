@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Odnosnik";
 import { useId, useRef, useState } from "react";
 import type { NewsBlock } from "@/lib/newsTypes";
 import { clThumb } from "@/lib/cloudinary";

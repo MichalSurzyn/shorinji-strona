@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Odnosnik";
 import { getFooterData } from "@/lib/footerData";
 import { getOrganization } from "@/lib/organization";
 import { formatTelefon } from "@/lib/organizationTypes";
