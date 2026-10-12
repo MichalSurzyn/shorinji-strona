@@ -2,7 +2,7 @@ import { cache } from "react";
 import { getSupabaseAdmin } from "./supabaseAdmin";
 import type { NewsBlock } from "./newsTypes";
 import { widoczneGalezie, type WierszWidocznosci } from "./widocznosc";
-import { NAJWIECEJ_SEGMENTOW } from "./drzewoLimity";
+import { NAJGLEBSZY_POZIOM, NAJWIECEJ_SEGMENTOW } from "./drzewoLimity";
 
 /**
  * Odczyt drzewa stron (`public.pages`) i przekierowań (`public.redirects`).
@@ -329,6 +329,27 @@ export async function getStronyDoSitemapy(): Promise<WezelStrony[]> {
   const wiersze = (data ?? []) as unknown as WezelStrony[];
   const { opublikowane } = widoczneGalezie(wiersze);
   return wiersze.filter((w) => w.kind === "page" && w.published && opublikowane.has(w.id));
+}
+
+/**
+ * Przodkowie strony od korzenia do rodzica — do okruszków na górze strony.
+ *
+ * Zgłoszenie właściciela przy czwartym poziomie: techniki i stopnie są poza
+ * menu, więc bez „mapy, gdzie jesteś" nie ma jak szybko się cofnąć. Drzewo ma
+ * najwyżej trzy poziomy nad stroną, czyli najwyżej trzy zapytania — a strona
+ * i tak leży w cache ISR przez godzinę. Limit pętli chroni przed zapętlonymi
+ * danymi (trigger bazy na to nie pozwala, ale ręczny zapis z pominięciem go — tak).
+ */
+export async function getPrzodkowie(strona: WezelStrony): Promise<WezelStrony[]> {
+  const wynik: WezelStrony[] = [];
+  let id = strona.parent_id;
+  for (let i = 0; id && i <= NAJGLEBSZY_POZIOM; i++) {
+    const w = await getStronaPoId(id);
+    if (!w) break;
+    wynik.unshift(w);
+    id = w.parent_id;
+  }
+  return wynik;
 }
 
 /** Węzeł po identyfikatorze — do okruszka i rodzeństwa w trasie catch-all. */

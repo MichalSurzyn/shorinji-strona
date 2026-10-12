@@ -3,8 +3,11 @@ import { notFound } from "next/navigation";
 import RenderBlocks from "@/components/RenderBlocks";
 import KafelkiPodstron from "@/components/KafelkiPodstron";
 import ArticlePage from "@/components/ArticlePage";
+import Okruszki, { type SasiedniaStrona } from "@/components/Okruszki";
+import ListaSekcji from "@/components/ListaSekcji";
 import {
   getDzieci,
+  getPrzodkowie,
   getSciezkiZBazy,
   getStrona,
   getStronaPoId,
@@ -134,7 +137,35 @@ export default async function StronaZDrzewa({ params }: Props) {
     );
   }
 
-  return <WidokStrony strona={strona} dzieci={dzieci} />;
+  // Okruszki i sąsiednie strony — dla stron z rodzicem (stopnie, techniki,
+  // podstrony programu). Strona najwyższego poziomu nie ma gdzie się cofać.
+  const przodkowie = await getPrzodkowie(strona);
+  const rodzenstwoStrony = strona.parent_id ? await getDzieci(strona.parent_id) : [];
+  const j = rodzenstwoStrony.findIndex((r) => r.id === strona.id);
+  const sasiad = (w: WezelStrony | undefined) => (w?.full_path ? { href: w.full_path, title: w.title } : undefined);
+  // Nagłówek grupujący publicznie nie ma strony — w okruszku i liście jest podpisem.
+  const adresWezla = (w: WezelStrony) => (w.kind === "page" ? w.full_path : null);
+  const rodzic = przodkowie[przodkowie.length - 1];
+
+  return (
+    <WidokStrony
+      strona={strona}
+      dzieci={dzieci}
+      przodkowie={przodkowie.map((p) => ({ title: p.title, href: adresWezla(p) }))}
+      poprzednia={j > 0 ? sasiad(rodzenstwoStrony[j - 1]) : undefined}
+      nastepna={j >= 0 ? sasiad(rodzenstwoStrony[j + 1]) : undefined}
+      sekcja={
+        rodzic
+          ? {
+              rodzic: { title: rodzic.title, href: adresWezla(rodzic) },
+              strony: rodzenstwoStrony
+                .filter((r) => r.full_path)
+                .map((r) => ({ href: r.full_path as string, title: r.title, biezaca: r.id === strona.id })),
+            }
+          : undefined
+      }
+    />
+  );
 }
 
 /**
@@ -146,10 +177,25 @@ export default async function StronaZDrzewa({ params }: Props) {
  * „Kafelki podstron pod treścią") znaczy „nie doklejaj". Do tej zmiany kafelki
  * doklejały się bez pytania i nie było ich jak zdjąć inaczej niż z SQL Editora.
  */
-function WidokStrony({ strona, dzieci }: { strona: WezelStrony; dzieci: WezelStrony[] }) {
-  return (
-    <div className="relative page-shell pb-20 min-h-screen">
-      <div className="container-site z-10 relative">
+function WidokStrony({
+  strona,
+  dzieci,
+  przodkowie,
+  poprzednia,
+  nastepna,
+  sekcja,
+}: {
+  strona: WezelStrony;
+  dzieci: WezelStrony[];
+  przodkowie: { title: string; href: string | null }[];
+  poprzednia?: SasiedniaStrona;
+  nastepna?: SasiedniaStrona;
+  sekcja?: { rodzic: { title: string; href: string | null }; strony: { href: string; title: string; biezaca: boolean }[] };
+}) {
+  // Lista „W tej sekcji" ma sens dopiero przy co najmniej dwóch stronach na poziomie.
+  const zListaSekcji = !!sekcja && sekcja.strony.length > 1;
+  const tresc = (
+    <>
         <header className="mb-10">
           {strona.kicker && (
             <p className="text-yellow-500 text-xs uppercase tracking-[0.18em] font-semibold mb-2">
@@ -178,6 +224,25 @@ function WidokStrony({ strona, dzieci }: { strona: WezelStrony; dzieci: WezelStr
               .filter((d) => d.full_path)
               .map((d) => ({ href: d.full_path as string, title: d.title, intro: d.intro }))}
           />
+        )}
+    </>
+  );
+
+  return (
+    <div className="relative page-shell pb-20 min-h-screen">
+      <div className="container-site z-10 relative">
+        {przodkowie.length > 0 && (
+          <Okruszki przodkowie={przodkowie} tytul={strona.title} poprzednia={poprzednia} nastepna={nastepna} />
+        )}
+        {/* Siatka tylko wtedy, gdy jest lista sekcji — strona bez niej zostaje
+            z dokładnie tym samym HTML-em co przed zmianą. */}
+        {zListaSekcji && sekcja ? (
+          <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_15rem] xl:gap-12">
+            <div className="min-w-0">{tresc}</div>
+            <ListaSekcji rodzic={sekcja.rodzic} strony={sekcja.strony} />
+          </div>
+        ) : (
+          tresc
         )}
       </div>
     </div>
